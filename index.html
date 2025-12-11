@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🇯🇵 AI極速旅遊規劃師</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    
+    <style>
+        /* --- 基礎設定 --- */
+        * { box-sizing: border-box; }
+        
+        :root {
+            --primary: #6366f1; --primary-hover: #4f46e5; --accent: #ec4899;
+            --bg-gradient: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            --text-dark: #1e293b; --text-gray: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.85); --glass-border: 1px solid rgba(255, 255, 255, 0.6); --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --tag-spot: #f43f5e; --tag-food: #f97316; --tag-trans: #0ea5e9;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg-gradient); background-size: 400% 400%; animation: gradientBG 15s ease infinite;
+            color: var(--text-dark); margin: 0; padding: 40px 20px; min-height: 100vh;
+        }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 400px 1fr; gap: 40px; }
+        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+
+        /* 卡片 */
+        .card {
+            background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: var(--glass-border); border-radius: 24px; box-shadow: var(--glass-shadow); padding: 35px; transition: transform 0.3s ease;
+        }
+        
+        h1 { text-align: center; font-weight: 900; font-size: 2.8rem; color: white; text-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom: 40px; letter-spacing: 1px; }
+        h2 { font-size: 1.4rem; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; color: var(--primary); font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+
+        label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.95rem; color: var(--text-gray); }
+        input, select, textarea {
+            width: 100%; padding: 14px 18px; margin-bottom: 20px; border: 2px solid transparent; border-radius: 16px;
+            background: #f1f5f9; color: var(--text-dark); font-size: 1rem; transition: all 0.3s ease; font-family: inherit;
+        }
+        input:focus, select:focus, textarea:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2); outline: none; }
+        .input-group { margin-bottom: 12px; }
+
+        /* 按鈕 */
+        button { width: 100%; padding: 16px; border: none; border-radius: 16px; font-weight: 700; font-size: 1.05rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; font-family: inherit; }
+        button:active { transform: scale(0.96); }
+        .btn-primary { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4); }
+        .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.5); }
+        .btn-magic { background: #fff; color: var(--accent); border: 2px dashed var(--accent); margin-bottom: 20px; }
+        .btn-magic:hover { background: #fff1f2; transform: translateY(-2px); }
+        .btn-outline { background: white; border: 2px solid #cbd5e1; color: var(--text-gray); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-danger { background: #fee2e2; color: #ef4444; width: auto; font-size: 0.9rem; padding: 10px 20px; }
+        .btn-setting { width: auto; padding: 8px 16px; background: #e2e8f0; color: var(--text-dark); border-radius: 12px; }
+        .btn-modify { background: #fff; border: 1px solid #ddd; color: var(--text-gray); margin-top: 15px; font-size: 0.9rem; padding: 10px; border-radius: 12px; }
+        .btn-modify:hover { background: #f8fafc; border-color: var(--primary); color: var(--primary); }
+
+        /* 匯出工具列 */
+        .export-bar { display: none; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn-export { flex: 1; min-width: 120px; font-size: 0.9rem; padding: 12px; color: white; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .btn-img { background: #f59e0b; } .btn-img:hover { background: #d97706; }
+        .btn-txt { background: #10b981; } .btn-txt:hover { background: #059669; }
+        .btn-cal { background: #3b82f6; } .btn-cal:hover { background: #2563eb; }
+        .btn-pdf { background: #64748b; } .btn-pdf:hover { background: #475569; }
+
+        /* 行程列表 */
+        details { background: #fff; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden; border: 1px solid #f1f5f9; transition: all 0.3s; }
+        details[open] { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: #e0e7ff; }
+        summary { padding: 20px 25px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; background: #fff; transition: background 0.2s; }
+        summary:hover { background: #f8fafc; }
+        details[open] summary { background: #f5f3ff; border-bottom: 1px solid #e0e7ff; }
+        summary::-webkit-details-marker { display: none; }
+        .day-date { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+        .day-summary { font-size: 0.95rem; color: var(--text-gray); font-weight: 500; }
+        .day-content { padding: 25px; background: #fff; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 時間軸 */
+        .timeline { border-left: 2px dashed #cbd5e1; margin-left: 10px; padding-left: 30px; position: relative; }
+        .itinerary-item { position: relative; margin-bottom: 35px; break-inside: avoid; page-break-inside: avoid; }
+        .itinerary-item:last-child { margin-bottom: 0; }
+        .itinerary-item::before { content: ''; position: absolute; left: -37px; top: 5px; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 3px solid #cbd5e1; z-index: 1; }
+        .type-spot::before { border-color: var(--tag-spot); box-shadow: 0 0 0 4px #ffe4e6; }
+        .type-food::before { border-color: var(--tag-food); box-shadow: 0 0 0 4px #ffedd5; }
+        .type-transport::before { border-color: var(--tag-trans); box-shadow: 0 0 0 4px #e0f2fe; }
+
+        .time { font-size: 0.9rem; font-weight: 700; color: var(--text-gray); margin-bottom: 6px; letter-spacing: 0.5px; }
+        .activity-card { background: #f8fafc; border-radius: 12px; padding: 15px; border: 1px solid #f1f5f9; transition: transform 0.2s; }
+        .activity-card:hover { transform: translateX(5px); background: #fff; border-color: #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .activity-title { font-size: 1.15rem; font-weight: 700; color: var(--text-dark); margin-bottom: 5px; }
+        .tags-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+        .tag { font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; font-weight: 600; color: white; letter-spacing: 0.5px; }
+        .tag.spot { background: var(--tag-spot); } .tag.food { background: var(--tag-food); } .tag.transport { background: var(--tag-trans); }
+        .tag.ticket { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+        .desc { font-size: 0.95rem; color: #475569; line-height: 1.6; }
+        .tips { margin-top: 10px; font-size: 0.85rem; background: #fffbeb; color: #b45309; padding: 10px 15px; border-radius: 10px; display: flex; gap: 8px; align-items: start; }
+        .tips::before { content: '💡'; }
+
+        #saveStatus { position: fixed; bottom: 30px; right: 30px; background: rgba(30, 41, 59, 0.9); color: white; padding: 12px 24px; border-radius: 30px; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.2); opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; z-index: 1000; }
+        #saveStatus.show { opacity: 1; transform: translateY(0); }
+        #loading { display: none; text-align: center; margin: 60px 0; }
+        .loader { width: 60px; height: 60px; border: 6px solid #fff; border-bottom-color: var(--primary); border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 9999; }
+        .modal-content { background: #fff; margin: 10% auto; padding: 40px; width: 90%; max-width: 500px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); animation: popUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* --- Print/Image Mode Style --- */
+        #pdfHeader { display: none; text-align: center; margin-bottom: 30px; }
+        #pdfHeader h2 { color: #000; margin: 0; font-size: 24px; }
+        #pdfHeader p { color: #555; margin: 5px 0 0 0; font-size: 14px; }
+
+        .print-mode { background: #ffffff !important; padding: 40px !important; color: #000 !important; font-family: "Noto Sans TC", sans-serif !important; width: 800px; margin: 0 auto; }
+        .print-mode details { box-shadow: none !important; border: 1px solid #ddd !important; margin-bottom: 20px !important; background: #fff !important; }
+        .print-mode summary { background: #f8f8f8 !important; border-bottom: 1px solid #eee !important; }
+        .print-mode .activity-card { background: #fff !important; border: none !important; padding: 0 !important; box-shadow: none !important; transform: none !important; }
+        .print-mode .tag { border: 1px solid #000 !important; color: #000 !important; background: #fff !important; }
+        .print-mode .tips { background: #f0f0f0 !important; color: #000 !important; border: 1px solid #ccc !important; }
+        .html2pdf__page-break { page-break-before: always; }
+    </style>
+</head>
+<body>
+
+    <div id="saveStatus">✅ 資料已暫存</div>
+
+    <div id="apiModal" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3 style="margin:0;">⚙️ 系統設定</h3><span onclick="closeModal('apiModal')" style="cursor:pointer; font-size:1.5rem; opacity:0.5;">×</span>
+            </div>
+            <label>Gemini API Key</label><input type="password" id="apiKey" placeholder="AIzaSy...">
+            <label>AI 模型</label>
+            <select id="modelSelect">
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Thinking</option>
+                <option value="gemini-3-pro-preview">Gemini 3 Pro</option>
+            </select>
+            <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
+            <div style="display:flex; gap:10px;">
+                <button onclick="exportData()" class="btn-outline">📤 備份資料</button>
+                <input type="file" id="importFile" style="display:none" onchange="importData(this)">
+                <button onclick="document.getElementById('importFile').click()" class="btn-outline">📥 匯入資料</button>
+            </div>
+            <button onclick="saveAndCloseModal()" class="btn-primary" style="margin-top:25px;">儲存並關閉</button>
+        </div>
+    </div>
+
+    <div id="modifyModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin:0 0 15px 0;">🤖 微調此日行程</h3>
+            <p id="modifyDateDisplay" style="color:var(--primary); font-weight:bold; margin-bottom:15px;"></p>
+            <textarea id="modifyInstruction" rows="4" placeholder="例如：我想晚點出門、晚餐想改吃壽司..."></textarea>
+            <button onclick="submitModification()" class="btn-primary">✨ 施展魔法 (微調)</button>
+            <button onclick="closeModal('modifyModal')" class="btn-outline" style="margin-top:10px;">取消</button>
+        </div>
+    </div>
+
+    <h1>✈️ AI 極速旅遊規劃師</h1>
+
+    <div class="container">
+        <div class="column">
+            <div class="card">
+                <h2>📝 行程設定 <button onclick="openModal('apiModal')" class="btn-setting">⚙️</button></h2>
+                
+                <label style="color:var(--primary);">📍 旅遊城市 (必填)</label>
+                <input type="text" id="city" placeholder="例如：香川縣高松市" style="border: 2px solid #e0e7ff;">
+
+                <label>🏨 住宿飯店</label>
+                <input type="text" id="hotel" placeholder="例如：Bon Stay Matsu201">
+                
+                <div class="input-group"><label>🛫 去程：台灣起飛</label><input type="datetime-local" id="flightArrival"></div>
+                <div class="input-group"><label>🛫 回程：日本起飛</label><input type="datetime-local" id="flightDeparture"></div>
+
+                <div class="input-group" style="display: grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div><label>⚡ 緊湊度</label><select id="pace"><option value="標準觀光">📷 標準</option><option value="悠閒慢活">☕ 悠閒</option><option value="特種兵極限">🔥 極限</option></select></div>
+                    <div><label>📅 天數</label><input type="text" id="durationDisplay" placeholder="-" readonly style="background:#f1f5f9; color:#64748b; text-align:center;"></div>
+                </div>
+
+                <button onclick="autoGenerateIdeas()" class="btn-magic">🪄 AI 幫我補全景點</button>
+                <label>📍 想去的景點</label><textarea id="spots" rows="3"></textarea>
+                <div class="input-group"><label>🚗 交通</label><select id="transport"><option>大眾運輸</option><option>自駕</option><option>全程包車</option></select></div>
+                <label>❤️ 需求</label><input type="text" id="prefs">
+
+                <button onclick="planTrip()" id="planBtn" class="btn-primary">✨ 開始生成夢幻行程</button>
+                <button onclick="clearAll()" class="btn-danger" style="margin-top:15px; width:100%;">🗑️ 清空重來</button>
+            </div>
+        </div>
+
+        <div class="column">
+            <div id="loading"><span class="loader"></span><p style="font-weight:bold; color:#fff; margin-top:20px; font-size:1.1rem; text-shadow:0 2px 4px rgba(0,0,0,0.2);">AI 正在為您規劃完美旅程...</p></div>
+            
+            <div class="export-bar" id="exportBar">
+                <button onclick="exportToImage()" class="btn-export btn-img">📸 長圖片 (推薦)</button>
+                <button onclick="exportToText()" class="btn-export btn-txt">📋 複製文字</button>
+                <button onclick="exportToICS()" class="btn-export btn-cal">📅 匯入行事曆</button>
+                <button onclick="exportToPDF()" class="btn-export btn-pdf">📄 匯出 PDF</button>
+            </div>
+            
+            <div id="tripContainer">
+                <div id="pdfHeader"><h2>🇯🇵 日本旅遊行程表</h2><p id="pdfSubTitle"></p><hr style="border:0; border-top:1px solid #333; margin:20px 0;"></div>
+                <div id="placeholderMsg" style="text-align:center; color:#fff; margin-top:100px; opacity:0.8;"><div style="font-size:4rem; margin-bottom:20px; text-shadow:0 4px 10px rgba(0,0,0,0.2);">🌏</div><p style="font-size:1.2rem; font-weight:500;">準備好出發了嗎？<br>請在左側輸入資料</p></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tripData = [];
+        let currentModifyIndex = null;
+        const inputIds = ['city', 'hotel', 'flightArrival', 'flightDeparture', 'spots', 'transport', 'pace', 'prefs'];
+
+        window.onload = function() {
+            const savedKey = localStorage.getItem('geminiApiKey');
+            if(savedKey) document.getElementById('apiKey').value = savedKey;
+            else setTimeout(() => openModal('apiModal'), 500);
+
+            const storedTrip = localStorage.getItem('myTrip_v27');
+            if(storedTrip) { try { tripData = JSON.parse(storedTrip); if(tripData.length) renderTrip(); } catch(e){} }
+
+            loadInputs(); updateDuration();
+            inputIds.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) { el.addEventListener('input', handleInput); el.addEventListener('change', handleInput); }
+            });
+        };
+
+        function handleInput() { saveInputs(); updateDuration(); showSaveStatus(); }
+        function showSaveStatus() { const s=document.getElementById('saveStatus'); s.classList.add('show'); setTimeout(()=>s.classList.remove('show'),1500); }
+        
+        function updateDuration() {
+            const arr = document.getElementById('flightArrival').value;
+            const dep = document.getElementById('flightDeparture').value;
+            const display = document.getElementById('durationDisplay');
+            if(arr && dep) {
+                const start = new Date(arr); const end = new Date(dep);
+                const count = Math.floor((end.setHours(0,0,0,0) - start.setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)) + 1;
+                display.value = count > 0 ? `${count} 天` : "日期錯誤";
+            } else display.value = "-";
+        }
+
+        // --- Plan Trip ---
+        async function planTrip() {
+            const apiKey = getApiKey(); if(!apiKey) return;
+            saveInputs();
+
+            const city = document.getElementById('city').value;
+            const hotel = document.getElementById('hotel').value;
+            const flightArr = document.getElementById('flightArrival').value;
+            const flightDep = document.getElementById('flightDeparture').value;
+            const spots = document.getElementById('spots').value;
+            const transport = document.getElementById('transport').value;
+            const pace = document.getElementById('pace').value;
+            const prefs = document.getElementById('prefs').value;
+
+            if(!city || !hotel) { alert("請輸入城市與飯店！"); return; }
+            if(!flightArr || !flightDep) { alert("請輸入班機時間！"); return; }
+
+            const startDate = flightArr.split('T')[0];
+            const endDate = flightDep.split('T')[0];
+            if(new Date(startDate) > new Date(endDate)) { alert("日期錯誤！"); return; }
+
+            setLoading(true);
+
+            const prompt = `
+            你是一位專業導遊。請規劃從【${startDate}】到【${endDate}】的行程。
+            【限制】
+            1. 城市：【${city}】(嚴禁跨縣市遠途)。
+            2. 飯店：【${hotel}】(每日起訖點)。
+            3. 去程：台灣起飛時間 ${flightArr}。請+4小時後開始排行程，優先去JR車站寄行李。
+            4. 回程：日本起飛時間 ${flightDep}。起飛前3小時到機場。
+            5. 必去：${spots}。
+            6. 交通：${transport}。
+            7. 需求：${prefs}。
+            8. 節奏：${pace}。
+
+            【輸出 JSON】
+            [{ 
+                "date": "YYYY-MM-DD", "day_title": "標題", "summary": "摘要", 
+                "itinerary": [{ "time": "HH:MM", "type": "SPOT/FOOD/TRANSPORT", "title": "名稱", "desc": "描述", "tips": "備註", "booking": false }] 
+            }]
+            `;
+
+            try {
+                const result = await callGemini(apiKey, prompt);
+                if(Array.isArray(result)) {
+                    tripData = result;
+                    localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
+                    renderTrip();
+                } else throw new Error("格式錯誤");
+            } catch(e) { alert("生成失敗：" + e.message); } 
+            finally { setLoading(false); }
+        }
+
+        async function submitModification() {
+            const instruction = document.getElementById('modifyInstruction').value;
+            if(!instruction) return;
+            closeModal('modifyModal'); setLoading(true);
+            const apiKey = getApiKey();
+            const targetDay = tripData[currentModifyIndex];
+            const prompt = `【微調】原始JSON:${JSON.stringify(targetDay)} 指令:${instruction} 回傳修改後的物件JSON`;
+            try {
+                const newDayData = await callGemini(apiKey, prompt);
+                tripData[currentModifyIndex] = newDayData;
+                localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
+                renderTrip();
+            } catch(e) { alert("微調失敗"); } finally { setLoading(false); }
+        }
+
+        // --- Export Functions ---
+        function prepareExport() {
+            const element = document.getElementById('tripContainer');
+            const header = document.getElementById('pdfHeader');
+            const subTitle = document.getElementById('pdfSubTitle');
+            const city = document.getElementById('city').value;
+            const start = document.getElementById('flightArrival').value.split('T')[0];
+            
+            document.getElementById('placeholderMsg').style.display = 'none'; 
+            header.style.display = 'block'; 
+            subTitle.innerText = `旅遊城市：${city} | 出發日期：${start}`;
+            
+            element.classList.add('print-mode'); // 切換白紙模式
+            element.querySelectorAll('details').forEach(d => d.open = true);
+            element.querySelectorAll('button').forEach(b => b.style.display = 'none');
+            return element;
+        }
+
+        function restoreExport(element) {
+            document.getElementById('pdfHeader').style.display = 'none';
+            element.classList.remove('print-mode');
+            element.querySelectorAll('button').forEach(b => b.style.display = 'inline-block');
+        }
+
+        function exportToImage() {
+            const element = prepareExport();
+            html2canvas(element, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Trip_${document.getElementById('city').value}.jpg`;
+                link.href = canvas.toDataURL("image/jpeg", 0.9);
+                link.click();
+                restoreExport(element);
+            });
+        }
+
+        function exportToPDF() {
+            const element = prepareExport();
+            const opt = {
+                margin: 10, filename: `Trip_${document.getElementById('city').value}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, backgroundColor: '#ffffff' }, 
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+            html2pdf().from(element).set(opt).save().then(() => restoreExport(element));
+        }
+
+        function exportToText() {
+            let text = `🇯🇵 日本旅遊行程 - ${document.getElementById('city').value}\n\n`;
+            tripData.forEach(day => {
+                text += `📅 ${day.date} ${day.day_title}\n`;
+                day.itinerary.forEach(item => {
+                    text += `${item.time} ${item.title}\n   ${item.desc}\n`;
+                });
+                text += "\n------------------\n\n";
+            });
+            navigator.clipboard.writeText(text).then(() => alert("✅ 行程已複製到剪貼簿！"));
+        }
+
+        function exportToICS() {
+            let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//AI Trip Planner//EN\n";
+            tripData.forEach(day => {
+                day.itinerary.forEach(item => {
+                    // 簡單處理：將時間轉為 ICS 格式 (這裡假設行程都在同一時區，實際使用可更精細)
+                    const dateStr = day.date.replace(/-/g, '');
+                    const timeStr = item.time.replace(':', '') + '00';
+                    const dtStart = `${dateStr}T${timeStr}`;
+                    // 假設每個活動 1 小時
+                    let endHour = parseInt(item.time.split(':')[0]) + 1;
+                    const dtEnd = `${dateStr}T${endHour.toString().padStart(2,'0')}${item.time.split(':')[1]}00`;
+
+                    icsContent += "BEGIN:VEVENT\n";
+                    icsContent += `SUMMARY:${item.title}\n`;
+                    icsContent += `DESCRIPTION:${item.desc} (備註:${item.tips})\n`;
+                    icsContent += `DTSTART:${dtStart}\n`;
+                    icsContent += `DTEND:${dtEnd}\n`;
+                    icsContent += "END:VEVENT\n";
+                });
+            });
+            icsContent += "END:VCALENDAR";
+            
+            const blob = new Blob([icsContent], { type: 'text/calendar' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'trip.ics';
+            link.click();
+        }
+
+        // --- Common Functions ---
+        async function autoGenerateIdeas() {
+            const apiKey = getApiKey(); if(!apiKey) return;
+            const city = document.getElementById('city').value;
+            if(!city) { alert("請輸入城市！"); return; }
+            const btn = document.querySelector('.btn-magic'); btn.disabled = true; btn.innerHTML = "🔮...";
+            const prompt = `推薦【${city}】景點。JSON:{ "spots": "...", "transport": "...", "prefs": "..." }`;
+            try {
+                const res = await callGemini(apiKey, prompt);
+                document.getElementById('spots').value = res.spots;
+                document.getElementById('transport').value = res.transport;
+                document.getElementById('prefs').value = res.prefs;
+                saveInputs();
+            } catch(e) {} finally { btn.disabled = false; btn.innerHTML = "🪄 AI 推薦景點"; }
+        }
+
+        async function callGemini(key, prompt) {
+            const model = document.getElementById('modelSelect').value;
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const data = await res.json();
+            return JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
+        }
+
+        function renderTrip() {
+            const container = document.getElementById('tripContainer');
+            const exportBar = document.getElementById('exportBar');
+            const ph = document.getElementById('placeholderMsg');
+            
+            if(!tripData.length) { ph.style.display='block'; exportBar.style.display = 'none'; return; }
+
+            ph.style.display = 'none';
+            exportBar.style.display = 'flex';
+            
+            const details = container.querySelectorAll('details');
+            details.forEach(d => d.remove());
+
+            tripData.forEach((day, index) => {
+                const isOpen = index === 0 ? 'open' : '';
+                const html = `
+                <details ${isOpen}>
+                    <summary><div class="day-header"><div class="day-date">${day.date}</div><div class="day-summary">${day.day_title}</div></div></summary>
+                    <div class="day-content">
+                        <div class="timeline">
+                            ${day.itinerary.map(item => {
+                                let typeClass = item.type === 'SPOT' ? 'type-spot' : item.type === 'FOOD' ? 'type-food' : 'type-transport';
+                                let tagHtml = `<span class="tag ${item.type.toLowerCase()}">${item.type}</span>`;
+                                let ticketHtml = item.booking ? '<span class="ticket-badge">🎟️ 需預約</span>' : '';
+                                return `<div class="itinerary-item ${typeClass}"><span class="time">${item.time}</span><div class="activity-card"><div class="tags-row">${tagHtml} ${ticketHtml}</div><div class="activity-title">${item.title}</div><div class="desc">${item.desc}</div>${item.tips ? `<div class="tips">${item.tips}</div>` : ''}</div><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.title)}" target="_blank" style="display:inline-block; margin-top:8px; margin-left:15px; font-size:0.85rem; color:var(--primary); text-decoration:none; font-weight:600;">📍 Map</a></div>`;
+                            }).join('')}
+                        </div>
+                        <button onclick="openModifyModal(${index})" class="btn-modify">🤖 AI 微調這天</button>
+                    </div>
+                </details>`;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function getApiKey() { const k=document.getElementById('apiKey').value.trim(); if(!k) openModal('apiModal'); return k; }
+        function setLoading(isLoading) { document.getElementById('loading').style.display = isLoading ? 'block' : 'none'; document.getElementById('tripContainer').style.display = isLoading ? 'none' : 'flex'; document.getElementById('planBtn').disabled = isLoading; }
+        function saveInputs() { const i={}; inputIds.forEach(id=>{const e=document.getElementById(id); if(e)i[id]=e.value}); localStorage.setItem('tripDraft_v27',JSON.stringify(i)); }
+        function loadInputs() { const s=localStorage.getItem('tripDraft_v27'); if(s) { const i=JSON.parse(s); inputIds.forEach(id=>{if(i[id])document.getElementById(id).value=i[id]}); } }
+        function clearAll() { if(confirm("清空？")) { localStorage.removeItem('tripDraft_v27'); localStorage.removeItem('myTrip_v27'); location.reload(); } }
+        function exportData() { const d={i:JSON.parse(localStorage.getItem('tripDraft_v27')),t:tripData}; const b=new Blob([JSON.stringify(d)],{type:"application/json"}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='trip_backup.json'; a.click(); }
+        function importData(inp) { const f=inp.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ const d=JSON.parse(e.target.result); if(d.i)localStorage.setItem('tripDraft_v27',JSON.stringify(d.i)); if(d.t)localStorage.setItem('myTrip_v27',JSON.stringify(d.t)); location.reload(); }; r.readAsText(f); }
+        function openModal(id) { document.getElementById(id).style.display="block"; }
+        function closeModal(id) { document.getElementById(id).style.display="none"; }
+        function saveAndCloseModal() { localStorage.setItem('geminiApiKey', document.getElementById('apiKey').value.trim()); closeModal('apiModal'); }
+        window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display="none"; }
+        function openModifyModal(idx) { currentModifyIndex=idx; document.getElementById('modifyDateDisplay').innerText=`${tripData[idx].date}`; openModal('modifyModal'); }
+    </script>
+</body>
+</html>
