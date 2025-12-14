@@ -42,12 +42,36 @@
         h2 { font-size: 1.4rem; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; color: var(--primary); font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
 
         label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.95rem; color: var(--text-gray); }
-        input, select, textarea {
+        input[type="text"], input[type="datetime-local"], select, textarea {
             width: 100%; padding: 14px 18px; margin-bottom: 20px; border: 2px solid transparent; border-radius: 16px;
             background: #f1f5f9; color: var(--text-dark); font-size: 1rem; transition: all 0.3s ease; font-family: inherit;
         }
         input:focus, select:focus, textarea:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2); outline: none; }
         .input-group { margin-bottom: 12px; }
+
+        /* --- Checkbox 樣式 --- */
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .checkbox-item {
+            position: relative;
+        }
+        .checkbox-item input {
+            position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0;
+        }
+        .checkbox-item label {
+            display: flex; align-items: center; justify-content: center;
+            background: #f1f5f9; padding: 10px; border-radius: 12px;
+            cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
+            margin: 0; font-weight: 500; color: #64748b;
+        }
+        .checkbox-item input:checked + label {
+            background: #e0e7ff; border-color: var(--primary); color: var(--primary); font-weight: 700;
+        }
+        .checkbox-item label:hover { background: #e2e8f0; }
 
         /* 按鈕 */
         button { width: 100%; padding: 16px; border: none; border-radius: 16px; font-weight: 700; font-size: 1.05rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; font-family: inherit; }
@@ -71,8 +95,16 @@
         .btn-cal { background: #3b82f6; } .btn-cal:hover { background: #2563eb; }
         .btn-pdf { background: #64748b; } .btn-pdf:hover { background: #475569; }
 
-        /* 行程列表 */
-        details { background: #fff; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden; border: 1px solid #f1f5f9; transition: all 0.3s; }
+        /* --- 修正：行程列表容器設定 (垂直排列) --- */
+        #tripContainer {
+            display: flex;
+            flex-direction: column; /* 確保垂直排列 */
+            gap: 20px;
+            width: 100%;
+        }
+
+        /* 行程卡片 */
+        details { background: #fff; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden; border: 1px solid #f1f5f9; transition: all 0.3s; width: 100%; }
         details[open] { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: #e0e7ff; }
         summary { padding: 20px 25px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; background: #fff; transition: background 0.2s; }
         summary:hover { background: #f8fafc; }
@@ -100,9 +132,13 @@
         .tag { font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; font-weight: 600; color: white; letter-spacing: 0.5px; }
         .tag.spot { background: var(--tag-spot); } .tag.food { background: var(--tag-food); } .tag.transport { background: var(--tag-trans); }
         .tag.ticket { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
-        .desc { font-size: 0.95rem; color: #475569; line-height: 1.6; }
+        .desc { font-size: 0.95rem; color: #475569; line-height: 1.6; white-space: pre-line; } /* 支援換行 */
         .tips { margin-top: 10px; font-size: 0.85rem; background: #fffbeb; color: #b45309; padding: 10px 15px; border-radius: 10px; display: flex; gap: 8px; align-items: start; }
         .tips::before { content: '💡'; }
+        
+        /* 地址樣式 */
+        .address-line { font-size: 0.85rem; color: #64748b; margin-top: 5px; display: flex; align-items: center; gap: 4px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
+        .address-line::before { content: '📍'; font-size: 0.9rem; }
 
         #saveStatus { position: fixed; bottom: 30px; right: 30px; background: rgba(30, 41, 59, 0.9); color: white; padding: 12px 24px; border-radius: 30px; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.2); opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; z-index: 1000; }
         #saveStatus.show { opacity: 1; transform: translateY(0); }
@@ -140,10 +176,11 @@
             <label>Gemini API Key</label><input type="password" id="apiKey" placeholder="AIzaSy...">
             <label>AI 模型</label>
             <select id="modelSelect">
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Thinking</option>
-                <option value="gemini-3-pro-preview">Gemini 3 Pro</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
             </select>
+            <p style="font-size:0.8rem; color:#64748b; margin-top:-10px;">* 建議使用 Gemini 2.0 Flash 速度最快</p>
             <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
             <div style="display:flex; gap:10px;">
                 <button onclick="exportData()" class="btn-outline">📤 備份資料</button>
@@ -185,10 +222,29 @@
                     <div><label>📅 天數</label><input type="text" id="durationDisplay" placeholder="-" readonly style="background:#f1f5f9; color:#64748b; text-align:center;"></div>
                 </div>
 
-                <button onclick="autoGenerateIdeas()" class="btn-magic">🪄 AI 幫我補全景點</button>
-                <label>📍 想去的景點</label><textarea id="spots" rows="3"></textarea>
+                <button onclick="autoGenerateIdeas()" class="btn-magic">🪄 AI 幫我補全景點 & 美食</button>
+                
+                <label>❤️ 旅遊元素 (多選)</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item"><input type="checkbox" id="tag_food" name="tripTag" value="美食探索"><label for="tag_food">🍱 美食</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="tag_spot" name="tripTag" value="熱門景點"><label for="tag_spot">🗼 景點</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="tag_shop" name="tripTag" value="購物血拼"><label for="tag_shop">🛍️ 購物</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="tag_drug" name="tripTag" value="藥妝採購"><label for="tag_drug">💊 藥妝</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="tag_photo" name="tripTag" value="攝影打卡"><label for="tag_photo">📷 攝影</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="tag_history" name="tripTag" value="歷史古蹟"><label for="tag_history">⛩️ 古蹟</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="tag_nature" name="tripTag" value="自然美景"><label for="tag_nature">🌲 自然</label></div>
+                    <div class="checkbox-item"><input type="checkbox" id="tag_family" name="tripTag" value="親子友善"><label for="tag_family">👶 親子</label></div>
+                </div>
+
+                <label>📍 必去景點</label><textarea id="spots" rows="3"></textarea>
+                
+                <label style="color:var(--tag-food);">🍜 必吃美食清單 (AI 推薦或自行輸入)</label>
+                <textarea id="foodList" rows="3" placeholder="例如：一蘭拉麵、當地特色烏龍麵... (可讓AI推薦後自行篩選)"></textarea>
+
                 <div class="input-group"><label>🚗 交通</label><select id="transport"><option>大眾運輸</option><option>自駕</option><option>全程包車</option></select></div>
-                <label>❤️ 需求</label><input type="text" id="prefs">
+                
+                <label>✨ 特殊需求 (自行填寫)</label>
+                <input type="text" id="customPrefs" placeholder="例如：行動不便、不吃牛、想體驗和服...">
 
                 <button onclick="planTrip()" id="planBtn" class="btn-primary">✨ 開始生成夢幻行程</button>
                 <button onclick="clearAll()" class="btn-danger" style="margin-top:15px; width:100%;">🗑️ 清空重來</button>
@@ -215,7 +271,8 @@
     <script>
         let tripData = [];
         let currentModifyIndex = null;
-        const inputIds = ['city', 'hotel', 'flightArrival', 'flightDeparture', 'spots', 'transport', 'pace', 'prefs'];
+        // 加入 foodList 到自動存檔清單
+        const inputIds = ['city', 'hotel', 'flightArrival', 'flightDeparture', 'spots', 'foodList', 'transport', 'pace', 'customPrefs'];
 
         window.onload = function() {
             const savedKey = localStorage.getItem('geminiApiKey');
@@ -226,9 +283,10 @@
             if(storedTrip) { try { tripData = JSON.parse(storedTrip); if(tripData.length) renderTrip(); } catch(e){} }
 
             loadInputs(); updateDuration();
-            inputIds.forEach(id => {
-                const el = document.getElementById(id);
-                if(el) { el.addEventListener('input', handleInput); el.addEventListener('change', handleInput); }
+            
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                el.addEventListener('input', handleInput);
+                el.addEventListener('change', handleInput);
             });
         };
 
@@ -256,9 +314,30 @@
             const flightArr = document.getElementById('flightArrival').value;
             const flightDep = document.getElementById('flightDeparture').value;
             const spots = document.getElementById('spots').value;
+            const foodList = document.getElementById('foodList').value;
             const transport = document.getElementById('transport').value;
             const pace = document.getElementById('pace').value;
-            const prefs = document.getElementById('prefs').value;
+            
+            const tags = Array.from(document.querySelectorAll('input[name="tripTag"]:checked')).map(el => el.value);
+            const customPrefs = document.getElementById('customPrefs').value;
+            
+            let combinedPrefs = tags.join('、');
+            if(combinedPrefs && customPrefs) combinedPrefs += `，且需注意：${customPrefs}`;
+            else if(customPrefs) combinedPrefs = customPrefs;
+            else if(!combinedPrefs) combinedPrefs = "無特殊需求";
+
+            let foodInstruction = "";
+            if (tags.includes('美食探索') || foodList.trim() !== "") {
+                foodInstruction = `
+                【美食特別指令 - 重要】
+                使用者非常重視美食。針對每天的午餐與晚餐，請務必在 'desc' (描述) 欄位中：
+                1. 優先安排使用者在「必吃美食清單」(${foodList}) 中的餐廳。
+                2. 若清單未指定，請列出「2~3 個具體的當地餐廳選項」供使用者選擇。
+                3. 格式請使用：
+                   選項 1：[餐廳名] - [特色短評] (營業時間: HH:MM-HH:MM)
+                   選項 2：[餐廳名] - [特色短評] (營業時間: HH:MM-HH:MM)
+                `;
+            }
 
             if(!city || !hotel) { alert("請輸入城市與飯店！"); return; }
             if(!flightArr || !flightDep) { alert("請輸入班機時間！"); return; }
@@ -269,22 +348,45 @@
 
             setLoading(true);
 
+            // 增強版 Prompt
             const prompt = `
             你是一位專業導遊。請規劃從【${startDate}】到【${endDate}】的行程。
             【限制】
             1. 城市：【${city}】(嚴禁跨縣市遠途)。
             2. 飯店：【${hotel}】(每日起訖點)。
-            3. 去程：台灣起飛時間 ${flightArr}。請+4小時後開始排行程，優先去JR車站寄行李。
+            3. 去程：台灣起飛時間 ${flightArr}。請+4小時後開始排行程。
             4. 回程：日本起飛時間 ${flightDep}。起飛前3小時到機場。
-            5. 必去：${spots}。
-            6. 交通：${transport}。
-            7. 需求：${prefs}。
-            8. 節奏：${pace}。
+            5. 必去景點：${spots}。
+            6. 必吃美食清單：${foodList}。
+            7. 交通：${transport}。
+            8. 偏好與需求：${combinedPrefs}。
+            9. 節奏：${pace}。
+            
+            ${foodInstruction}
 
-            【輸出 JSON】
+            【動線與地理位置】
+            午餐與晚餐的餐廳選擇，必須在當天上午或下午景點的【步行或短程交通可達範圍內】。
+
+            【精確地址與資訊 - 非常重要】
+            1. 每個行程點 (餐廳/景點) 都必須提供【Google Map 可搜尋的完整地址】。
+            2. 嚴禁只填寫城市名稱 (如 '高松市')，這會被視為錯誤。必須包含町名、番地或建築物名稱。
+            3. 若真的找不到地址，請提供「最近的地標」或「xx站步行x分鐘」。
+            4. 請標註景點/餐廳的「營業時間」。
+
+            【輸出規則 - 重要】
+            請只輸出 JSON 格式，不要輸出任何 Markdown 標記 (如 \`\`\`json)，也不要任何開場白。
+            格式範例：
             [{ 
                 "date": "YYYY-MM-DD", "day_title": "標題", "summary": "摘要", 
-                "itinerary": [{ "time": "HH:MM", "type": "SPOT/FOOD/TRANSPORT", "title": "名稱", "desc": "描述", "tips": "備註", "booking": false }] 
+                "itinerary": [{ 
+                    "time": "HH:MM", 
+                    "type": "SPOT/FOOD/TRANSPORT", 
+                    "title": "名稱", 
+                    "desc": "描述", 
+                    "address": "請填寫完整真實地址(含番地)", 
+                    "tips": "備註", 
+                    "booking": false 
+                }] 
             }]
             `;
 
@@ -294,8 +396,16 @@
                     tripData = result;
                     localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
                     renderTrip();
-                } else throw new Error("格式錯誤");
-            } catch(e) { alert("生成失敗：" + e.message); } 
+                } else {
+                    if (typeof result === 'object' && result !== null) {
+                        tripData = [result];
+                        localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
+                        renderTrip();
+                    } else {
+                        throw new Error("格式錯誤：AI 未回傳行程陣列");
+                    }
+                }
+            } catch(e) { alert("生成失敗：" + e.message); console.error(e); } 
             finally { setLoading(false); }
         }
 
@@ -305,13 +415,13 @@
             closeModal('modifyModal'); setLoading(true);
             const apiKey = getApiKey();
             const targetDay = tripData[currentModifyIndex];
-            const prompt = `【微調】原始JSON:${JSON.stringify(targetDay)} 指令:${instruction} 回傳修改後的物件JSON`;
+            const prompt = `【微調】原始JSON:${JSON.stringify(targetDay)} 指令:${instruction} 回傳修改後的當天 JSON 物件`;
             try {
                 const newDayData = await callGemini(apiKey, prompt);
                 tripData[currentModifyIndex] = newDayData;
                 localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
                 renderTrip();
-            } catch(e) { alert("微調失敗"); } finally { setLoading(false); }
+            } catch(e) { alert("微調失敗：" + e.message); } finally { setLoading(false); }
         }
 
         // --- Export Functions ---
@@ -326,7 +436,7 @@
             header.style.display = 'block'; 
             subTitle.innerText = `旅遊城市：${city} | 出發日期：${start}`;
             
-            element.classList.add('print-mode'); // 切換白紙模式
+            element.classList.add('print-mode');
             element.querySelectorAll('details').forEach(d => d.open = true);
             element.querySelectorAll('button').forEach(b => b.style.display = 'none');
             return element;
@@ -366,7 +476,7 @@
             tripData.forEach(day => {
                 text += `📅 ${day.date} ${day.day_title}\n`;
                 day.itinerary.forEach(item => {
-                    text += `${item.time} ${item.title}\n   ${item.desc}\n`;
+                    text += `${item.time} ${item.title}\n   ${item.desc}\n   📍 地址：${item.address || "無"}\n`;
                 });
                 text += "\n------------------\n\n";
             });
@@ -377,17 +487,16 @@
             let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//AI Trip Planner//EN\n";
             tripData.forEach(day => {
                 day.itinerary.forEach(item => {
-                    // 簡單處理：將時間轉為 ICS 格式 (這裡假設行程都在同一時區，實際使用可更精細)
                     const dateStr = day.date.replace(/-/g, '');
                     const timeStr = item.time.replace(':', '') + '00';
                     const dtStart = `${dateStr}T${timeStr}`;
-                    // 假設每個活動 1 小時
                     let endHour = parseInt(item.time.split(':')[0]) + 1;
                     const dtEnd = `${dateStr}T${endHour.toString().padStart(2,'0')}${item.time.split(':')[1]}00`;
 
                     icsContent += "BEGIN:VEVENT\n";
                     icsContent += `SUMMARY:${item.title}\n`;
-                    icsContent += `DESCRIPTION:${item.desc} (備註:${item.tips})\n`;
+                    icsContent += `DESCRIPTION:${item.desc} (地址: ${item.address || ''})\n`;
+                    icsContent += `LOCATION:${item.address || ''}\n`;
                     icsContent += `DTSTART:${dtStart}\n`;
                     icsContent += `DTEND:${dtEnd}\n`;
                     icsContent += "END:VEVENT\n";
@@ -408,24 +517,94 @@
             const city = document.getElementById('city').value;
             if(!city) { alert("請輸入城市！"); return; }
             const btn = document.querySelector('.btn-magic'); btn.disabled = true; btn.innerHTML = "🔮...";
-            const prompt = `推薦【${city}】景點。JSON:{ "spots": "...", "transport": "...", "prefs": "..." }`;
+            const prompt = `推薦【${city}】景點與美食。JSON:{ "spots": "...", "food": "...", "transport": "...", "prefs": "..." }`;
             try {
                 const res = await callGemini(apiKey, prompt);
-                document.getElementById('spots').value = res.spots;
-                document.getElementById('transport').value = res.transport;
-                document.getElementById('prefs').value = res.prefs;
+                // 修正：檢查回傳是否為陣列或物件，並轉為字串
+                document.getElementById('spots').value = formatAIOutput(res.spots);
+                document.getElementById('foodList').value = formatAIOutput(res.food);
+                document.getElementById('transport').value = formatAIOutput(res.transport) || "大眾運輸";
+                document.getElementById('customPrefs').value = formatAIOutput(res.prefs);
                 saveInputs();
-            } catch(e) {} finally { btn.disabled = false; btn.innerHTML = "🪄 AI 推薦景點"; }
+            } catch(e) {} finally { btn.disabled = false; btn.innerHTML = "🪄 AI 幫我補全景點 & 美食"; }
         }
 
+        // ★★★ 修正：處理 AI 回傳格式的 Helper 函式 ★★★
+        function formatAIOutput(data) {
+            if (!data) return "";
+            if (typeof data === 'string') return data;
+            // 如果是陣列，嘗試取出每個項目的名稱或直接轉字串
+            if (Array.isArray(data)) {
+                return data.map(item => {
+                    if (typeof item === 'string') return item;
+                    if (typeof item === 'object') return item.name || item.title || item.place || Object.values(item)[0] || "";
+                    return "";
+                }).join("、");
+            }
+            return "";
+        }
+
+        // ★★★ 核心修正：強制 JSON 模式 + 核彈級 Regex 提取 ★★★
         async function callGemini(key, prompt) {
             const model = document.getElementById('modelSelect').value;
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-            });
-            const data = await res.json();
-            return JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim());
+            
+            const requestBody = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
+            };
+
+            let data;
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                if (!res.ok && res.status === 400) {
+                    throw new Error("Mode not supported, retrying...");
+                }
+                
+                data = await res.json();
+                
+            } catch (e) {
+                console.warn("JSON mode failed, retrying plain text mode...");
+                const simpleBody = { contents: [{ parts: [{ text: prompt }] }] };
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(simpleBody)
+                });
+                data = await res.json();
+            }
+
+            if (!data.candidates || !data.candidates[0].content) {
+                console.error("API Response Error:", data);
+                throw new Error("API 回傳結構異常，可能被阻擋或 Key 失效");
+            }
+
+            const rawText = data.candidates[0].content.parts[0].text;
+            
+            try {
+                return JSON.parse(rawText);
+            } catch (e) {
+                console.log("Direct parse failed, trying Regex extraction...");
+                const jsonArrayMatch = rawText.match(/\[[\s\S]*\]/);
+                const jsonObjectMatch = rawText.match(/\{[\s\S]*\}/);
+
+                let jsonStr = "";
+                if (jsonArrayMatch) jsonStr = jsonArrayMatch[0];
+                else if (jsonObjectMatch) jsonStr = jsonObjectMatch[0];
+                else throw new Error("無法在回應中找到有效的 JSON 區塊");
+
+                jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '');
+
+                try {
+                    return JSON.parse(jsonStr);
+                } catch (finalError) {
+                    throw new Error("JSON 解析失敗，請再試一次");
+                }
+            }
         }
 
         function renderTrip() {
@@ -449,10 +628,21 @@
                     <div class="day-content">
                         <div class="timeline">
                             ${day.itinerary.map(item => {
+                                const typeMap = { 'SPOT': '景點', 'FOOD': '美食', 'TRANSPORT': '交通' };
+                                const typeLabel = typeMap[item.type] || item.type;
+
                                 let typeClass = item.type === 'SPOT' ? 'type-spot' : item.type === 'FOOD' ? 'type-food' : 'type-transport';
-                                let tagHtml = `<span class="tag ${item.type.toLowerCase()}">${item.type}</span>`;
+                                let tagHtml = `<span class="tag ${item.type.toLowerCase()}">${typeLabel}</span>`;
                                 let ticketHtml = item.booking ? '<span class="ticket-badge">🎟️ 需預約</span>' : '';
-                                return `<div class="itinerary-item ${typeClass}"><span class="time">${item.time}</span><div class="activity-card"><div class="tags-row">${tagHtml} ${ticketHtml}</div><div class="activity-title">${item.title}</div><div class="desc">${item.desc}</div>${item.tips ? `<div class="tips">${item.tips}</div>` : ''}</div><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.title)}" target="_blank" style="display:inline-block; margin-top:8px; margin-left:15px; font-size:0.85rem; color:var(--primary); text-decoration:none; font-weight:600;">📍 Map</a></div>`;
+                                
+                                // ★★★ 新增：地址顯示與精確地圖連結 ★★★
+                                const addressHtml = item.address ? `<div class="address-line">${item.address}</div>` : '';
+                                // 搜尋邏輯：強制用「店名 + 地址」去搜尋，避免只搜到城市
+                                const mapQuery = item.title + " " + (item.address || document.getElementById('city').value);
+                                // 使用標準 Google Maps Search URL
+                                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+
+                                return `<div class="itinerary-item ${typeClass}"><span class="time">${item.time}</span><div class="activity-card"><div class="tags-row">${tagHtml} ${ticketHtml}</div><div class="activity-title">${item.title}</div><div class="desc">${item.desc}</div>${addressHtml}${item.tips ? `<div class="tips">${item.tips}</div>` : ''}</div><a href="${mapUrl}" target="_blank" style="display:inline-block; margin-top:8px; margin-left:15px; font-size:0.85rem; color:var(--primary); text-decoration:none; font-weight:600;">📍 Map</a></div>`;
                             }).join('')}
                         </div>
                         <button onclick="openModifyModal(${index})" class="btn-modify">🤖 AI 微調這天</button>
@@ -464,8 +654,29 @@
 
         function getApiKey() { const k=document.getElementById('apiKey').value.trim(); if(!k) openModal('apiModal'); return k; }
         function setLoading(isLoading) { document.getElementById('loading').style.display = isLoading ? 'block' : 'none'; document.getElementById('tripContainer').style.display = isLoading ? 'none' : 'flex'; document.getElementById('planBtn').disabled = isLoading; }
-        function saveInputs() { const i={}; inputIds.forEach(id=>{const e=document.getElementById(id); if(e)i[id]=e.value}); localStorage.setItem('tripDraft_v27',JSON.stringify(i)); }
-        function loadInputs() { const s=localStorage.getItem('tripDraft_v27'); if(s) { const i=JSON.parse(s); inputIds.forEach(id=>{if(i[id])document.getElementById(id).value=i[id]}); } }
+        
+        function saveInputs() { 
+            const i={}; 
+            inputIds.forEach(id=>{const e=document.getElementById(id); if(e)i[id]=e.value}); 
+            const tags = [];
+            document.querySelectorAll('input[name="tripTag"]:checked').forEach(cb => tags.push(cb.value)); 
+            i['tripTags'] = tags;
+            localStorage.setItem('tripDraft_v27',JSON.stringify(i)); 
+        }
+
+        function loadInputs() { 
+            const s=localStorage.getItem('tripDraft_v27'); 
+            if(s) { 
+                const i=JSON.parse(s); 
+                inputIds.forEach(id=>{if(i[id])document.getElementById(id).value=i[id]}); 
+                if(i['tripTags']) {
+                    document.querySelectorAll('input[name="tripTag"]').forEach(cb => {
+                        if(i['tripTags'].includes(cb.value)) cb.checked = true;
+                    });
+                }
+            } 
+        }
+
         function clearAll() { if(confirm("清空？")) { localStorage.removeItem('tripDraft_v27'); localStorage.removeItem('myTrip_v27'); location.reload(); } }
         function exportData() { const d={i:JSON.parse(localStorage.getItem('tripDraft_v27')),t:tripData}; const b=new Blob([JSON.stringify(d)],{type:"application/json"}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='trip_backup.json'; a.click(); }
         function importData(inp) { const f=inp.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ const d=JSON.parse(e.target.result); if(d.i)localStorage.setItem('tripDraft_v27',JSON.stringify(d.i)); if(d.t)localStorage.setItem('myTrip_v27',JSON.stringify(d.t)); location.reload(); }; r.readAsText(f); }
