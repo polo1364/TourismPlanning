@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✈️ AI極速旅遊規劃師 (離島渡輪版)</title>
+    <title>🇯🇵 AI極速旅遊規劃師 (A4手冊修復版)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -146,27 +146,37 @@
         .address-line::before { content: '📍'; font-size: 0.9rem; }
 
         /* 交通方案樣式 */
-        .transit-box {
-            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
-            padding: 10px 15px; margin-top: 10px; font-size: 0.9rem; color: #166534;
-        }
+        .transit-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px 15px; margin-top: 10px; font-size: 0.9rem; color: #166534; }
         .transit-title { font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
         .transit-options { display: flex; flex-direction: column; gap: 6px; }
         .transit-option { display: flex; gap: 8px; align-items: baseline; }
         .transit-badge { background: #fff; border: 1px solid #166534; color: #166534; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; white-space: nowrap; }
+        .cost-badge { display: inline-block; background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-left: 5px; }
 
-        /* 費用標籤樣式 */
-        .cost-badge {
-            display: inline-block;
-            background: #fffbeb; 
-            color: #b45309;      
-            border: 1px solid #fcd34d;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 5px;
+        /* A4 手冊模式樣式 */
+        .paper-mode {
+            width: 800px !important;
+            min-height: 1120px !important;
+            background-color: #ffffff !important;
+            background: #ffffff !important;
+            padding: 50px !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            border: 1px solid #ccc !important;
+            color: #000000 !important;
+            font-family: "Noto Sans TC", sans-serif !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
         }
+        .paper-mode summary { background-color: #f8f9fa !important; border-bottom: 2px solid #333 !important; }
+        .paper-mode .day-date { color: #000 !important; font-size: 1.5rem !important; }
+        .paper-mode .day-summary { color: #555 !important; }
+        .paper-mode .activity-card { background-color: #ffffff !important; border: 1px solid #000 !important; box-shadow: none !important; }
+        .paper-mode .tag { border: 1px solid #000 !important; background: #fff !important; color: #000 !important; }
+        .paper-mode .btn-modify, .paper-mode button { display: none !important; }
+        .watermark { display: none; text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.8rem; color: #999; }
+        .paper-mode .watermark { display: block !important; }
 
         #saveStatus { position: fixed; bottom: 30px; right: 30px; background: rgba(30, 41, 59, 0.9); color: white; padding: 12px 24px; border-radius: 30px; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.2); opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; z-index: 1000; }
         #saveStatus.show { opacity: 1; transform: translateY(0); }
@@ -178,19 +188,23 @@
         .modal-content { background: #fff; margin: 10% auto; padding: 40px; width: 90%; max-width: 500px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); animation: popUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
         @keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* --- Print/Image Mode Style --- */
         #pdfHeader { display: none; text-align: center; margin-bottom: 30px; }
         #pdfHeader h2 { color: #000; margin: 0; font-size: 24px; }
         #pdfHeader p { color: #555; margin: 5px 0 0 0; font-size: 14px; }
-
-        .print-mode { background: #ffffff !important; padding: 40px !important; color: #000 !important; font-family: "Noto Sans TC", sans-serif !important; width: 800px; margin: 0 auto; }
-        .print-mode details { box-shadow: none !important; border: 1px solid #ddd !important; margin-bottom: 20px !important; background: #fff !important; }
-        .print-mode summary { background: #f8f8f8 !important; border-bottom: 1px solid #eee !important; }
-        .print-mode .activity-card { background: #fff !important; border: none !important; padding: 0 !important; box-shadow: none !important; transform: none !important; }
-        .print-mode .tag { border: 1px solid #000 !important; color: #000 !important; background: #fff !important; }
-        .print-mode .tips { background: #f0f0f0 !important; color: #000 !important; border: 1px solid #ccc !important; }
-        .print-mode .transit-box { background: #fff !important; border: 1px dashed #999 !important; color: #333 !important; }
-        .print-mode .cost-badge { border: 1px solid #000 !important; color: #000 !important; background: #fff !important; }
+        
+        /* 截圖專用 - 暴力覆蓋所有透明效果 */
+        .snapshot-mode {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            box-shadow: none !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #000 !important;
+            opacity: 1 !important;
+        }
+        .snapshot-mode * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+        
         .html2pdf__page-break { page-break-before: always; }
     </style>
 </head>
@@ -303,10 +317,9 @@
             <div id="loading"><span class="loader"></span><p style="font-weight:bold; color:#fff; margin-top:20px; font-size:1.1rem; text-shadow:0 2px 4px rgba(0,0,0,0.2);">AI 正在為您規劃完美旅程...</p></div>
             
             <div class="export-bar" id="exportBar">
-                <button onclick="exportToImage()" class="btn-export btn-img">📸 長圖片 (推薦)</button>
-                <button onclick="exportToText()" class="btn-export btn-txt">📋 複製文字</button>
-                <button onclick="exportToICS()" class="btn-export btn-cal">📅 匯入行事曆</button>
-                <button onclick="exportToPDF()" class="btn-export btn-pdf">📄 匯出 PDF</button>
+                <button onclick="exportToA4Image()" class="btn-export btn-img">📸 下載 A4 手冊圖</button>
+                <button onclick="exportToMobileImages()" class="btn-export btn-img">📱 下載手機版行程圖</button>
+                <button onclick="exportToText()" class="btn-export btn-txt">📋 複製 LINE 筆記格式</button>
             </div>
             
             <div id="tripContainer">
@@ -351,7 +364,7 @@
             } else display.value = "-";
         }
 
-        // --- Weather & Geo Functions ---
+        // --- Weather & Geo Functions (Open-Meteo & Climate Mock) ---
         async function getCoordinates(city) {
             try {
                 const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh&format=json`;
@@ -377,14 +390,12 @@
                 const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&start_date=${startStr}&end_date=${endStr}`;
                 const res = await fetch(url);
                 if(!res.ok) {
-                    console.log("Weather API error, fallback to sim.");
                     return getSimulatedClimate(startDate, new Date(endStr));
                 }
                 const data = await res.json();
                 data.isSimulated = false; 
                 return data;
             } catch(e) { 
-                console.log("Weather fetch error, fallback to sim.");
                 return getSimulatedClimate(startDate, new Date(endStr)); 
             }
         }
@@ -392,6 +403,7 @@
         function getSimulatedClimate(start, end) {
             const month = start.getMonth() + 1; 
             let baseMax = 25, baseMin = 18, code = 1;
+            
             if (month >= 3 && month <= 5) { baseMax = 20; baseMin = 12; code = 2; }
             else if (month >= 6 && month <= 9) { baseMax = 32; baseMin = 25; code = 0; }
             else if (month >= 10 && month <= 11) { baseMax = 24; baseMin = 16; code = 1; }
@@ -435,14 +447,13 @@
             return map[code] || '⛅';
         }
 
-        // --- Auto Generate Logic (Fixed) ---
+        // --- Auto Generate Logic ---
         async function autoGenerateIdeas() {
             const apiKey = getApiKey(); if(!apiKey) return;
             const city = document.getElementById('city').value;
             if(!city) { alert("請輸入城市！"); return; }
             const btn = document.querySelector('.btn-magic'); btn.disabled = true; btn.innerHTML = "🔮...";
             
-            // 專注產生景點與美食，不覆蓋其他欄位
             const prompt = `推薦【${city}】的必去景點與必吃美食。請回傳 JSON:{ "spots": "列出3-5個熱門景點", "food": "列出3-5個必吃美食或餐廳" }`;
             
             try {
@@ -720,7 +731,7 @@
             }
         }
 
-        // --- Export Functions ---
+        // --- Helper functions for export ---
         function prepareExport() {
             const element = document.getElementById('tripContainer');
             const header = document.getElementById('pdfHeader');
@@ -744,67 +755,142 @@
             element.querySelectorAll('button').forEach(b => b.style.display = 'inline-block');
         }
 
-        function exportToImage() {
-            const element = prepareExport();
-            html2canvas(element, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Trip_${document.getElementById('city').value}.jpg`;
-                link.href = canvas.toDataURL("image/jpeg", 0.9);
-                link.click();
-                restoreExport(element);
-            });
+        // --- Export Functions (A4 Paper Mode Fix) ---
+        async function exportToA4Image() {
+            const container = document.getElementById('tripContainer');
+            const city = document.getElementById('city').value || 'Trip';
+            
+            prepareExport();
+            
+            const days = container.querySelectorAll('details');
+
+            for (let i = 0; i < days.length; i++) {
+                const dayEl = days[i];
+                dayEl.scrollIntoView();
+                
+                const dateEl = dayEl.querySelector('.day-date');
+                const dateText = dateEl ? dateEl.innerText : `Day${i+1}`;
+                
+                try {
+                    dayEl.classList.add('paper-mode');
+                    // 為了確保截圖時所有背景都變成白底，套用 snapshot-mode
+                    dayEl.classList.add('snapshot-mode');
+                    await new Promise(resolve => setTimeout(resolve, 300));
+
+                    const canvas = await html2canvas(dayEl, { 
+                        scale: 2, 
+                        backgroundColor: "#ffffff",
+                        useCORS: true,
+                        height: dayEl.scrollHeight,
+                        windowWidth: 1000 
+                    });
+                    
+                    // 移除暫時加入的樣式
+                    dayEl.classList.remove('snapshot-mode');
+                    dayEl.classList.remove('paper-mode');
+
+                    // 將白色背景繪製到底層，確保輸出的圖片完全不透明
+                    {
+                        const ctx = canvas.getContext('2d');
+                        ctx.globalCompositeOperation = 'destination-over';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+                    const link = document.createElement('a');
+                    link.download = `${city}_${dateText}_A4.jpg`;
+                    link.href = canvas.toDataURL("image/jpeg", 0.9);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    
+                } catch (e) { console.error("截圖失敗:", e); }
+            }
+            restoreExport(container);
+            alert("✅ A4 手冊圖卡已下載！");
         }
 
-        function exportToPDF() {
-            const element = prepareExport();
-            const opt = {
-                margin: 10, filename: `Trip_${document.getElementById('city').value}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, backgroundColor: '#ffffff' }, 
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-            };
-            html2pdf().from(element).set(opt).save().then(() => restoreExport(element));
+        // 將每日行程匯出為適合手機瀏覽的圖片
+        async function exportToMobileImages() {
+            const container = document.getElementById('tripContainer');
+            const city = document.getElementById('city').value || 'Trip';
+            // 開啟列印模式顯示標題、解開折疊
+            prepareExport();
+            const days = container.querySelectorAll('details');
+            for (let i = 0; i < days.length; i++) {
+                const dayEl = days[i];
+                dayEl.scrollIntoView();
+                const dateEl = dayEl.querySelector('.day-date');
+                const dateText = dateEl ? dateEl.innerText : `Day${i+1}`;
+                try {
+                    // 套用紙張模式與 snapshot-mode 來清除透明效果
+                    dayEl.classList.add('paper-mode');
+                    dayEl.classList.add('snapshot-mode');
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    const canvas = await html2canvas(dayEl, {
+                        scale: 2,
+                        backgroundColor: "#ffffff",
+                        useCORS: true,
+                        height: dayEl.scrollHeight,
+                        windowWidth: 500
+                    });
+                    // 移除樣式
+                    dayEl.classList.remove('snapshot-mode');
+                    dayEl.classList.remove('paper-mode');
+                    // 填充白色背景，確保沒有透明區域
+                    {
+                        const ctx = canvas.getContext('2d');
+                        ctx.globalCompositeOperation = 'destination-over';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+                    const link = document.createElement('a');
+                    link.download = `${city}_${dateText}_mobile.jpg`;
+                    link.href = canvas.toDataURL("image/jpeg", 0.9);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                } catch (e) {
+                    console.error("手機版截圖失敗:", e);
+                }
+            }
+            restoreExport(container);
+            alert("✅ 手機版行程圖已下載！");
         }
 
         function exportToText() {
-            let text = `🇯🇵 日本旅遊行程 - ${document.getElementById('city').value}\n\n`;
+            let city = document.getElementById('city').value;
+            let text = `【🇯🇵 旅遊行程：${city}】\n\n`;
+
             tripData.forEach(day => {
                 text += `📅 ${day.date} ${day.day_title}\n`;
-                day.itinerary.forEach(item => {
-                    text += `${item.time} ${item.title}\n   ${item.desc}\n   📍 地址：${item.address || "無"}\n   💰 費用：${item.cost || "無"}\n`;
-                });
-                text += "\n------------------\n\n";
-            });
-            navigator.clipboard.writeText(text).then(() => alert("✅ 行程已複製到剪貼簿！"));
-        }
+                if (day.weather) {
+                    let label = day.weather.isSimulated ? "(歷史均溫)" : "(預報)";
+                    let icon = getWeatherIcon(day.weather.code);
+                    text += `🌡️ 天氣：${icon} ${Math.round(day.weather.max)}° / ${Math.round(day.weather.min)}° ${label}\n`;
+                }
+                text += `------------------------------\n`;
 
-        function exportToICS() {
-            let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//AI Trip Planner//EN\n";
-            tripData.forEach(day => {
                 day.itinerary.forEach(item => {
-                    const dateStr = day.date.replace(/-/g, '');
-                    const timeStr = item.time.replace(':', '') + '00';
-                    const dtStart = `${dateStr}T${timeStr}`;
-                    let endHour = parseInt(item.time.split(':')[0]) + 1;
-                    const dtEnd = `${dateStr}T${endHour.toString().padStart(2,'0')}${item.time.split(':')[1]}00`;
-
-                    icsContent += "BEGIN:VEVENT\n";
-                    icsContent += `SUMMARY:${item.title}\n`;
-                    icsContent += `DESCRIPTION:${item.desc} (地址: ${item.address || ''} | 費用: ${item.cost || ''})\n`;
-                    icsContent += `LOCATION:${item.address || ''}\n`;
-                    icsContent += `DTSTART:${dtStart}\n`;
-                    icsContent += `DTEND:${dtEnd}\n`;
-                    icsContent += "END:VEVENT\n";
+                    text += `⏰ ${item.time} ${item.title}\n`;
+                    if(item.desc) text += `📝 ${item.desc}\n`;
+                    if(item.address) text += `📍 地址：${item.address}\n`;
+                    if(item.cost) text += `💰 費用：${item.cost}\n`;
+                    if(item.transit && item.transit.length > 0) {
+                        text += `🚗 交通建議：\n`;
+                        item.transit.forEach(t => {
+                            text += `   - ${t.mode} (${t.time}): ${t.desc}\n`;
+                        });
+                    }
+                    if(item.tips) text += `💡 提醒：${item.tips}\n`;
+                    text += `\n`;
                 });
+                text += `\n`;
             });
-            icsContent += "END:VCALENDAR";
-            
-            const blob = new Blob([icsContent], { type: 'text/calendar' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'trip.ics';
-            link.click();
+
+            navigator.clipboard.writeText(text).then(() => alert("✅ 已複製 LINE 筆記格式！請直接貼上即可。"));
         }
 
         function renderTrip() {
@@ -848,7 +934,6 @@
 
                                 let typeClass = item.type === 'SPOT' ? 'type-spot' : item.type === 'FOOD' ? 'type-food' : 'type-transport';
                                 let tagHtml = `<span class="tag ${item.type.toLowerCase()}">${typeLabel}</span>`;
-                                // 新增：費用標籤
                                 let costHtml = item.cost ? `<span class="cost-badge">💰 ${item.cost}</span>` : '';
                                 let ticketHtml = item.booking ? '<span class="ticket-badge">🎟️ 需預約</span>' : '';
                                 
@@ -856,7 +941,6 @@
                                 const mapQuery = item.title + " " + (item.address || document.getElementById('city').value);
                                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
 
-                                // 交通方案區塊
                                 let transitHtml = '';
                                 if(item.transit && item.transit.length > 0) {
                                     transitHtml = `
@@ -877,6 +961,7 @@
                             }).join('')}
                         </div>
                         <button onclick="openModifyModal(${index})" class="btn-modify">🤖 AI 微調這天</button>
+                        <div class="watermark">Generated by AI Trip Planner • Create your journey</div>
                     </div>
                 </details>`;
                 container.insertAdjacentHTML('beforeend', html);
