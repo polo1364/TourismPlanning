@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🇯🇵 AI極速旅遊規劃師</title>
+    <title>✈️ AI極速旅遊規劃師 (離島渡輪版)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -56,21 +56,15 @@
             gap: 10px;
             margin-bottom: 20px;
         }
-        .checkbox-item {
-            position: relative;
-        }
-        .checkbox-item input {
-            position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0;
-        }
+        .checkbox-item { position: relative; }
+        .checkbox-item input { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
         .checkbox-item label {
             display: flex; align-items: center; justify-content: center;
             background: #f1f5f9; padding: 10px; border-radius: 12px;
             cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
             margin: 0; font-weight: 500; color: #64748b;
         }
-        .checkbox-item input:checked + label {
-            background: #e0e7ff; border-color: var(--primary); color: var(--primary); font-weight: 700;
-        }
+        .checkbox-item input:checked + label { background: #e0e7ff; border-color: var(--primary); color: var(--primary); font-weight: 700; }
         .checkbox-item label:hover { background: #e2e8f0; }
 
         /* 按鈕 */
@@ -95,12 +89,12 @@
         .btn-cal { background: #3b82f6; } .btn-cal:hover { background: #2563eb; }
         .btn-pdf { background: #64748b; } .btn-pdf:hover { background: #475569; }
 
-        /* --- 修正：行程列表容器設定 (垂直排列) --- */
-        #tripContainer {
-            display: flex;
-            flex-direction: column; /* 確保垂直排列 */
-            gap: 20px;
-            width: 100%;
+        /* 行程列表容器 - 垂直排列 */
+        #tripContainer { 
+            display: flex; 
+            flex-direction: column !important; 
+            gap: 20px; 
+            width: 100%; 
         }
 
         /* 行程卡片 */
@@ -110,14 +104,27 @@
         summary:hover { background: #f8fafc; }
         details[open] summary { background: #f5f3ff; border-bottom: 1px solid #e0e7ff; }
         summary::-webkit-details-marker { display: none; }
-        .day-date { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
-        .day-summary { font-size: 0.95rem; color: var(--text-gray); font-weight: 500; }
+        
+        .day-header { display: flex; align-items: center; gap: 15px; width: 100%; flex-wrap: wrap; }
+        .day-date { font-size: 1.2rem; font-weight: 800; color: var(--primary); white-space: nowrap; }
+        .day-summary { font-size: 0.95rem; color: var(--text-gray); font-weight: 500; flex-grow: 1; }
+        
+        /* 天氣標籤 */
+        .weather-badge { 
+            display: flex; align-items: center; gap: 6px; 
+            background: #e0f2fe; color: #0369a1; 
+            padding: 6px 12px; border-radius: 20px; 
+            font-size: 0.85rem; font-weight: 600; white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .weather-badge.simulated { background: #f3f4f6; color: #64748b; border: 1px dashed #cbd5e1; }
+
         .day-content { padding: 25px; background: #fff; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         /* 時間軸 */
         .timeline { border-left: 2px dashed #cbd5e1; margin-left: 10px; padding-left: 30px; position: relative; }
-        .itinerary-item { position: relative; margin-bottom: 35px; break-inside: avoid; page-break-inside: avoid; }
+        .itinerary-item { position: relative; margin-bottom: 40px; break-inside: avoid; page-break-inside: avoid; }
         .itinerary-item:last-child { margin-bottom: 0; }
         .itinerary-item::before { content: ''; position: absolute; left: -37px; top: 5px; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 3px solid #cbd5e1; z-index: 1; }
         .type-spot::before { border-color: var(--tag-spot); box-shadow: 0 0 0 4px #ffe4e6; }
@@ -125,20 +132,41 @@
         .type-transport::before { border-color: var(--tag-trans); box-shadow: 0 0 0 4px #e0f2fe; }
 
         .time { font-size: 0.9rem; font-weight: 700; color: var(--text-gray); margin-bottom: 6px; letter-spacing: 0.5px; }
-        .activity-card { background: #f8fafc; border-radius: 12px; padding: 15px; border: 1px solid #f1f5f9; transition: transform 0.2s; }
+        .activity-card { background: #f8fafc; border-radius: 12px; padding: 15px; border: 1px solid #f1f5f9; transition: transform 0.2s; position: relative; }
         .activity-card:hover { transform: translateX(5px); background: #fff; border-color: #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .activity-title { font-size: 1.15rem; font-weight: 700; color: var(--text-dark); margin-bottom: 5px; }
         .tags-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
         .tag { font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; font-weight: 600; color: white; letter-spacing: 0.5px; }
         .tag.spot { background: var(--tag-spot); } .tag.food { background: var(--tag-food); } .tag.transport { background: var(--tag-trans); }
         .tag.ticket { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
-        .desc { font-size: 0.95rem; color: #475569; line-height: 1.6; white-space: pre-line; } /* 支援換行 */
+        .desc { font-size: 0.95rem; color: #475569; line-height: 1.6; white-space: pre-line; }
         .tips { margin-top: 10px; font-size: 0.85rem; background: #fffbeb; color: #b45309; padding: 10px 15px; border-radius: 10px; display: flex; gap: 8px; align-items: start; }
         .tips::before { content: '💡'; }
-        
-        /* 地址樣式 */
         .address-line { font-size: 0.85rem; color: #64748b; margin-top: 5px; display: flex; align-items: center; gap: 4px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
         .address-line::before { content: '📍'; font-size: 0.9rem; }
+
+        /* 交通方案樣式 */
+        .transit-box {
+            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+            padding: 10px 15px; margin-top: 10px; font-size: 0.9rem; color: #166534;
+        }
+        .transit-title { font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+        .transit-options { display: flex; flex-direction: column; gap: 6px; }
+        .transit-option { display: flex; gap: 8px; align-items: baseline; }
+        .transit-badge { background: #fff; border: 1px solid #166534; color: #166534; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; white-space: nowrap; }
+
+        /* 費用標籤樣式 */
+        .cost-badge {
+            display: inline-block;
+            background: #fffbeb; 
+            color: #b45309;      
+            border: 1px solid #fcd34d;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 5px;
+        }
 
         #saveStatus { position: fixed; bottom: 30px; right: 30px; background: rgba(30, 41, 59, 0.9); color: white; padding: 12px 24px; border-radius: 30px; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.2); opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; z-index: 1000; }
         #saveStatus.show { opacity: 1; transform: translateY(0); }
@@ -161,6 +189,8 @@
         .print-mode .activity-card { background: #fff !important; border: none !important; padding: 0 !important; box-shadow: none !important; transform: none !important; }
         .print-mode .tag { border: 1px solid #000 !important; color: #000 !important; background: #fff !important; }
         .print-mode .tips { background: #f0f0f0 !important; color: #000 !important; border: 1px solid #ccc !important; }
+        .print-mode .transit-box { background: #fff !important; border: 1px dashed #999 !important; color: #333 !important; }
+        .print-mode .cost-badge { border: 1px solid #000 !important; color: #000 !important; background: #fff !important; }
         .html2pdf__page-break { page-break-before: always; }
     </style>
 </head>
@@ -208,14 +238,32 @@
             <div class="card">
                 <h2>📝 行程設定 <button onclick="openModal('apiModal')" class="btn-setting">⚙️</button></h2>
                 
-                <label style="color:var(--primary);">📍 旅遊城市 (必填)</label>
-                <input type="text" id="city" placeholder="例如：香川縣高松市" style="border: 2px solid #e0e7ff;">
+                <div class="input-group" style="display: grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div>
+                        <label>🏠 出發地 (選填)</label>
+                        <input type="text" id="origin" placeholder="例如：台北 / 高雄">
+                    </div>
+                    <div>
+                        <label style="color:var(--primary);">📍 旅遊城市 (必填)</label>
+                        <input type="text" id="city" placeholder="例如：香川縣高松市" style="border: 2px solid #e0e7ff;">
+                    </div>
+                </div>
 
                 <label>🏨 住宿飯店</label>
                 <input type="text" id="hotel" placeholder="例如：Bon Stay Matsu201">
                 
-                <div class="input-group"><label>🛫 去程：台灣起飛</label><input type="datetime-local" id="flightArrival"></div>
-                <div class="input-group"><label>🛫 回程：日本起飛</label><input type="datetime-local" id="flightDeparture"></div>
+                <label>🚦 往返交通方式</label>
+                <select id="entryType">
+                    <option value="flight">✈️ 飛機 (國際/國內線)</option>
+                    <option value="ferry">🚢 渡輪 (前往離島)</option>
+                    <option value="hsr">🚄 高鐵 (High Speed Rail)</option>
+                    <option value="train">🚂 火車 (台鐵/JR/國鐵)</option>
+                    <option value="car">🚗 自行開車</option>
+                    <option value="bus">🚌 客運/巴士</option>
+                </select>
+
+                <div class="input-group"><label>🛫 去程：出發時間</label><input type="datetime-local" id="flightArrival"></div>
+                <div class="input-group"><label>🛫 回程：返程出發時間</label><input type="datetime-local" id="flightDeparture"></div>
 
                 <div class="input-group" style="display: grid; grid-template-columns: 1fr 1fr; gap:15px;">
                     <div><label>⚡ 緊湊度</label><select id="pace"><option value="標準觀光">📷 標準</option><option value="悠閒慢活">☕ 悠閒</option><option value="特種兵極限">🔥 極限</option></select></div>
@@ -241,7 +289,7 @@
                 <label style="color:var(--tag-food);">🍜 必吃美食清單 (AI 推薦或自行輸入)</label>
                 <textarea id="foodList" rows="3" placeholder="例如：一蘭拉麵、當地特色烏龍麵... (可讓AI推薦後自行篩選)"></textarea>
 
-                <div class="input-group"><label>🚗 交通</label><select id="transport"><option>大眾運輸</option><option>自駕</option><option>全程包車</option></select></div>
+                <div class="input-group"><label>🚗 當地交通</label><select id="transport"><option>大眾運輸</option><option>自駕</option><option>全程包車</option></select></div>
                 
                 <label>✨ 特殊需求 (自行填寫)</label>
                 <input type="text" id="customPrefs" placeholder="例如：行動不便、不吃牛、想體驗和服...">
@@ -271,8 +319,7 @@
     <script>
         let tripData = [];
         let currentModifyIndex = null;
-        // 加入 foodList 到自動存檔清單
-        const inputIds = ['city', 'hotel', 'flightArrival', 'flightDeparture', 'spots', 'foodList', 'transport', 'pace', 'customPrefs'];
+        const inputIds = ['origin', 'city', 'hotel', 'entryType', 'flightArrival', 'flightDeparture', 'spots', 'foodList', 'transport', 'pace', 'customPrefs'];
 
         window.onload = function() {
             const savedKey = localStorage.getItem('geminiApiKey');
@@ -304,11 +351,119 @@
             } else display.value = "-";
         }
 
+        // --- Weather & Geo Functions ---
+        async function getCoordinates(city) {
+            try {
+                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh&format=json`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if(data.results && data.results.length > 0) {
+                    return { lat: data.results[0].latitude, lon: data.results[0].longitude };
+                }
+            } catch(e) { console.error("Geo fetch failed", e); }
+            return null;
+        }
+
+        async function getWeatherData(lat, lon, startStr, endStr) {
+            const startDate = new Date(startStr);
+            const today = new Date();
+            const diffDays = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 14) {
+                return getSimulatedClimate(startDate, new Date(endStr));
+            }
+
+            try {
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&start_date=${startStr}&end_date=${endStr}`;
+                const res = await fetch(url);
+                if(!res.ok) {
+                    console.log("Weather API error, fallback to sim.");
+                    return getSimulatedClimate(startDate, new Date(endStr));
+                }
+                const data = await res.json();
+                data.isSimulated = false; 
+                return data;
+            } catch(e) { 
+                console.log("Weather fetch error, fallback to sim.");
+                return getSimulatedClimate(startDate, new Date(endStr)); 
+            }
+        }
+
+        function getSimulatedClimate(start, end) {
+            const month = start.getMonth() + 1; 
+            let baseMax = 25, baseMin = 18, code = 1;
+            if (month >= 3 && month <= 5) { baseMax = 20; baseMin = 12; code = 2; }
+            else if (month >= 6 && month <= 9) { baseMax = 32; baseMin = 25; code = 0; }
+            else if (month >= 10 && month <= 11) { baseMax = 24; baseMin = 16; code = 1; }
+            else { baseMax = 12; baseMin = 5; code = 3; }
+
+            const days = [];
+            const weatherCodes = [];
+            const maxTemps = [];
+            const minTemps = [];
+            
+            let currentDate = new Date(start);
+            while (currentDate <= end) {
+                days.push(currentDate.toISOString().split('T')[0]);
+                weatherCodes.push(code); 
+                maxTemps.push(baseMax + Math.floor(Math.random() * 4 - 2));
+                minTemps.push(baseMin + Math.floor(Math.random() * 4 - 2));
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            return {
+                isSimulated: true, 
+                daily: {
+                    time: days,
+                    weather_code: weatherCodes,
+                    temperature_2m_max: maxTemps,
+                    temperature_2m_min: minTemps
+                }
+            };
+        }
+
+        function getWeatherIcon(code) {
+            const map = {
+                0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 
+                45: '🌫️', 48: '🌫️', 
+                51: '🌧️', 53: '🌧️', 55: '🌧️', 
+                61: '☔', 63: '☔', 65: '☔', 
+                71: '❄️', 73: '❄️', 75: '❄️',
+                80: '🌦️', 81: '🌦️', 82: '⛈️',
+                95: '⛈️', 96: '⛈️', 99: '⛈️'
+            };
+            return map[code] || '⛅';
+        }
+
+        // --- Auto Generate Logic (Fixed) ---
+        async function autoGenerateIdeas() {
+            const apiKey = getApiKey(); if(!apiKey) return;
+            const city = document.getElementById('city').value;
+            if(!city) { alert("請輸入城市！"); return; }
+            const btn = document.querySelector('.btn-magic'); btn.disabled = true; btn.innerHTML = "🔮...";
+            
+            // 專注產生景點與美食，不覆蓋其他欄位
+            const prompt = `推薦【${city}】的必去景點與必吃美食。請回傳 JSON:{ "spots": "列出3-5個熱門景點", "food": "列出3-5個必吃美食或餐廳" }`;
+            
+            try {
+                const res = await callGemini(apiKey, prompt);
+                document.getElementById('spots').value = formatAIOutput(res.spots);
+                document.getElementById('foodList').value = formatAIOutput(res.food);
+                saveInputs();
+            } catch(e) {
+                console.error(e);
+            } finally { 
+                btn.disabled = false; 
+                btn.innerHTML = "🪄 AI 幫我補全景點 & 美食"; 
+            }
+        }
+
         // --- Plan Trip ---
         async function planTrip() {
             const apiKey = getApiKey(); if(!apiKey) return;
             saveInputs();
 
+            const origin = document.getElementById('origin').value || "出發地";
             const city = document.getElementById('city').value;
             const hotel = document.getElementById('hotel').value;
             const flightArr = document.getElementById('flightArrival').value;
@@ -317,6 +472,7 @@
             const foodList = document.getElementById('foodList').value;
             const transport = document.getElementById('transport').value;
             const pace = document.getElementById('pace').value;
+            const entryType = document.getElementById('entryType').value;
             
             const tags = Array.from(document.querySelectorAll('input[name="tripTag"]:checked')).map(el => el.value);
             const customPrefs = document.getElementById('customPrefs').value;
@@ -325,6 +481,28 @@
             if(combinedPrefs && customPrefs) combinedPrefs += `，且需注意：${customPrefs}`;
             else if(customPrefs) combinedPrefs = customPrefs;
             else if(!combinedPrefs) combinedPrefs = "無特殊需求";
+
+            let transportInstruction = "";
+            let entryName = "";
+            if(entryType === 'flight') {
+                entryName = "飛機";
+                transportInstruction = "交通方式：飛機。請估算「飛行時間+出關+移動」總耗時。回程請安排提早 3 小時抵達機場。";
+            } else if(entryType === 'ferry') {
+                entryName = "渡輪";
+                transportInstruction = "交通方式：渡輪。請務必考量「船班時刻表」與「前往碼頭的交通時間」。回程請安排提早 40-60 分鐘抵達碼頭報到。請提醒使用者注意海況或暈船藥準備。";
+            } else if(entryType === 'hsr') {
+                entryName = "高鐵";
+                transportInstruction = "交通方式：高鐵。請務必考量「高鐵站通常位於郊區」，需加上轉乘市區的交通時間。回程請安排提早 45-60 分鐘抵達車站。";
+            } else if(entryType === 'train') {
+                entryName = "火車";
+                transportInstruction = "交通方式：火車(如台鐵/JR)。車站通常位於市中心。回程請安排提早 30-40 分鐘抵達車站。";
+            } else if(entryType === 'bus') {
+                entryName = "客運/巴士";
+                transportInstruction = "交通方式：客運/巴士。請估算「車程+緩衝」總耗時。回程請安排提早 30 分鐘抵達轉運站。";
+            } else {
+                entryName = "自行開車";
+                transportInstruction = "交通方式：自行開車。請估算「車程+塞車緩衝」總耗時。請注意景點停車便利性。";
+            }
 
             let foodInstruction = "";
             if (tags.includes('美食探索') || foodList.trim() !== "") {
@@ -348,33 +526,56 @@
 
             setLoading(true);
 
-            // 增強版 Prompt
+            let weatherInfo = null;
+            try {
+                const geo = await getCoordinates(city);
+                if(geo) {
+                    weatherInfo = await getWeatherData(geo.lat, geo.lon, startDate, endDate);
+                } else {
+                    weatherInfo = getSimulatedClimate(new Date(startDate), new Date(endDate));
+                }
+            } catch(e) { 
+                console.log("Weather error", e);
+                weatherInfo = getSimulatedClimate(new Date(startDate), new Date(endDate));
+            }
+
             const prompt = `
             你是一位專業導遊。請規劃從【${startDate}】到【${endDate}】的行程。
             【限制】
             1. 城市：【${city}】(嚴禁跨縣市遠途)。
             2. 飯店：【${hotel}】(每日起訖點)。
-            3. 去程：台灣起飛時間 ${flightArr}。請+4小時後開始排行程。
-            4. 回程：日本起飛時間 ${flightDep}。起飛前3小時到機場。
-            5. 必去景點：${spots}。
-            6. 必吃美食清單：${foodList}。
-            7. 交通：${transport}。
-            8. 偏好與需求：${combinedPrefs}。
-            9. 節奏：${pace}。
+            3. 去程出發時間：${flightArr} (從【${origin}】出發，請根據「${entryName}」估算交通耗時，推算出抵達當地並開始行程的時間)。
+            4. 回程出發時間：${flightDep} (這是準備從當地離開踏上歸途的時間，請依此安排最後一天的結束時間)。
+            5. ${transportInstruction}
+            6. 必去景點：${spots}。
+            7. 必吃美食清單：${foodList}。
+            8. 當地交通：${transport}。
+            9. 偏好與需求：${combinedPrefs}。
+            10. 節奏：${pace}。
             
             ${foodInstruction}
 
-            【動線與地理位置】
-            午餐與晚餐的餐廳選擇，必須在當天上午或下午景點的【步行或短程交通可達範圍內】。
+            【費用預估 - 新增需求】
+            請在每個行程項目中新增 "cost" 欄位，提供該活動的預估費用。
+            1. 景點：門票價格 (成人票價)。
+            2. 交通：該段移動的預估車資 (如計程車約1500円、地鐵210円)。
+            3. 餐廳：平均消費預算 (如午餐 1500-2000円)。
+            4. 若為免費，請填寫「免費」。
 
-            【精確地址與資訊 - 非常重要】
-            1. 每個行程點 (餐廳/景點) 都必須提供【Google Map 可搜尋的完整地址】。
-            2. 嚴禁只填寫城市名稱 (如 '高松市')，這會被視為錯誤。必須包含町名、番地或建築物名稱。
-            3. 若真的找不到地址，請提供「最近的地標」或「xx站步行x分鐘」。
-            4. 請標註景點/餐廳的「營業時間」。
+            【飲食安排邏輯】
+            1. 嚴禁「餵豬式行程」。
+            2. 夜市即晚餐。
+            3. 合理間隔。
+
+            【點到點交通】
+            請為每個行程點提供 **2種** 交通移動方案供選擇。
+
+            【精確地址與資訊】
+            1. 提供【Google Map 可搜尋的完整地址】。
+            2. 標註景點/餐廳的「營業時間」。
 
             【輸出規則 - 重要】
-            請只輸出 JSON 格式，不要輸出任何 Markdown 標記 (如 \`\`\`json)，也不要任何開場白。
+            請只輸出 JSON 格式。
             格式範例：
             [{ 
                 "date": "YYYY-MM-DD", "day_title": "標題", "summary": "摘要", 
@@ -383,9 +584,11 @@
                     "type": "SPOT/FOOD/TRANSPORT", 
                     "title": "名稱", 
                     "desc": "描述", 
-                    "address": "請填寫完整真實地址(含番地)", 
+                    "address": "地址", 
+                    "cost": "預估費用",
                     "tips": "備註", 
-                    "booking": false 
+                    "booking": false,
+                    "transit": [ {"mode":"A", "time":"min", "desc":"..."}, {"mode":"B", "time":"min", "desc":"..."} ]
                 }] 
             }]
             `;
@@ -393,6 +596,18 @@
             try {
                 const result = await callGemini(apiKey, prompt);
                 if(Array.isArray(result)) {
+                    if(weatherInfo && weatherInfo.daily) {
+                        result.forEach((day, idx) => {
+                            if (weatherInfo.daily.time[idx]) {
+                                day.weather = {
+                                    code: weatherInfo.daily.weather_code[idx],
+                                    max: weatherInfo.daily.temperature_2m_max[idx],
+                                    min: weatherInfo.daily.temperature_2m_min[idx],
+                                    isSimulated: weatherInfo.isSimulated
+                                };
+                            }
+                        });
+                    }
                     tripData = result;
                     localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
                     renderTrip();
@@ -418,133 +633,31 @@
             const prompt = `【微調】原始JSON:${JSON.stringify(targetDay)} 指令:${instruction} 回傳修改後的當天 JSON 物件`;
             try {
                 const newDayData = await callGemini(apiKey, prompt);
+                if(tripData[currentModifyIndex].weather) {
+                    newDayData.weather = tripData[currentModifyIndex].weather;
+                }
                 tripData[currentModifyIndex] = newDayData;
                 localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
                 renderTrip();
             } catch(e) { alert("微調失敗：" + e.message); } finally { setLoading(false); }
         }
 
-        // --- Export Functions ---
-        function prepareExport() {
-            const element = document.getElementById('tripContainer');
-            const header = document.getElementById('pdfHeader');
-            const subTitle = document.getElementById('pdfSubTitle');
-            const city = document.getElementById('city').value;
-            const start = document.getElementById('flightArrival').value.split('T')[0];
-            
-            document.getElementById('placeholderMsg').style.display = 'none'; 
-            header.style.display = 'block'; 
-            subTitle.innerText = `旅遊城市：${city} | 出發日期：${start}`;
-            
-            element.classList.add('print-mode');
-            element.querySelectorAll('details').forEach(d => d.open = true);
-            element.querySelectorAll('button').forEach(b => b.style.display = 'none');
-            return element;
-        }
-
-        function restoreExport(element) {
-            document.getElementById('pdfHeader').style.display = 'none';
-            element.classList.remove('print-mode');
-            element.querySelectorAll('button').forEach(b => b.style.display = 'inline-block');
-        }
-
-        function exportToImage() {
-            const element = prepareExport();
-            html2canvas(element, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Trip_${document.getElementById('city').value}.jpg`;
-                link.href = canvas.toDataURL("image/jpeg", 0.9);
-                link.click();
-                restoreExport(element);
-            });
-        }
-
-        function exportToPDF() {
-            const element = prepareExport();
-            const opt = {
-                margin: 10, filename: `Trip_${document.getElementById('city').value}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, backgroundColor: '#ffffff' }, 
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-            };
-            html2pdf().from(element).set(opt).save().then(() => restoreExport(element));
-        }
-
-        function exportToText() {
-            let text = `🇯🇵 日本旅遊行程 - ${document.getElementById('city').value}\n\n`;
-            tripData.forEach(day => {
-                text += `📅 ${day.date} ${day.day_title}\n`;
-                day.itinerary.forEach(item => {
-                    text += `${item.time} ${item.title}\n   ${item.desc}\n   📍 地址：${item.address || "無"}\n`;
-                });
-                text += "\n------------------\n\n";
-            });
-            navigator.clipboard.writeText(text).then(() => alert("✅ 行程已複製到剪貼簿！"));
-        }
-
-        function exportToICS() {
-            let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//AI Trip Planner//EN\n";
-            tripData.forEach(day => {
-                day.itinerary.forEach(item => {
-                    const dateStr = day.date.replace(/-/g, '');
-                    const timeStr = item.time.replace(':', '') + '00';
-                    const dtStart = `${dateStr}T${timeStr}`;
-                    let endHour = parseInt(item.time.split(':')[0]) + 1;
-                    const dtEnd = `${dateStr}T${endHour.toString().padStart(2,'0')}${item.time.split(':')[1]}00`;
-
-                    icsContent += "BEGIN:VEVENT\n";
-                    icsContent += `SUMMARY:${item.title}\n`;
-                    icsContent += `DESCRIPTION:${item.desc} (地址: ${item.address || ''})\n`;
-                    icsContent += `LOCATION:${item.address || ''}\n`;
-                    icsContent += `DTSTART:${dtStart}\n`;
-                    icsContent += `DTEND:${dtEnd}\n`;
-                    icsContent += "END:VEVENT\n";
-                });
-            });
-            icsContent += "END:VCALENDAR";
-            
-            const blob = new Blob([icsContent], { type: 'text/calendar' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'trip.ics';
-            link.click();
-        }
-
-        // --- Common Functions ---
-        async function autoGenerateIdeas() {
-            const apiKey = getApiKey(); if(!apiKey) return;
-            const city = document.getElementById('city').value;
-            if(!city) { alert("請輸入城市！"); return; }
-            const btn = document.querySelector('.btn-magic'); btn.disabled = true; btn.innerHTML = "🔮...";
-            const prompt = `推薦【${city}】景點與美食。JSON:{ "spots": "...", "food": "...", "transport": "...", "prefs": "..." }`;
-            try {
-                const res = await callGemini(apiKey, prompt);
-                // 修正：檢查回傳是否為陣列或物件，並轉為字串
-                document.getElementById('spots').value = formatAIOutput(res.spots);
-                document.getElementById('foodList').value = formatAIOutput(res.food);
-                document.getElementById('transport').value = formatAIOutput(res.transport) || "大眾運輸";
-                document.getElementById('customPrefs').value = formatAIOutput(res.prefs);
-                saveInputs();
-            } catch(e) {} finally { btn.disabled = false; btn.innerHTML = "🪄 AI 幫我補全景點 & 美食"; }
-        }
-
-        // ★★★ 修正：處理 AI 回傳格式的 Helper 函式 ★★★
         function formatAIOutput(data) {
             if (!data) return "";
             if (typeof data === 'string') return data;
-            // 如果是陣列，嘗試取出每個項目的名稱或直接轉字串
             if (Array.isArray(data)) {
                 return data.map(item => {
                     if (typeof item === 'string') return item;
-                    if (typeof item === 'object') return item.name || item.title || item.place || Object.values(item)[0] || "";
+                    if (typeof item === 'object' && item !== null) {
+                        return item.name || item.title || item.place || item.description || Object.values(item)[0] || "";
+                    }
                     return "";
-                }).join("、");
+                }).filter(s => s).join("、");
             }
+            if (typeof data === 'object' && data !== null) return Object.values(data).join(" ");
             return "";
         }
 
-        // ★★★ 核心修正：強制 JSON 模式 + 核彈級 Regex 提取 ★★★
         async function callGemini(key, prompt) {
             const model = document.getElementById('modelSelect').value;
             
@@ -607,6 +720,93 @@
             }
         }
 
+        // --- Export Functions ---
+        function prepareExport() {
+            const element = document.getElementById('tripContainer');
+            const header = document.getElementById('pdfHeader');
+            const subTitle = document.getElementById('pdfSubTitle');
+            const city = document.getElementById('city').value;
+            const start = document.getElementById('flightArrival').value.split('T')[0];
+            
+            document.getElementById('placeholderMsg').style.display = 'none'; 
+            header.style.display = 'block'; 
+            subTitle.innerText = `旅遊城市：${city} | 出發日期：${start}`;
+            
+            element.classList.add('print-mode');
+            element.querySelectorAll('details').forEach(d => d.open = true);
+            element.querySelectorAll('button').forEach(b => b.style.display = 'none');
+            return element;
+        }
+
+        function restoreExport(element) {
+            document.getElementById('pdfHeader').style.display = 'none';
+            element.classList.remove('print-mode');
+            element.querySelectorAll('button').forEach(b => b.style.display = 'inline-block');
+        }
+
+        function exportToImage() {
+            const element = prepareExport();
+            html2canvas(element, { scale: 2, backgroundColor: "#ffffff" }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Trip_${document.getElementById('city').value}.jpg`;
+                link.href = canvas.toDataURL("image/jpeg", 0.9);
+                link.click();
+                restoreExport(element);
+            });
+        }
+
+        function exportToPDF() {
+            const element = prepareExport();
+            const opt = {
+                margin: 10, filename: `Trip_${document.getElementById('city').value}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, backgroundColor: '#ffffff' }, 
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+            html2pdf().from(element).set(opt).save().then(() => restoreExport(element));
+        }
+
+        function exportToText() {
+            let text = `🇯🇵 日本旅遊行程 - ${document.getElementById('city').value}\n\n`;
+            tripData.forEach(day => {
+                text += `📅 ${day.date} ${day.day_title}\n`;
+                day.itinerary.forEach(item => {
+                    text += `${item.time} ${item.title}\n   ${item.desc}\n   📍 地址：${item.address || "無"}\n   💰 費用：${item.cost || "無"}\n`;
+                });
+                text += "\n------------------\n\n";
+            });
+            navigator.clipboard.writeText(text).then(() => alert("✅ 行程已複製到剪貼簿！"));
+        }
+
+        function exportToICS() {
+            let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//AI Trip Planner//EN\n";
+            tripData.forEach(day => {
+                day.itinerary.forEach(item => {
+                    const dateStr = day.date.replace(/-/g, '');
+                    const timeStr = item.time.replace(':', '') + '00';
+                    const dtStart = `${dateStr}T${timeStr}`;
+                    let endHour = parseInt(item.time.split(':')[0]) + 1;
+                    const dtEnd = `${dateStr}T${endHour.toString().padStart(2,'0')}${item.time.split(':')[1]}00`;
+
+                    icsContent += "BEGIN:VEVENT\n";
+                    icsContent += `SUMMARY:${item.title}\n`;
+                    icsContent += `DESCRIPTION:${item.desc} (地址: ${item.address || ''} | 費用: ${item.cost || ''})\n`;
+                    icsContent += `LOCATION:${item.address || ''}\n`;
+                    icsContent += `DTSTART:${dtStart}\n`;
+                    icsContent += `DTEND:${dtEnd}\n`;
+                    icsContent += "END:VEVENT\n";
+                });
+            });
+            icsContent += "END:VCALENDAR";
+            
+            const blob = new Blob([icsContent], { type: 'text/calendar' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'trip.ics';
+            link.click();
+        }
+
         function renderTrip() {
             const container = document.getElementById('tripContainer');
             const exportBar = document.getElementById('exportBar');
@@ -622,9 +822,24 @@
 
             tripData.forEach((day, index) => {
                 const isOpen = index === 0 ? 'open' : '';
+                
+                let weatherHtml = '';
+                if(day.weather) {
+                    const icon = getWeatherIcon(day.weather.code);
+                    const label = day.weather.isSimulated ? '(歷史均溫)' : '(預報)';
+                    const styleClass = day.weather.isSimulated ? 'weather-badge simulated' : 'weather-badge';
+                    weatherHtml = `<div class="${styleClass}">${icon} ${Math.round(day.weather.max)}° / ${Math.round(day.weather.min)}° <span style="font-size:0.7em; margin-left:3px; opacity:0.7;">${label}</span></div>`;
+                }
+
                 const html = `
                 <details ${isOpen}>
-                    <summary><div class="day-header"><div class="day-date">${day.date}</div><div class="day-summary">${day.day_title}</div></div></summary>
+                    <summary>
+                        <div class="day-header">
+                            <div class="day-date">${day.date}</div>
+                            <div class="day-summary">${day.day_title}</div>
+                            ${weatherHtml}
+                        </div>
+                    </summary>
                     <div class="day-content">
                         <div class="timeline">
                             ${day.itinerary.map(item => {
@@ -633,16 +848,32 @@
 
                                 let typeClass = item.type === 'SPOT' ? 'type-spot' : item.type === 'FOOD' ? 'type-food' : 'type-transport';
                                 let tagHtml = `<span class="tag ${item.type.toLowerCase()}">${typeLabel}</span>`;
+                                // 新增：費用標籤
+                                let costHtml = item.cost ? `<span class="cost-badge">💰 ${item.cost}</span>` : '';
                                 let ticketHtml = item.booking ? '<span class="ticket-badge">🎟️ 需預約</span>' : '';
                                 
-                                // ★★★ 新增：地址顯示與精確地圖連結 ★★★
                                 const addressHtml = item.address ? `<div class="address-line">${item.address}</div>` : '';
-                                // 搜尋邏輯：強制用「店名 + 地址」去搜尋，避免只搜到城市
                                 const mapQuery = item.title + " " + (item.address || document.getElementById('city').value);
-                                // 使用標準 Google Maps Search URL
                                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
 
-                                return `<div class="itinerary-item ${typeClass}"><span class="time">${item.time}</span><div class="activity-card"><div class="tags-row">${tagHtml} ${ticketHtml}</div><div class="activity-title">${item.title}</div><div class="desc">${item.desc}</div>${addressHtml}${item.tips ? `<div class="tips">${item.tips}</div>` : ''}</div><a href="${mapUrl}" target="_blank" style="display:inline-block; margin-top:8px; margin-left:15px; font-size:0.85rem; color:var(--primary); text-decoration:none; font-weight:600;">📍 Map</a></div>`;
+                                // 交通方案區塊
+                                let transitHtml = '';
+                                if(item.transit && item.transit.length > 0) {
+                                    transitHtml = `
+                                    <div class="transit-box">
+                                        <div class="transit-title">🚦 建議交通 (From 上一站)</div>
+                                        <div class="transit-options">
+                                            ${item.transit.map((t, i) => `
+                                                <div class="transit-option">
+                                                    <span class="transit-badge">${i===0 ? 'A' : 'B'}</span>
+                                                    <b>${t.mode}</b> (${t.time}) - ${t.desc}
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>`;
+                                }
+
+                                return `<div class="itinerary-item ${typeClass}"><span class="time">${item.time}</span><div class="activity-card"><div class="tags-row">${tagHtml} ${costHtml} ${ticketHtml}</div><div class="activity-title">${item.title}</div><div class="desc">${item.desc}</div>${addressHtml}${transitHtml}${item.tips ? `<div class="tips">${item.tips}</div>` : ''}</div><a href="${mapUrl}" target="_blank" style="display:inline-block; margin-top:8px; margin-left:15px; font-size:0.85rem; color:var(--primary); text-decoration:none; font-weight:600;">📍 Map</a></div>`;
                             }).join('')}
                         </div>
                         <button onclick="openModifyModal(${index})" class="btn-modify">🤖 AI 微調這天</button>
