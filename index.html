@@ -12,82 +12,538 @@
     
     <style>
         /* --- 基礎設定 --- */
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         
         :root {
             --primary: #6366f1; --primary-hover: #4f46e5; --accent: #ec4899;
-            --bg-gradient: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-            --text-dark: #1e293b; --text-gray: #64748b;
-            --glass-bg: rgba(255, 255, 255, 0.85); --glass-border: 1px solid rgba(255, 255, 255, 0.6); --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+            --bg-gradient-alt: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            --text-dark: #1e293b; --text-gray: #64748b; --text-light: #94a3b8;
+            --glass-bg: rgba(255, 255, 255, 0.95); --glass-border: 1px solid rgba(255, 255, 255, 0.8); 
+            --glass-shadow: 0 20px 60px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            --glass-shadow-hover: 0 25px 80px -12px rgba(0, 0, 0, 0.35);
             --tag-spot: #f43f5e; --tag-food: #f97316; --tag-trans: #0ea5e9;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --surface: #ffffff; --surface-hover: #f8fafc;
         }
 
         body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background: var(--bg-gradient); background-size: 400% 400%; animation: gradientBG 15s ease infinite;
-            color: var(--text-dark); margin: 0; padding: 40px 20px; min-height: 100vh;
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-gradient); 
+            background-size: 400% 400%; 
+            animation: gradientBG 20s ease infinite;
+            color: var(--text-dark); 
+            margin: 0; 
+            padding: 30px 20px; 
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
         }
-        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes gradientBG { 
+            0% { background-position: 0% 50%; } 
+            50% { background-position: 100% 50%; } 
+            100% { background-position: 0% 50%; } 
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
 
-        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 400px 1fr; gap: 40px; }
-        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            display: grid; 
+            grid-template-columns: 420px 1fr; 
+            gap: 30px; 
+            position: relative;
+            z-index: 1;
+        }
+        @media (max-width: 1024px) { 
+            .container { 
+                grid-template-columns: 1fr; 
+                gap: 25px;
+            } 
+        }
 
         /* 卡片 */
         .card {
-            background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: var(--glass-border); border-radius: 24px; box-shadow: var(--glass-shadow); padding: 35px; transition: transform 0.3s ease;
+            background: var(--glass-bg); 
+            backdrop-filter: blur(20px) saturate(180%); 
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: var(--glass-border); 
+            border-radius: 28px; 
+            box-shadow: var(--glass-shadow); 
+            padding: 40px; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
         
-        h1 { text-align: center; font-weight: 900; font-size: 2.8rem; color: white; text-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-bottom: 40px; letter-spacing: 1px; }
-        h2 { font-size: 1.4rem; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; color: var(--primary); font-weight: 800; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-
-        label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.95rem; color: var(--text-gray); }
-        input[type="text"], input[type="datetime-local"], select, textarea {
-            width: 100%; padding: 14px 18px; margin-bottom: 20px; border: 2px solid transparent; border-radius: 16px;
-            background: #f1f5f9; color: var(--text-dark); font-size: 1rem; transition: all 0.3s ease; font-family: inherit;
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            opacity: 0;
+            transition: opacity 0.3s;
         }
-        input:focus, select:focus, textarea:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2); outline: none; }
-        .input-group { margin-bottom: 12px; }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--glass-shadow-hover);
+        }
+        
+        .card:hover::before {
+            opacity: 1;
+        }
+        
+        h1 { 
+            text-align: center; 
+            font-weight: 900; 
+            font-size: clamp(2rem, 5vw, 3.2rem); 
+            color: white; 
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2); 
+            margin-bottom: 50px; 
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        h2 { 
+            font-size: 1.5rem; 
+            margin-bottom: 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            color: var(--primary); 
+            font-weight: 800; 
+            border-bottom: 3px solid transparent;
+            border-image: linear-gradient(90deg, var(--primary), transparent) 1;
+            padding-bottom: 12px;
+            position: relative;
+        }
+        
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 2px;
+        }
+
+        label { 
+            display: block; 
+            margin-bottom: 10px; 
+            font-weight: 700; 
+            font-size: 0.95rem; 
+            color: var(--text-dark);
+            letter-spacing: 0.3px;
+            position: relative;
+        }
+        
+        label::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+        
+        input[type="text"]:focus ~ label::after,
+        input[type="datetime-local"]:focus ~ label::after,
+        select:focus ~ label::after,
+        textarea:focus ~ label::after {
+            width: 100%;
+        }
+        
+        input[type="text"], input[type="datetime-local"], select, textarea {
+            width: 100%; 
+            padding: 16px 20px; 
+            margin-bottom: 22px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 14px;
+            background: #ffffff; 
+            color: var(--text-dark); 
+            font-size: 1rem; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            font-family: inherit;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        input:hover, select:hover, textarea:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+        
+        input:focus, select:focus, textarea:focus { 
+            background: #ffffff; 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15), 0 4px 12px rgba(99, 102, 241, 0.1); 
+            outline: none;
+            transform: translateY(-1px);
+        }
+        
+        .input-group { 
+            margin-bottom: 16px; 
+            position: relative;
+        }
+        
+        /* 城市搜索建议框样式 */
+        .city-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+            margin-top: 4px;
+        }
+        
+        .city-suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.2s;
+        }
+        
+        .city-suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .city-suggestion-item:hover,
+        .city-suggestion-item.selected {
+            background: #f8fafc;
+        }
+        
+        .city-suggestion-icon {
+            font-size: 1.5rem;
+            width: 32px;
+            text-align: center;
+        }
+        
+        .city-suggestion-content {
+            flex: 1;
+        }
+        
+        .city-suggestion-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+        }
+        
+        .city-suggestion-category {
+            font-size: 0.8rem;
+            color: var(--text-gray);
+            margin-top: 2px;
+        }
 
         /* --- Checkbox 樣式 --- */
         .checkbox-group {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
         }
-        .checkbox-item { position: relative; }
-        .checkbox-item input { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+        .checkbox-item { 
+            position: relative; 
+        }
+        .checkbox-item input { 
+            position: absolute; 
+            opacity: 0; 
+            cursor: pointer; 
+            height: 0; 
+            width: 0; 
+        }
         .checkbox-item label {
-            display: flex; align-items: center; justify-content: center;
-            background: #f1f5f9; padding: 10px; border-radius: 12px;
-            cursor: pointer; border: 2px solid transparent; transition: all 0.2s;
-            margin: 0; font-weight: 500; color: #64748b;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+            padding: 14px 16px; 
+            border-radius: 14px;
+            cursor: pointer; 
+            border: 2px solid #e2e8f0; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 0; 
+            font-weight: 600; 
+            color: var(--text-gray);
+            position: relative;
+            overflow: hidden;
         }
-        .checkbox-item input:checked + label { background: #e0e7ff; border-color: var(--primary); color: var(--primary); font-weight: 700; }
-        .checkbox-item label:hover { background: #e2e8f0; }
+        
+        .checkbox-item label::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .checkbox-item label:hover::before {
+            left: 100%;
+        }
+        
+        .checkbox-item input:checked + label { 
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); 
+            border-color: var(--primary); 
+            color: var(--primary); 
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+            transform: scale(1.02);
+        }
+        .checkbox-item label:hover { 
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
         /* 按鈕 */
-        button { width: 100%; padding: 16px; border: none; border-radius: 16px; font-weight: 700; font-size: 1.05rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; font-family: inherit; }
-        button:active { transform: scale(0.96); }
-        .btn-primary { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4); }
-        .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.5); }
-        .btn-magic { background: #fff; color: var(--accent); border: 2px dashed var(--accent); margin-bottom: 20px; }
-        .btn-magic:hover { background: #fff1f2; transform: translateY(-2px); }
-        .btn-outline { background: white; border: 2px solid #cbd5e1; color: var(--text-gray); }
-        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-        .btn-danger { background: #fee2e2; color: #ef4444; width: auto; font-size: 0.9rem; padding: 10px 20px; }
-        .btn-setting { width: auto; padding: 8px 16px; background: #e2e8f0; color: var(--text-dark); border-radius: 12px; }
-        .btn-modify { background: #fff; border: 1px solid #ddd; color: var(--text-gray); margin-top: 15px; font-size: 0.9rem; padding: 10px; border-radius: 12px; }
-        .btn-modify:hover { background: #f8fafc; border-color: var(--primary); color: var(--primary); }
+        button { 
+            width: 100%; 
+            padding: 18px 24px; 
+            border: none; 
+            border-radius: 14px; 
+            font-weight: 700; 
+            font-size: 1.05rem; 
+            cursor: pointer; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            position: relative; 
+            overflow: hidden; 
+            font-family: inherit;
+            letter-spacing: 0.3px;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        button:active { 
+            transform: scale(0.97); 
+        }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%); 
+            color: white; 
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+            position: relative;
+        }
+        
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-primary:hover::after {
+            left: 100%;
+        }
+        
+        .btn-primary:hover { 
+            filter: brightness(1.1); 
+            box-shadow: 0 15px 35px -5px rgba(99, 102, 241, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+            transform: translateY(-2px);
+        }
+        
+        .btn-magic { 
+            background: linear-gradient(135deg, #ffffff 0%, #fef3f2 100%); 
+            color: var(--accent); 
+            border: 2px dashed var(--accent); 
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.15);
+        }
+        
+        .btn-magic:hover { 
+            background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); 
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(236, 72, 153, 0.25);
+            border-color: #f43f5e;
+        }
+        
+        .btn-outline { 
+            background: white; 
+            border: 2px solid #e2e8f0; 
+            color: var(--text-gray);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-outline:hover { 
+            border-color: var(--primary); 
+            color: var(--primary);
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        }
+        
+        .btn-danger { 
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); 
+            color: var(--danger); 
+            width: auto; 
+            font-size: 0.9rem; 
+            padding: 12px 24px;
+            border: 2px solid #fecaca;
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+        }
+        
+        .btn-setting { 
+            width: auto; 
+            padding: 10px 18px; 
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); 
+            color: var(--text-dark); 
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+        
+        .btn-setting:hover {
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+            transform: translateY(-1px);
+        }
+        
+        .btn-modify { 
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); 
+            border: 2px solid #e2e8f0; 
+            color: var(--text-gray); 
+            margin-top: 20px; 
+            font-size: 0.9rem; 
+            padding: 12px 20px; 
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-modify:hover { 
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+            border-color: var(--primary); 
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        }
 
         /* 匯出工具列 */
-        .export-bar { display: none; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .btn-export { flex: 1; min-width: 120px; font-size: 0.9rem; padding: 12px; color: white; display: flex; align-items: center; justify-content: center; gap: 6px; }
-        .btn-img { background: #f59e0b; } .btn-img:hover { background: #d97706; }
-        .btn-txt { background: #10b981; } .btn-txt:hover { background: #059669; }
-        .btn-cal { background: #3b82f6; } .btn-cal:hover { background: #2563eb; }
-        .btn-pdf { background: #64748b; } .btn-pdf:hover { background: #475569; }
+        .export-bar { 
+            display: none; 
+            gap: 12px; 
+            margin-bottom: 30px; 
+            flex-wrap: wrap;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+            border: var(--glass-border);
+        }
+        
+        .btn-export { 
+            flex: 1; 
+            min-width: 140px; 
+            font-size: 0.95rem; 
+            padding: 14px 20px; 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-export:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+        
+        .btn-img { 
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); 
+        } 
+        .btn-img:hover { 
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%); 
+        }
+        .btn-txt { 
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+        } 
+        .btn-txt:hover { 
+            background: linear-gradient(135deg, #059669 0%, #047857 100%); 
+        }
+        .btn-cal { 
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
+        } 
+        .btn-cal:hover { 
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); 
+        }
+        .btn-pdf { 
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%); 
+        } 
+        .btn-pdf:hover { 
+            background: linear-gradient(135deg, #475569 0%, #334155 100%); 
+        }
 
         /* 行程列表容器 - 垂直排列 */
         #tripContainer { 
@@ -98,60 +554,506 @@
         }
 
         /* 行程卡片 */
-        details { background: #fff; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden; border: 1px solid #f1f5f9; transition: all 0.3s; width: 100%; }
-        details[open] { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: #e0e7ff; }
-        summary { padding: 20px 25px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; background: #fff; transition: background 0.2s; }
-        summary:hover { background: #f8fafc; }
-        details[open] summary { background: #f5f3ff; border-bottom: 1px solid #e0e7ff; }
-        summary::-webkit-details-marker { display: none; }
+        details { 
+            background: #fff; 
+            border-radius: 24px; 
+            box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05); 
+            overflow: hidden; 
+            border: 1px solid #f1f5f9; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            width: 100%;
+            margin-bottom: 20px;
+        }
         
-        .day-header { display: flex; align-items: center; gap: 15px; width: 100%; flex-wrap: wrap; }
-        .day-date { font-size: 1.2rem; font-weight: 800; color: var(--primary); white-space: nowrap; }
-        .day-summary { font-size: 0.95rem; color: var(--text-gray); font-weight: 500; flex-grow: 1; }
+        details[open] { 
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(99, 102, 241, 0.2); 
+            border-color: #e0e7ff;
+            transform: translateY(-2px);
+        }
+        
+        summary { 
+            padding: 24px 28px; 
+            cursor: pointer; 
+            list-style: none; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+        summary::after {
+            content: '▼';
+            font-size: 0.8rem;
+            color: var(--primary);
+            transition: transform 0.3s;
+        }
+        
+        details[open] summary::after {
+            transform: rotate(180deg);
+        }
+        
+        summary:hover { 
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+        
+        details[open] summary { 
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); 
+            border-bottom: 2px solid #e0e7ff;
+        }
+        
+        summary::-webkit-details-marker { 
+            display: none; 
+        }
+        
+        .day-header { 
+            display: flex; 
+            align-items: center; 
+            gap: 18px; 
+            width: 100%; 
+            flex-wrap: wrap; 
+        }
+        
+        .day-date { 
+            font-size: 1.3rem; 
+            font-weight: 900; 
+            color: var(--primary); 
+            white-space: nowrap;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .day-summary { 
+            font-size: 1rem; 
+            color: var(--text-gray); 
+            font-weight: 600; 
+            flex-grow: 1; 
+        }
+        
+        /* 每日費用標籤 */
+        .day-cost-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+            border: 2px solid #fbbf24;
+        }
+        
+        /* 每日操作按鈕容器 */
+        .day-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        /* 路線圖按鈕 */
+        .btn-route {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-route:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-route:active {
+            transform: translateY(0);
+        }
+        
+        /* 總費用摘要 */
+        .total-cost-summary {
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .total-cost-card {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 3px solid #fbbf24;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.25);
+        }
+        
+        .total-cost-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        
+        .total-cost-amount {
+            margin-bottom: 10px;
+        }
+        
+        .local-currency {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #78350f;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 8px;
+        }
+        
+        .twd-currency {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #92400e;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        
+        .total-cost-note {
+            font-size: 0.85rem;
+            color: #a16207;
+            font-style: italic;
+            margin-top: 12px;
+            line-height: 1.6;
+        }
         
         /* 天氣標籤 */
         .weather-badge { 
-            display: flex; align-items: center; gap: 6px; 
-            background: #e0f2fe; color: #0369a1; 
-            padding: 6px 12px; border-radius: 20px; 
-            font-size: 0.85rem; font-weight: 600; white-space: nowrap;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); 
+            color: #0369a1; 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            font-size: 0.9rem; 
+            font-weight: 700; 
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+            border: 2px solid #7dd3fc;
         }
-        .weather-badge.simulated { background: #f3f4f6; color: #64748b; border: 1px dashed #cbd5e1; }
+        
+        .weather-badge.simulated { 
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); 
+            color: #64748b; 
+            border: 2px dashed #cbd5e1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
 
         .day-content { padding: 25px; background: #fff; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         /* 時間軸 */
-        .timeline { border-left: 2px dashed #cbd5e1; margin-left: 10px; padding-left: 30px; position: relative; }
-        .itinerary-item { position: relative; margin-bottom: 40px; break-inside: avoid; page-break-inside: avoid; }
-        .itinerary-item:last-child { margin-bottom: 0; }
-        .itinerary-item::before { content: ''; position: absolute; left: -37px; top: 5px; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 3px solid #cbd5e1; z-index: 1; }
-        .type-spot::before { border-color: var(--tag-spot); box-shadow: 0 0 0 4px #ffe4e6; }
-        .type-food::before { border-color: var(--tag-food); box-shadow: 0 0 0 4px #ffedd5; }
-        .type-transport::before { border-color: var(--tag-trans); box-shadow: 0 0 0 4px #e0f2fe; }
+        .timeline { 
+            border-left: 3px solid #e2e8f0; 
+            margin-left: 15px; 
+            padding-left: 35px; 
+            position: relative;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: -3px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--primary), var(--accent));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        details[open] .timeline::before {
+            opacity: 0.3;
+        }
+        
+        .itinerary-item { 
+            position: relative; 
+            margin-bottom: 32px; 
+            break-inside: avoid; 
+            page-break-inside: avoid;
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+        }
+        
+        .itinerary-item:nth-child(1) { animation-delay: 0.1s; }
+        .itinerary-item:nth-child(2) { animation-delay: 0.2s; }
+        .itinerary-item:nth-child(3) { animation-delay: 0.3s; }
+        .itinerary-item:nth-child(4) { animation-delay: 0.4s; }
+        .itinerary-item:nth-child(5) { animation-delay: 0.5s; }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .itinerary-item:last-child { 
+            margin-bottom: 0; 
+        }
+        
+        .itinerary-item::before { 
+            content: ''; 
+            position: absolute; 
+            left: -44px; 
+            top: 8px; 
+            width: 18px; 
+            height: 18px; 
+            border-radius: 50%; 
+            background: #fff; 
+            border: 4px solid #cbd5e1; 
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .itinerary-item:hover::before {
+            transform: scale(1.2);
+        }
+        
+        .type-spot::before { 
+            border-color: var(--tag-spot); 
+            box-shadow: 0 0 0 6px rgba(244, 63, 94, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: var(--tag-spot);
+        }
+        .type-food::before { 
+            border-color: var(--tag-food); 
+            box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: var(--tag-food);
+        }
+        .type-transport::before { 
+            border-color: var(--tag-trans); 
+            box-shadow: 0 0 0 6px rgba(14, 165, 233, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: var(--tag-trans);
+        }
 
-        .time { font-size: 0.9rem; font-weight: 700; color: var(--text-gray); margin-bottom: 6px; letter-spacing: 0.5px; }
-        .activity-card { background: #f8fafc; border-radius: 12px; padding: 15px; border: 1px solid #f1f5f9; transition: transform 0.2s; position: relative; }
-        .activity-card:hover { transform: translateX(5px); background: #fff; border-color: #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .activity-title { font-size: 1.15rem; font-weight: 700; color: var(--text-dark); margin-bottom: 5px; }
-        .tags-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-        .tag { font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; font-weight: 600; color: white; letter-spacing: 0.5px; }
-        .tag.spot { background: var(--tag-spot); } .tag.food { background: var(--tag-food); } .tag.transport { background: var(--tag-trans); }
-        .tag.ticket { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
-        .desc { font-size: 0.95rem; color: #475569; line-height: 1.6; white-space: pre-line; }
-        .tips { margin-top: 10px; font-size: 0.85rem; background: #fffbeb; color: #b45309; padding: 10px 15px; border-radius: 10px; display: flex; gap: 8px; align-items: start; }
-        .tips::before { content: '💡'; }
-        .address-line { font-size: 0.85rem; color: #64748b; margin-top: 5px; display: flex; align-items: center; gap: 4px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
-        .address-line::before { content: '📍'; font-size: 0.9rem; }
+        .time { 
+            font-size: 0.95rem; 
+            font-weight: 800; 
+            color: var(--primary); 
+            margin-bottom: 10px; 
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .activity-card { 
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); 
+            border-radius: 16px; 
+            padding: 20px; 
+            border: 2px solid #f1f5f9; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        .activity-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary), var(--accent));
+            border-radius: 2px 0 0 2px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .activity-card:hover { 
+            transform: translateX(8px); 
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); 
+            border-color: #e0e7ff; 
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .activity-card:hover::before {
+            opacity: 1;
+        }
+        
+        .activity-title { 
+            font-size: 1.2rem; 
+            font-weight: 800; 
+            color: var(--text-dark); 
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .tags-row { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 12px; 
+            flex-wrap: wrap; 
+        }
+        
+        .tag { 
+            font-size: 0.8rem; 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            font-weight: 700; 
+            color: white; 
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s;
+        }
+        
+        .tag:hover {
+            transform: scale(1.05);
+        }
+        
+        .tag.spot { 
+            background: linear-gradient(135deg, var(--tag-spot) 0%, #e11d48 100%); 
+        } 
+        .tag.food { 
+            background: linear-gradient(135deg, var(--tag-food) 0%, #ea580c 100%); 
+        } 
+        .tag.transport { 
+            background: linear-gradient(135deg, var(--tag-trans) 0%, #0284c7 100%); 
+        }
+        .tag.ticket { 
+            background: #fff; 
+            color: var(--primary); 
+            border: 2px solid var(--primary);
+            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.2);
+        }
+        
+        .desc { 
+            font-size: 0.95rem; 
+            color: #475569; 
+            line-height: 1.7; 
+            white-space: pre-line;
+            margin-top: 8px;
+        }
+        
+        .tips { 
+            margin-top: 14px; 
+            font-size: 0.9rem; 
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); 
+            color: #b45309; 
+            padding: 14px 18px; 
+            border-radius: 12px; 
+            display: flex; 
+            gap: 10px; 
+            align-items: start;
+            border-left: 4px solid #fbbf24;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+        }
+        
+        .tips::before { 
+            content: '💡'; 
+            font-size: 1.2rem;
+        }
+        
+        .address-line { 
+            font-size: 0.9rem; 
+            color: var(--text-gray); 
+            margin-top: 12px; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            border-top: 2px dashed #e2e8f0; 
+            padding-top: 12px;
+            font-weight: 500;
+        }
+        
+        .address-line::before { 
+            content: '📍'; 
+            font-size: 1rem;
+        }
 
         /* 交通方案樣式 */
-        .transit-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px 15px; margin-top: 10px; font-size: 0.9rem; color: #166534; }
-        .transit-title { font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
-        .transit-options { display: flex; flex-direction: column; gap: 6px; }
-        .transit-option { display: flex; gap: 8px; align-items: baseline; }
-        .transit-badge { background: #fff; border: 1px solid #166534; color: #166534; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; white-space: nowrap; }
-        .cost-badge { display: inline-block; background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-left: 5px; }
+        .transit-box { 
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
+            border: 2px solid #bbf7d0; 
+            border-radius: 14px; 
+            padding: 16px 20px; 
+            margin-top: 14px; 
+            font-size: 0.9rem; 
+            color: #166534;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+        }
+        
+        .transit-title { 
+            font-weight: 800; 
+            margin-bottom: 10px; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .transit-options { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+        
+        .transit-option { 
+            display: flex; 
+            gap: 10px; 
+            align-items: baseline;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+        
+        .transit-option:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateX(4px);
+        }
+        
+        .transit-badge { 
+            background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); 
+            border: 2px solid #166534; 
+            color: #166534; 
+            font-size: 0.8rem; 
+            padding: 4px 10px; 
+            border-radius: 8px; 
+            font-weight: 800; 
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .cost-badge { 
+            display: inline-block; 
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); 
+            color: #b45309; 
+            border: 2px solid #fcd34d; 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+            font-size: 0.8rem; 
+            font-weight: 700; 
+            margin-left: 8px;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+        }
 
         /* A4 手冊模式樣式 */
         .paper-mode {
@@ -178,15 +1080,98 @@
         .watermark { display: none; text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 0.8rem; color: #999; }
         .paper-mode .watermark { display: block !important; }
 
-        #saveStatus { position: fixed; bottom: 30px; right: 30px; background: rgba(30, 41, 59, 0.9); color: white; padding: 12px 24px; border-radius: 30px; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.2); opacity: 0; transform: translateY(20px); transition: all 0.3s; pointer-events: none; z-index: 1000; }
-        #saveStatus.show { opacity: 1; transform: translateY(0); }
-        #loading { display: none; text-align: center; margin: 60px 0; }
-        .loader { width: 60px; height: 60px; border: 6px solid #fff; border-bottom-color: var(--primary); border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #saveStatus { 
+            position: fixed; 
+            bottom: 30px; 
+            right: 30px; 
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(5, 150, 105, 0.95) 100%); 
+            color: white; 
+            padding: 14px 28px; 
+            border-radius: 30px; 
+            font-weight: 700; 
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2) inset; 
+            opacity: 0; 
+            transform: translateY(20px) scale(0.9); 
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            pointer-events: none; 
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
         
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 9999; }
-        .modal-content { background: #fff; margin: 10% auto; padding: 40px; width: 90%; max-width: 500px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); animation: popUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        #saveStatus.show { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+        }
+        
+        #loading { 
+            display: none; 
+            text-align: center; 
+            margin: 80px 0; 
+        }
+        
+        #loadingText {
+            transition: opacity 0.3s ease-in-out;
+            opacity: 1;
+        }
+        
+        .loader { 
+            width: 70px; 
+            height: 70px; 
+            border: 6px solid rgba(255, 255, 255, 0.3); 
+            border-top-color: var(--primary); 
+            border-right-color: var(--accent);
+            border-radius: 50%; 
+            display: inline-block; 
+            animation: rotation 1s linear infinite;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+        
+        @keyframes rotation { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0, 0, 0, 0.5); 
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 9999;
+            animation: fadeIn 0.3s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content { 
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); 
+            margin: 8% auto; 
+            padding: 45px; 
+            width: 90%; 
+            max-width: 550px; 
+            border-radius: 28px; 
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1) inset; 
+            animation: popUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+        
+        @keyframes popUp { 
+            from { 
+                transform: scale(0.85) translateY(20px); 
+                opacity: 0; 
+            } 
+            to { 
+                transform: scale(1) translateY(0); 
+                opacity: 1; 
+            } 
+        }
 
         #pdfHeader { display: none; text-align: center; margin-bottom: 30px; }
         #pdfHeader h2 { color: #000; margin: 0; font-size: 24px; }
@@ -206,6 +1191,102 @@
         .snapshot-mode * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
         
         .html2pdf__page-break { page-break-before: always; }
+        
+        /* Placeholder 消息 */
+        #placeholderMsg {
+            text-align: center;
+            color: white;
+            margin-top: 120px;
+            padding: 60px 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        #placeholderMsg div:first-child {
+            font-size: 5rem;
+            margin-bottom: 24px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        #placeholderMsg p {
+            font-size: 1.4rem;
+            font-weight: 600;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            line-height: 1.8;
+        }
+        
+        /* 响应式优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 15px;
+            }
+            
+            .card {
+                padding: 28px;
+                border-radius: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 30px;
+            }
+            
+            .container {
+                gap: 20px;
+            }
+            
+            .export-bar {
+                padding: 16px;
+                gap: 10px;
+            }
+            
+            .btn-export {
+                min-width: 100%;
+                font-size: 0.9rem;
+                padding: 12px;
+            }
+            
+            .modal-content {
+                padding: 30px 24px;
+                margin: 10% auto;
+            }
+        }
+        
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--primary-hover), var(--accent));
+        }
+        
+        /* 选择文本样式 */
+        ::selection {
+            background: rgba(99, 102, 241, 0.3);
+            color: var(--text-dark);
+        }
+        
+        /* 焦点可见性改进 */
+        *:focus-visible {
+            outline: 3px solid rgba(99, 102, 241, 0.5);
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
@@ -220,11 +1301,9 @@
             <label>Gemini API Key</label><input type="password" id="apiKey" placeholder="AIzaSy...">
             <label>AI 模型</label>
             <select id="modelSelect">
-                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
             </select>
-            <p style="font-size:0.8rem; color:#64748b; margin-top:-10px;">* 建議使用 Gemini 2.0 Flash 速度最快</p>
+            <p style="font-size:0.8rem; color:#64748b; margin-top:-10px;">* 使用 Gemini 2.5 Flash</p>
             <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
             <div style="display:flex; gap:10px;">
                 <button onclick="exportData()" class="btn-outline">📤 備份資料</button>
@@ -259,12 +1338,273 @@
                     </div>
                     <div>
                         <label style="color:var(--primary);">📍 旅遊城市 (必填)</label>
-                        <input type="text" id="city" placeholder="例如：香川縣高松市" style="border: 2px solid #e0e7ff;">
+                        <div style="position: relative;">
+                            <input type="text" id="city" placeholder="搜尋城市名稱..." style="border: 2px solid #e0e7ff;" autocomplete="off">
+                            <div id="citySuggestions" class="city-suggestions" style="display: none;"></div>
+                        </div>
+                        <datalist id="cityList" style="display: none;">
+                            <!-- 🇯🇵 日本 -->
+                            <option value="東京">東京</option>
+                            <option value="大阪">大阪</option>
+                            <option value="京都">京都</option>
+                            <option value="橫濱">橫濱</option>
+                            <option value="名古屋">名古屋</option>
+                            <option value="福岡">福岡</option>
+                            <option value="札幌">札幌</option>
+                            <option value="仙台">仙台</option>
+                            <option value="廣島">廣島</option>
+                            <option value="神戶">神戶</option>
+                            <option value="奈良">奈良</option>
+                            <option value="沖繩">沖繩</option>
+                            <option value="金澤">金澤</option>
+                            <option value="高松">高松</option>
+                            <option value="香川縣高松市">香川縣高松市</option>
+                            <option value="函館">函館</option>
+                            <option value="小樽">小樽</option>
+                            <option value="輕井澤">輕井澤</option>
+                            <option value="箱根">箱根</option>
+                            <option value="鎌倉">鎌倉</option>
+                            <option value="日光">日光</option>
+                            <option value="白川鄉">白川鄉</option>
+                            <option value="高山">高山</option>
+                            <option value="松本">松本</option>
+                            <option value="長野">長野</option>
+                            <option value="富山">富山</option>
+                            <option value="新潟">新潟</option>
+                            <option value="靜岡">靜岡</option>
+                            <option value="熱海">熱海</option>
+                            <option value="伊豆">伊豆</option>
+                            <option value="和歌山">和歌山</option>
+                            <option value="姬路">姬路</option>
+                            <option value="倉敷">倉敷</option>
+                            <option value="岡山">岡山</option>
+                            <option value="松山">松山</option>
+                            <option value="高知">高知</option>
+                            <option value="熊本">熊本</option>
+                            <option value="鹿兒島">鹿兒島</option>
+                            <option value="宮崎">宮崎</option>
+                            <option value="大分">大分</option>
+                            <option value="長崎">長崎</option>
+                            <option value="佐賀">佐賀</option>
+                            <option value="青森">青森</option>
+                            <option value="秋田">秋田</option>
+                            <option value="山形">山形</option>
+                            <option value="福島">福島</option>
+                            <option value="岩手">岩手</option>
+                            <option value="宮城">宮城</option>
+                            <option value="茨城">茨城</option>
+                            <option value="栃木">栃木</option>
+                            <option value="群馬">群馬</option>
+                            <option value="埼玉">埼玉</option>
+                            <option value="千葉">千葉</option>
+                            <option value="神奈川">神奈川</option>
+                            <option value="山梨">山梨</option>
+                            <option value="岐阜">岐阜</option>
+                            <option value="愛知">愛知</option>
+                            <option value="三重">三重</option>
+                            <option value="滋賀">滋賀</option>
+                            <option value="兵庫">兵庫</option>
+                            <option value="鳥取">鳥取</option>
+                            <option value="島根">島根</option>
+                            <option value="山口">山口</option>
+                            <option value="德島">德島</option>
+                            <option value="香川">香川</option>
+                            <option value="愛媛">愛媛</option>
+                            
+                            <!-- 🇹🇼 台灣 -->
+                            <option value="台北">台北</option>
+                            <option value="新北">新北</option>
+                            <option value="桃園">桃園</option>
+                            <option value="台中">台中</option>
+                            <option value="台南">台南</option>
+                            <option value="高雄">高雄</option>
+                            <option value="基隆">基隆</option>
+                            <option value="新竹">新竹</option>
+                            <option value="嘉義">嘉義</option>
+                            <option value="屏東">屏東</option>
+                            <option value="宜蘭">宜蘭</option>
+                            <option value="花蓮">花蓮</option>
+                            <option value="台東">台東</option>
+                            <option value="南投">南投</option>
+                            <option value="苗栗">苗栗</option>
+                            <option value="彰化">彰化</option>
+                            <option value="雲林">雲林</option>
+                            <option value="澎湖">澎湖</option>
+                            <option value="金門">金門</option>
+                            <option value="馬祖">馬祖</option>
+                            <option value="墾丁">墾丁</option>
+                            <option value="九份">九份</option>
+                            <option value="淡水">淡水</option>
+                            <option value="日月潭">日月潭</option>
+                            <option value="阿里山">阿里山</option>
+                            <option value="太魯閣">太魯閣</option>
+                            
+                            <!-- 🇨🇳 中國大陸 -->
+                            <option value="北京">北京</option>
+                            <option value="上海">上海</option>
+                            <option value="廣州">廣州</option>
+                            <option value="深圳">深圳</option>
+                            <option value="成都">成都</option>
+                            <option value="重慶">重慶</option>
+                            <option value="杭州">杭州</option>
+                            <option value="南京">南京</option>
+                            <option value="武漢">武漢</option>
+                            <option value="西安">西安</option>
+                            <option value="蘇州">蘇州</option>
+                            <option value="廈門">廈門</option>
+                            <option value="青島">青島</option>
+                            <option value="大連">大連</option>
+                            <option value="天津">天津</option>
+                            <option value="長沙">長沙</option>
+                            <option value="鄭州">鄭州</option>
+                            <option value="昆明">昆明</option>
+                            <option value="瀋陽">瀋陽</option>
+                            <option value="哈爾濱">哈爾濱</option>
+                            <option value="長春">長春</option>
+                            <option value="濟南">濟南</option>
+                            <option value="福州">福州</option>
+                            <option value="無錫">無錫</option>
+                            <option value="寧波">寧波</option>
+                            <option value="珠海">珠海</option>
+                            <option value="三亞">三亞</option>
+                            <option value="麗江">麗江</option>
+                            <option value="大理">大理</option>
+                            <option value="張家界">張家界</option>
+                            <option value="桂林">桂林</option>
+                            <option value="陽朔">陽朔</option>
+                            <option value="九寨溝">九寨溝</option>
+                            <option value="黃山">黃山</option>
+                            <option value="烏鎮">烏鎮</option>
+                            <option value="周莊">周莊</option>
+                            <option value="鳳凰古城">鳳凰古城</option>
+                            
+                            <!-- 🇹🇭 泰國 -->
+                            <option value="曼谷">曼谷</option>
+                            <option value="清邁">清邁</option>
+                            <option value="清萊">清萊</option>
+                            <option value="普吉島">普吉島</option>
+                            <option value="芭達雅">芭達雅</option>
+                            <option value="華欣">華欣</option>
+                            <option value="蘇梅島">蘇梅島</option>
+                            <option value="象島">象島</option>
+                            <option value="甲米">甲米</option>
+                            <option value="皮皮島">皮皮島</option>
+                            <option value="拜縣">拜縣</option>
+                            <option value="大城">大城</option>
+                            <option value="素可泰">素可泰</option>
+                            <option value="合艾">合艾</option>
+                            <option value="董里">董里</option>
+                            
+                            <!-- 🇻🇳 越南 -->
+                            <option value="胡志明市">胡志明市</option>
+                            <option value="河內">河內</option>
+                            <option value="峴港">峴港</option>
+                            <option value="會安">會安</option>
+                            <option value="芽莊">芽莊</option>
+                            <option value="大叻">大叻</option>
+                            <option value="順化">順化</option>
+                            <option value="下龍灣">下龍灣</option>
+                            <option value="沙壩">沙壩</option>
+                            <option value="美奈">美奈</option>
+                            <option value="富國島">富國島</option>
+                            <option value="芹苴">芹苴</option>
+                            <option value="寧平">寧平</option>
+                            
+                            <!-- 🇪🇺 歐洲 -->
+                            <option value="巴黎">巴黎</option>
+                            <option value="倫敦">倫敦</option>
+                            <option value="羅馬">羅馬</option>
+                            <option value="米蘭">米蘭</option>
+                            <option value="威尼斯">威尼斯</option>
+                            <option value="佛羅倫斯">佛羅倫斯</option>
+                            <option value="巴塞隆納">巴塞隆納</option>
+                            <option value="馬德里">馬德里</option>
+                            <option value="阿姆斯特丹">阿姆斯特丹</option>
+                            <option value="柏林">柏林</option>
+                            <option value="慕尼黑">慕尼黑</option>
+                            <option value="維也納">維也納</option>
+                            <option value="布拉格">布拉格</option>
+                            <option value="布達佩斯">布達佩斯</option>
+                            <option value="華沙">華沙</option>
+                            <option value="斯德哥爾摩">斯德哥爾摩</option>
+                            <option value="哥本哈根">哥本哈根</option>
+                            <option value="奧斯陸">奧斯陸</option>
+                            <option value="赫爾辛基">赫爾辛基</option>
+                            <option value="都柏林">都柏林</option>
+                            <option value="愛丁堡">愛丁堡</option>
+                            <option value="里斯本">里斯本</option>
+                            <option value="雅典">雅典</option>
+                            <option value="伊斯坦堡">伊斯坦堡</option>
+                            <option value="蘇黎世">蘇黎世</option>
+                            <option value="日內瓦">日內瓦</option>
+                            <option value="布魯塞爾">布魯塞爾</option>
+                            <option value="盧森堡">盧森堡</option>
+                            <option value="雷克雅維克">雷克雅維克</option>
+                            
+                            <!-- 🇺🇸 美國 -->
+                            <option value="紐約">紐約</option>
+                            <option value="洛杉磯">洛杉磯</option>
+                            <option value="舊金山">舊金山</option>
+                            <option value="芝加哥">芝加哥</option>
+                            <option value="波士頓">波士頓</option>
+                            <option value="華盛頓">華盛頓</option>
+                            <option value="邁阿密">邁阿密</option>
+                            <option value="拉斯維加斯">拉斯維加斯</option>
+                            <option value="西雅圖">西雅圖</option>
+                            <option value="休士頓">休士頓</option>
+                            <option value="達拉斯">達拉斯</option>
+                            <option value="費城">費城</option>
+                            <option value="亞特蘭大">亞特蘭大</option>
+                            <option value="鳳凰城">鳳凰城</option>
+                            <option value="聖地牙哥">聖地牙哥</option>
+                            <option value="丹佛">丹佛</option>
+                            <option value="波特蘭">波特蘭</option>
+                            <option value="新奧爾良">新奧爾良</option>
+                            <option value="夏威夷">夏威夷</option>
+                            <option value="檀香山">檀香山</option>
+                            <option value="火奴魯魯">火奴魯魯</option>
+                            <option value="奧蘭多">奧蘭多</option>
+                            <option value="聖安東尼奧">聖安東尼奧</option>
+                            <option value="聖荷西">聖荷西</option>
+                            <option value="奧斯汀">奧斯汀</option>
+                            <option value="納什維爾">納什維爾</option>
+                            <option value="查爾斯頓">查爾斯頓</option>
+                            <option value="薩凡納">薩凡納</option>
+                            
+                            <!-- 🇨🇦 加拿大 -->
+                            <option value="多倫多">多倫多</option>
+                            <option value="溫哥華">溫哥華</option>
+                            <option value="蒙特婁">蒙特婁</option>
+                            <option value="渥太華">渥太華</option>
+                            <option value="卡加利">卡加利</option>
+                            <option value="魁北克">魁北克</option>
+                            <option value="維多利亞">維多利亞</option>
+                            <option value="哈利法克斯">哈利法克斯</option>
+                        </datalist>
                     </div>
                 </div>
 
-                <label>🏨 住宿飯店</label>
-                <input type="text" id="hotel" placeholder="例如：Bon Stay Matsu201">
+                <label>🏨 住宿飯店 / 地址</label>
+                <input type="text" id="hotel" placeholder="完整地址、車站名稱或 Airbnb 標題">
+                <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd; border-radius: 12px; padding: 14px; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.7;">
+                    <div style="font-weight: 700; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                        💡 三種輸入方式（任選一種）
+                    </div>
+                    <div style="color: #475569;">
+                        <div style="margin-bottom: 6px;">
+                            ⭐ <strong style="color: #1e293b;">方法1：完整地址</strong>（最精準 ⭐）<br>
+                            <span style="color: #64748b; font-size: 0.9em; margin-left: 20px;">例如：東京都新宿區西新宿2-8-1</span>
+                        </div>
+                        <div style="margin-bottom: 6px;">
+                            🚇 <strong style="color: #1e293b;">方法2：最近車站/地標</strong><br>
+                            <span style="color: #64748b; font-size: 0.9em; margin-left: 20px;">例如：新宿站 或 靠近淺草雷門的民宿</span>
+                        </div>
+                        <div>
+                            🏠 <strong style="color: #1e293b;">方法3：Airbnb 房源標題</strong><br>
+                            <span style="color: #64748b; font-size: 0.9em; margin-left: 20px;">例如：Cozy Apartment near Shibuya Crossing</span>
+                        </div>
+                    </div>
+                </div>
                 
                 <label>🚦 往返交通方式</label>
                 <select id="entryType">
@@ -305,16 +1645,36 @@
 
                 <div class="input-group"><label>🚗 當地交通</label><select id="transport"><option>大眾運輸</option><option>自駕</option><option>全程包車</option></select></div>
                 
+                <div class="input-group">
+                    <label>🎭 導遊風格</label>
+                    <select id="guideStyle">
+                        <option value="專業導遊">👔 專業導遊 (預設)</option>
+                        <option value="歷史老師">🎓 歷史老師 (多講古蹟背景，少講購物)</option>
+                        <option value="IG 網美">📸 IG 網美 (專注於拍照點、咖啡廳、穿搭建議)</option>
+                        <option value="孤獨的美食家">🍱 孤獨的美食家 (專注於巷弄美食，對食物描寫極其詳細)</option>
+                    </select>
+                </div>
+                
                 <label>✨ 特殊需求 (自行填寫)</label>
                 <input type="text" id="customPrefs" placeholder="例如：行動不便、不吃牛、想體驗和服...">
 
                 <button onclick="planTrip()" id="planBtn" class="btn-primary">✨ 開始生成夢幻行程</button>
-                <button onclick="clearAll()" class="btn-danger" style="margin-top:15px; width:100%;">🗑️ 清空重來</button>
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
+                    <button onclick="clearAll()" class="btn-danger" style="width:100%;">🗑️ 清空重來</button>
+                </div>
             </div>
         </div>
 
         <div class="column">
-            <div id="loading"><span class="loader"></span><p style="font-weight:bold; color:#fff; margin-top:20px; font-size:1.1rem; text-shadow:0 2px 4px rgba(0,0,0,0.2);">AI 正在為您規劃完美旅程...</p></div>
+            <div id="loading">
+                <span class="loader"></span>
+                <p id="loadingText" style="font-weight:bold; color:#fff; margin-top:20px; font-size:1.1rem; text-shadow:0 2px 4px rgba(0,0,0,0.2); min-height: 1.5rem;">AI 正在啟動...</p>
+                
+                <div style="width: 300px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 5px; margin: 15px auto; overflow: hidden;">
+                    <div id="progressBar" style="width: 0%; height: 100%; background: #4f46e5; transition: width 0.5s;"></div>
+                </div>
+                <p id="progressPercent" style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">0%</p>
+            </div>
             
             <div class="export-bar" id="exportBar">
                 <button onclick="exportToA4Image()" class="btn-export btn-img">📸 下載 A4 手冊圖</button>
@@ -324,7 +1684,10 @@
             
             <div id="tripContainer">
                 <div id="pdfHeader"><h2>🇯🇵 日本旅遊行程表</h2><p id="pdfSubTitle"></p><hr style="border:0; border-top:1px solid #333; margin:20px 0;"></div>
-                <div id="placeholderMsg" style="text-align:center; color:#fff; margin-top:100px; opacity:0.8;"><div style="font-size:4rem; margin-bottom:20px; text-shadow:0 4px 10px rgba(0,0,0,0.2);">🌏</div><p style="font-size:1.2rem; font-weight:500;">準備好出發了嗎？<br>請在左側輸入資料</p></div>
+                <div id="placeholderMsg">
+                    <div>🌏</div>
+                    <p>準備好出發了嗎？<br>請在左側輸入資料</p>
+                </div>
             </div>
         </div>
     </div>
@@ -332,7 +1695,136 @@
     <script>
         let tripData = [];
         let currentModifyIndex = null;
-        const inputIds = ['origin', 'city', 'hotel', 'entryType', 'flightArrival', 'flightDeparture', 'spots', 'foodList', 'transport', 'pace', 'customPrefs'];
+        const inputIds = ['origin', 'city', 'hotel', 'entryType', 'flightArrival', 'flightDeparture', 'spots', 'foodList', 'transport', 'pace', 'guideStyle', 'customPrefs'];
+        
+        // 城市搜索数据（热门城市，带图标和分类）
+        const citySearchData = [
+            // 日本热门城市
+            { name: '東京', icon: '🇯🇵', category: '日本 · 首都', keywords: ['tokyo', '东京'] },
+            { name: '大阪', icon: '🇯🇵', category: '日本 · 關西', keywords: ['osaka', '大阪'] },
+            { name: '京都', icon: '🇯🇵', category: '日本 · 古都', keywords: ['kyoto', '京都'] },
+            { name: '沖繩', icon: '🇯🇵', category: '日本 · 海島', keywords: ['okinawa', '冲绳'] },
+            { name: '札幌', icon: '🇯🇵', category: '日本 · 北海道', keywords: ['sapporo', '札幌'] },
+            { name: '福岡', icon: '🇯🇵', category: '日本 · 九州', keywords: ['fukuoka', '福冈'] },
+            { name: '金澤', icon: '🇯🇵', category: '日本 · 北陸', keywords: ['kanazawa', '金泽'] },
+            { name: '高松', icon: '🇯🇵', category: '日本 · 四國', keywords: ['takamatsu', '高松'] },
+            { name: '香川縣高松市', icon: '🇯🇵', category: '日本 · 四國', keywords: ['kagawa', '香川'] },
+            // 台湾
+            { name: '台北', icon: '🇹🇼', category: '台灣 · 北部', keywords: ['taipei', '台北'] },
+            { name: '台中', icon: '🇹🇼', category: '台灣 · 中部', keywords: ['taichung', '台中'] },
+            { name: '高雄', icon: '🇹🇼', category: '台灣 · 南部', keywords: ['kaohsiung', '高雄'] },
+            { name: '台南', icon: '🇹🇼', category: '台灣 · 南部', keywords: ['tainan', '台南'] },
+            // 中国大陆
+            { name: '北京', icon: '🇨🇳', category: '中國 · 首都', keywords: ['beijing', '北京'] },
+            { name: '上海', icon: '🇨🇳', category: '中國 · 一線城市', keywords: ['shanghai', '上海'] },
+            { name: '廣州', icon: '🇨🇳', category: '中國 · 一線城市', keywords: ['guangzhou', '广州'] },
+            { name: '成都', icon: '🇨🇳', category: '中國 · 西南', keywords: ['chengdu', '成都'] },
+            // 泰国
+            { name: '曼谷', icon: '🇹🇭', category: '泰國 · 首都', keywords: ['bangkok', '曼谷'] },
+            { name: '清邁', icon: '🇹🇭', category: '泰國 · 北部', keywords: ['chiang mai', '清迈'] },
+            { name: '普吉島', icon: '🇹🇭', category: '泰國 · 海島', keywords: ['phuket', '普吉'] },
+            // 越南
+            { name: '胡志明市', icon: '🇻🇳', category: '越南 · 南部', keywords: ['ho chi minh', '胡志明'] },
+            { name: '河內', icon: '🇻🇳', category: '越南 · 首都', keywords: ['hanoi', '河内'] },
+            // 欧美
+            { name: '紐約', icon: '🇺🇸', category: '美國 · 東岸', keywords: ['new york', '纽约'] },
+            { name: '洛杉磯', icon: '🇺🇸', category: '美國 · 西岸', keywords: ['los angeles', '洛杉矶'] },
+            { name: '巴黎', icon: '🇫🇷', category: '法國 · 首都', keywords: ['paris', '巴黎'] },
+            { name: '倫敦', icon: '🇬🇧', category: '英國 · 首都', keywords: ['london', '伦敦'] },
+            { name: '東京', icon: '🇯🇵', category: '日本 · 首都', keywords: ['tokyo', '东京'] }
+        ];
+        
+        // 城市搜索功能
+        function initCitySearch() {
+            const cityInput = document.getElementById('city');
+            const suggestionsBox = document.getElementById('citySuggestions');
+            let selectedIndex = -1;
+            
+            if(!cityInput || !suggestionsBox) return;
+            
+            cityInput.addEventListener('input', function(e) {
+                const query = e.target.value.trim().toLowerCase();
+                
+                if(query.length === 0) {
+                    suggestionsBox.style.display = 'none';
+                    return;
+                }
+                
+                // 过滤城市
+                const filtered = citySearchData.filter(city => {
+                    const nameMatch = city.name.toLowerCase().includes(query);
+                    const keywordMatch = city.keywords.some(kw => kw.toLowerCase().includes(query));
+                    return nameMatch || keywordMatch;
+                }).slice(0, 8); // 最多显示8个
+                
+                if(filtered.length === 0) {
+                    suggestionsBox.style.display = 'none';
+                    return;
+                }
+                
+                // 生成建议列表
+                suggestionsBox.innerHTML = filtered.map((city, index) => `
+                    <div class="city-suggestion-item" data-index="${index}" data-value="${city.name}">
+                        <div class="city-suggestion-icon">${city.icon}</div>
+                        <div class="city-suggestion-content">
+                            <div class="city-suggestion-name">${city.name}</div>
+                            <div class="city-suggestion-category">${city.category}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                suggestionsBox.style.display = 'block';
+                selectedIndex = -1;
+                
+                // 添加点击事件
+                suggestionsBox.querySelectorAll('.city-suggestion-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        cityInput.value = this.dataset.value;
+                        suggestionsBox.style.display = 'none';
+                        cityInput.focus();
+                    });
+                    
+                    item.addEventListener('mouseenter', function() {
+                        suggestionsBox.querySelectorAll('.city-suggestion-item').forEach(i => i.classList.remove('selected'));
+                        this.classList.add('selected');
+                        selectedIndex = parseInt(this.dataset.index);
+                    });
+                });
+            });
+            
+            // 键盘导航
+            cityInput.addEventListener('keydown', function(e) {
+                const items = suggestionsBox.querySelectorAll('.city-suggestion-item');
+                if(items.length === 0) return;
+                
+                if(e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = (selectedIndex + 1) % items.length;
+                    items[selectedIndex].scrollIntoView({ block: 'nearest' });
+                    items.forEach(i => i.classList.remove('selected'));
+                    items[selectedIndex].classList.add('selected');
+                } else if(e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = selectedIndex <= 0 ? items.length - 1 : selectedIndex - 1;
+                    items[selectedIndex].scrollIntoView({ block: 'nearest' });
+                    items.forEach(i => i.classList.remove('selected'));
+                    items[selectedIndex].classList.add('selected');
+                } else if(e.key === 'Enter' && selectedIndex >= 0) {
+                    e.preventDefault();
+                    cityInput.value = items[selectedIndex].dataset.value;
+                    suggestionsBox.style.display = 'none';
+                } else if(e.key === 'Escape') {
+                    suggestionsBox.style.display = 'none';
+                }
+            });
+            
+            // 点击外部关闭
+            document.addEventListener('click', function(e) {
+                if(!cityInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                    suggestionsBox.style.display = 'none';
+                }
+            });
+        }
 
         window.onload = function() {
             const savedKey = localStorage.getItem('geminiApiKey');
@@ -343,6 +1835,7 @@
             if(storedTrip) { try { tripData = JSON.parse(storedTrip); if(tripData.length) renderTrip(); } catch(e){} }
 
             loadInputs(); updateDuration();
+            initCitySearch(); // 初始化城市搜索
             
             document.querySelectorAll('input, select, textarea').forEach(el => {
                 el.addEventListener('input', handleInput);
@@ -416,7 +1909,7 @@
             
             let currentDate = new Date(start);
             while (currentDate <= end) {
-                days.push(currentDate.toISOString().split('T')[0]);
+                days.push(formatLocalDate(currentDate));
                 weatherCodes.push(code); 
                 maxTemps.push(baseMax + Math.floor(Math.random() * 4 - 2));
                 minTemps.push(baseMin + Math.floor(Math.random() * 4 - 2));
@@ -454,7 +1947,7 @@
             if(!city) { alert("請輸入城市！"); return; }
             const btn = document.querySelector('.btn-magic'); btn.disabled = true; btn.innerHTML = "🔮...";
             
-            const prompt = `推薦【${city}】的必去景點與必吃美食。請回傳 JSON:{ "spots": "列出3-5個熱門景點", "food": "列出3-5個必吃美食或餐廳" }`;
+            const prompt = `推薦【${city}】的必去景點與必吃美食。請回傳 JSON:{ "spots": "列出3-5個熱門景點", "food": "列出3-5個必吃美食或餐廳" }。Output strictly in Traditional Chinese (Taiwan).`;
             
             try {
                 const res = await callGemini(apiKey, prompt);
@@ -469,11 +1962,115 @@
             }
         }
 
-        // --- Plan Trip ---
+        // ==========================================
+        // 🚀 序列化生成核心 (Day-by-Day Generation)
+        // ==========================================
+
+        // 輔助：更新進度條 UI
+        function updateProgress(percent, text) {
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const loadingText = document.getElementById('loadingText');
+            if(progressBar) progressBar.style.width = percent + '%';
+            if(progressPercent) progressPercent.innerText = percent + '%';
+            if(loadingText) loadingText.innerText = text;
+        }
+
+        // 輔助：格式化本地日期為 YYYY-MM-DD（避免時區問題）
+        function formatLocalDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 輔助：生成單日 Prompt (防重複版 v3.0)
+        function generateSingleDayPrompt(params) {
+            const { city, hotel, dateStr, dayIndex, totalDays, isFirstDay, isLastDay,
+                    flightArr, flightDep, transport, pace, tags, previousLocation,
+                    spots, foodList, combinedPrefs, guideRole, entryName, transportInstruction,
+                    dailySpotCount, foodInstruction, 
+                    weatherDesc, weekDay, isWeekend, 
+                    visitedSpots } = params; // ✨ 新增 visitedSpots 參數
+
+            // ✨ 根據天氣生成特殊指令
+            let weatherInstruction = "";
+            if (weatherDesc && (weatherDesc.includes("雨") || weatherDesc.includes("雷"))) {
+                weatherInstruction = `⚠️ **天氣警示**：預報顯示今天是【${weatherDesc}】。請盡量安排「室內景點」或「有遮蔽的商店街/百貨」。`;
+            } else if (weatherDesc && (weatherDesc.includes("雪"))) {
+                weatherInstruction = `⚠️ **天氣警示**：預報顯示今天是【${weatherDesc}】。請提醒穿著保暖防滑鞋。`;
+            }
+
+            // ✨ 根據週末生成特殊指令
+            let weekendInstruction = "";
+            if (isWeekend) {
+                weekendInstruction = `⚠️ **人潮警示**：今天是【${weekDay}】（週末假日）。熱門景點人潮眾多，請建議「避開尖峰時段」。`;
+            }
+
+            // ✨ 處理已去過的景點字串
+            const visitedStr = (visitedSpots && visitedSpots.length > 0) ? visitedSpots.join('、') : "無";
+
+            return `
+${guideRole}
+
+任務：請只規劃【第 ${dayIndex} 天】(${dateStr} ${weekDay}) 的行程。
+
+【環境資訊】
+- 城市：${city}
+- 天氣：${weatherDesc || "未知"}。${weatherInstruction}
+- 日期：${weekDay}。${weekendInstruction}
+- 今日起點：${previousLocation}
+- 住宿：${hotel}
+- 交通：${transport}
+- 風格：${pace}
+- 每日景點數：約 ${dailySpotCount}
+
+【⛔ 避開名單 (非常重要)】
+- **已安排過的景點/餐廳 (絕對禁止重複)**：${visitedStr}
+- 請挖掘 ${city} 的其他區域或不同類型的景點，不要一直重複熱門地標。
+
+【今日特殊條件】
+${isFirstDay ? `- 第一天，${entryName} ${flightArr} **抵達**。請考慮出關交通。${transportInstruction}` : ''}
+${isLastDay ? `- 最後一天，${entryName} ${flightDep} **出發**。請務必安排提前抵達機場。${transportInstruction}` : ''}
+${!isFirstDay && !isLastDay ? `- 完整的一天，請安排順路行程。` : ''}
+
+【嚴格規劃規則】
+1. **時間邏輯**：行程需從早到晚閉環。
+2. **不重複原則**：絕對不要安排「避開名單」裡的景點。
+3. **飲食細節**：午晚餐必須有「具體餐廳名稱」。
+4. **交通建議**：提供具體搭乘方式 (如: 搭乘 JR 山手線)。
+5. **描述風格**：符合導遊人設。
+
+【JSON 輸出格式】
+請回傳一個 JSON 物件:
+{
+  "date": "${dateStr}",
+  "day_title": "今日主題",
+  "summary": "一句話總結",
+  "itinerary": [
+    {
+      "time": "HH:MM",
+      "type": "SPOT" | "FOOD" | "TRANSPORT",
+      "title": "地點名稱",
+      "desc": "介紹",
+      "address": "地址",
+      "cost": "預估費用",
+      "booking": false,
+      "tips": "小撇步",
+      "transit": [ { "mode": "交通", "time": "耗時", "desc": "路線" } ]
+    }
+  ]
+}
+Output strictly in Traditional Chinese (Taiwan).
+`;
+        }
+
+        // --- Plan Trip (序列化生成版本) ---
         async function planTrip() {
             const apiKey = getApiKey(); if(!apiKey) return;
             saveInputs();
 
+            // 1. 取得基本資訊
             const origin = document.getElementById('origin').value || "出發地";
             const city = document.getElementById('city').value;
             const hotel = document.getElementById('hotel').value;
@@ -487,11 +2084,24 @@
             
             const tags = Array.from(document.querySelectorAll('input[name="tripTag"]:checked')).map(el => el.value);
             const customPrefs = document.getElementById('customPrefs').value;
+            const guideStyle = document.getElementById('guideStyle').value;
             
             let combinedPrefs = tags.join('、');
             if(combinedPrefs && customPrefs) combinedPrefs += `，且需注意：${customPrefs}`;
             else if(customPrefs) combinedPrefs = customPrefs;
             else if(!combinedPrefs) combinedPrefs = "無特殊需求";
+            
+            // 根據導遊風格生成 Role 描述
+            let guideRole = "";
+            if(guideStyle === "歷史老師") {
+                guideRole = "你是一位歷史老師風格的導遊，專注於古蹟歷史背景、文化故事，少講購物資訊。";
+            } else if(guideStyle === "IG 網美") {
+                guideRole = "你是一位 IG 網美風格的導遊，專注於拍照打卡點、網美咖啡廳、穿搭建議、最佳拍照角度與時間。";
+            } else if(guideStyle === "孤獨的美食家") {
+                guideRole = "你是一位孤獨的美食家風格的導遊，專注於巷弄美食、在地餐廳，對食物描寫極其詳細（包含口感、香氣、食材來源、推薦吃法等）。";
+            } else {
+                guideRole = "你是一位專業導遊，擅長路線優化與實用行程規劃。";
+            }
 
             let transportInstruction = "";
             let entryName = "";
@@ -531,108 +2141,167 @@
             if(!city || !hotel) { alert("請輸入城市與飯店！"); return; }
             if(!flightArr || !flightDep) { alert("請輸入班機時間！"); return; }
 
-            const startDate = flightArr.split('T')[0];
-            const endDate = flightDep.split('T')[0];
-            if(new Date(startDate) > new Date(endDate)) { alert("日期錯誤！"); return; }
+            // 2. 計算日期範圍
+            const startDate = new Date(flightArr);
+            const endDate = new Date(flightDep);
+            const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            
+            if(totalDays <= 0) { alert("回程日期必須晚於去程！"); return; }
+            if(totalDays > 15) { alert("為了確保品質，目前僅支援 15 天以內的行程。"); return; }
 
+            // 根據節奏決定每日景點數量
+            let dailySpotCount = "4-5個";
+            if(pace === "特種兵極限") {
+                dailySpotCount = "8-10個";
+            } else if(pace === "標準觀光") {
+                dailySpotCount = "4-5個";
+            } else if(pace === "悠閒慢活") {
+                dailySpotCount = "2-3個";
+            }
+
+            // 3. 準備 UI
             setLoading(true);
+            tripData = []; // 清空舊資料
+            localStorage.removeItem('myTrip_v27');
 
+            let previousLocation = hotel; // 第一天的起點是飯店 (或機場)
+            
+            // ✨ 新增：用來儲存所有已安排過的景點名稱
+            let allVisitedSpots = [];
+            
+            // 4. 取得天氣資訊（一次性取得）
             let weatherInfo = null;
+            const startDateStr = flightArr.split('T')[0];
+            const endDateStr = flightDep.split('T')[0];
             try {
                 const geo = await getCoordinates(city);
                 if(geo) {
-                    weatherInfo = await getWeatherData(geo.lat, geo.lon, startDate, endDate);
+                    weatherInfo = await getWeatherData(geo.lat, geo.lon, startDateStr, endDateStr);
                 } else {
-                    weatherInfo = getSimulatedClimate(new Date(startDate), new Date(endDate));
+                    weatherInfo = getSimulatedClimate(new Date(startDateStr), new Date(endDateStr));
                 }
             } catch(e) { 
                 console.log("Weather error", e);
-                weatherInfo = getSimulatedClimate(new Date(startDate), new Date(endDate));
+                weatherInfo = getSimulatedClimate(new Date(startDateStr), new Date(endDateStr));
             }
-
-            const prompt = `
-            你是一位專業導遊。請規劃從【${startDate}】到【${endDate}】的行程。
-            【限制】
-            1. 城市：【${city}】(嚴禁跨縣市遠途)。
-            2. 飯店：【${hotel}】(每日起訖點)。
-            3. 去程出發時間：${flightArr} (從【${origin}】出發，請根據「${entryName}」估算交通耗時，推算出抵達當地並開始行程的時間)。
-            4. 回程出發時間：${flightDep} (這是準備從當地離開踏上歸途的時間，請依此安排最後一天的結束時間)。
-            5. ${transportInstruction}
-            6. 必去景點：${spots}。
-            7. 必吃美食清單：${foodList}。
-            8. 當地交通：${transport}。
-            9. 偏好與需求：${combinedPrefs}。
-            10. 節奏：${pace}。
             
-            ${foodInstruction}
-
-            【費用預估 - 新增需求】
-            請在每個行程項目中新增 "cost" 欄位，提供該活動的預估費用。
-            1. 景點：門票價格 (成人票價)。
-            2. 交通：該段移動的預估車資 (如計程車約1500円、地鐵210円)。
-            3. 餐廳：平均消費預算 (如午餐 1500-2000円)。
-            4. 若為免費，請填寫「免費」。
-
-            【飲食安排邏輯】
-            1. 嚴禁「餵豬式行程」。
-            2. 夜市即晚餐。
-            3. 合理間隔。
-
-            【點到點交通】
-            請為每個行程點提供 **2種** 交通移動方案供選擇。
-
-            【精確地址與資訊】
-            1. 提供【Google Map 可搜尋的完整地址】。
-            2. 標註景點/餐廳的「營業時間」。
-
-            【輸出規則 - 重要】
-            請只輸出 JSON 格式。
-            格式範例：
-            [{ 
-                "date": "YYYY-MM-DD", "day_title": "標題", "summary": "摘要", 
-                "itinerary": [{ 
-                    "time": "HH:MM", 
-                    "type": "SPOT/FOOD/TRANSPORT", 
-                    "title": "名稱", 
-                    "desc": "描述", 
-                    "address": "地址", 
-                    "cost": "預估費用",
-                    "tips": "備註", 
-                    "booking": false,
-                    "transit": [ {"mode":"A", "time":"min", "desc":"..."}, {"mode":"B", "time":"min", "desc":"..."} ]
-                }] 
-            }]
-            `;
-
             try {
-                const result = await callGemini(apiKey, prompt);
-                if(Array.isArray(result)) {
-                    if(weatherInfo && weatherInfo.daily) {
-                        result.forEach((day, idx) => {
-                            if (weatherInfo.daily.time[idx]) {
-                                day.weather = {
-                                    code: weatherInfo.daily.weather_code[idx],
-                                    max: weatherInfo.daily.temperature_2m_max[idx],
-                                    min: weatherInfo.daily.temperature_2m_min[idx],
+                // 5. 開始迴圈：一天一天生成
+                for (let i = 0; i < totalDays; i++) {
+                    // 計算當天日期（使用本地時間，避免時區問題）
+                    let currentDate = new Date(startDate);
+                    currentDate.setDate(startDate.getDate() + i);
+                    const dateStr = formatLocalDate(currentDate);
+                    
+                    // 更新進度條（在開始規劃時顯示已完成天數）
+                    const percent = Math.round((i / totalDays) * 100);
+                    updateProgress(percent, `正在規劃第 ${i + 1} 天 (${dateStr})...`);
+
+                    // 判斷是否為第一天或最後一天 (影響 Prompt)
+                    const isFirstDay = (i === 0);
+                    const isLastDay = (i === totalDays - 1);
+                    
+                    // ✨ 1. 計算天氣描述
+                    let weatherDesc = "";
+                    let weatherCode = null;
+                    if(weatherInfo && weatherInfo.daily && weatherInfo.daily.weather_code[i] !== undefined) {
+                        weatherCode = weatherInfo.daily.weather_code[i];
+                        // WMO 天氣代碼映射 (Open-Meteo 使用)
+                        const codeMap = {
+                            0: '晴天', 1: '多雲', 2: '陰天', 3: '陰天',
+                            45: '霧', 48: '霧',
+                            51: '小雨', 53: '小雨', 55: '小雨',
+                            56: '雨夾雪', 57: '雨夾雪',
+                            61: '小雨', 63: '雨天', 65: '大雨',
+                            66: '凍雨', 67: '凍雨',
+                            71: '小雪', 73: '下雪', 75: '大雪',
+                            77: '雪粒', 80: '雷雨', 81: '雷雨', 82: '強雷雨',
+                            85: '雪', 86: '雪',
+                            95: '雷雨', 96: '雷雨', 99: '強雷雨'
+                        };
+                        weatherDesc = codeMap[weatherCode] || "多雲時晴";
+                        
+                        // 加上氣溫
+                        const maxT = Math.round(weatherInfo.daily.temperature_2m_max[i]);
+                        const minT = Math.round(weatherInfo.daily.temperature_2m_min[i]);
+                        weatherDesc += `，氣溫 ${minT}°C~${maxT}°C`;
+                    }
+
+                    // ✨ 2. 計算星期幾
+                    const weekDayIndex = currentDate.getDay(); // 0 是週日
+                    const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+                    const weekDay = weekDays[weekDayIndex];
+                    const isWeekend = (weekDayIndex === 0 || weekDayIndex === 6);
+                    
+                    // 6. 動態生成 Prompt (傳入新參數)
+                    const dayPrompt = generateSingleDayPrompt({
+                        city, hotel, dateStr, dayIndex: i + 1, totalDays,
+                        isFirstDay, isLastDay,
+                        flightArr, flightDep,
+                        transport, pace, tags: tags.join('、'),
+                        previousLocation, // 告訴 AI 昨天最後在哪，確保連貫
+                        spots, foodList, combinedPrefs, guideRole,
+                        entryName, transportInstruction, dailySpotCount, foodInstruction,
+                        weatherDesc, weekDay, isWeekend,
+                        // 👇 關鍵：把目前為止去過的所有景點傳進去
+                        visitedSpots: allVisitedSpots
+                    });
+
+                    // 7. 呼叫 AI
+                    // 注意：這裡我們預期 AI 只回傳「這一天」的 JSON 物件，不是陣列
+                    const dayResult = await callGemini(apiKey, dayPrompt);
+                    
+                    // 8. 格式校正 (如果 AI 回傳陣列，取第一個；如果是物件，直接用)
+                    let finalDayData = Array.isArray(dayResult) ? dayResult[0] : dayResult;
+                    
+                    // 強制寫入正確日期 (防止 AI 寫錯)
+                    finalDayData.date = dateStr;
+                    
+                    // 9. 加入天氣資訊
+                    if(weatherInfo && weatherInfo.daily && weatherInfo.daily.time[i]) {
+                        finalDayData.weather = {
+                            code: weatherInfo.daily.weather_code[i],
+                            max: weatherInfo.daily.temperature_2m_max[i],
+                            min: weatherInfo.daily.temperature_2m_min[i],
                                     isSimulated: weatherInfo.isSimulated
                                 };
                             }
+                    
+                    // 10. 儲存結果並更新「上一地點」
+                    tripData.push(finalDayData);
+                    
+                    // ✨ 關鍵步驟：將今天生成的景點加入「已去過名單」
+                    if (finalDayData.itinerary) {
+                        finalDayData.itinerary.forEach(item => {
+                            // 只紀錄景點和餐廳，不紀錄交通
+                            if ((item.type === 'SPOT' || item.type === 'FOOD') && item.title) {
+                                allVisitedSpots.push(item.title);
+                            }
                         });
                     }
-                    tripData = result;
-                    localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
-                    renderTrip();
-                } else {
-                    if (typeof result === 'object' && result !== null) {
-                        tripData = [result];
-                        localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
-                        renderTrip();
-                    } else {
-                        throw new Error("格式錯誤：AI 未回傳行程陣列");
+                    
+                    // 嘗試抓取當天最後一個景點作為明天的起點 (簡單邏輯)
+                    if(finalDayData.itinerary && finalDayData.itinerary.length > 0) {
+                        const lastItem = finalDayData.itinerary[finalDayData.itinerary.length - 1];
+                        previousLocation = lastItem.title || hotel;
                     }
+
+                    // (可選) 這裡可以做一個簡單的延遲，避免 API Rate Limit (雖然 Gemini 限制很寬鬆)
+                    await new Promise(r => setTimeout(r, 500));
                 }
-            } catch(e) { alert("生成失敗：" + e.message); console.error(e); } 
-            finally { setLoading(false); }
+
+                // 11. 全部完成
+                updateProgress(100, "行程整合中...");
+                    localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
+                
+                    renderTrip();
+
+            } catch (e) {
+                console.error(e);
+                alert(`規劃中斷於第 ${tripData.length + 1} 天：${e.message}`);
+            } finally {
+                setLoading(false);
+            }
         }
 
         async function submitModification() {
@@ -641,7 +2310,7 @@
             closeModal('modifyModal'); setLoading(true);
             const apiKey = getApiKey();
             const targetDay = tripData[currentModifyIndex];
-            const prompt = `【微調】原始JSON:${JSON.stringify(targetDay)} 指令:${instruction} 回傳修改後的當天 JSON 物件`;
+            const prompt = `【微調】原始JSON:${JSON.stringify(targetDay)} 指令:${instruction} 回傳修改後的當天 JSON 物件。Output strictly in Traditional Chinese (Taiwan).`;
             try {
                 const newDayData = await callGemini(apiKey, prompt);
                 if(tripData[currentModifyIndex].weather) {
@@ -675,59 +2344,39 @@
             const requestBody = {
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
-                    responseMimeType: "application/json"
+                    responseMimeType: "application/json",
+                    // ⚠️ 關鍵：調高 Token 上限，防止行程寫到一半被腰斬
+                    maxOutputTokens: 8192, 
+                    temperature: 0.7
                 }
             };
 
-            let data;
             try {
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestBody)
                 });
                 
-                if (!res.ok && res.status === 400) {
-                    throw new Error("Mode not supported, retrying...");
-                }
-                
-                data = await res.json();
-                
-            } catch (e) {
-                console.warn("JSON mode failed, retrying plain text mode...");
-                const simpleBody = { contents: [{ parts: [{ text: prompt }] }] };
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(simpleBody)
-                });
-                data = await res.json();
-            }
+                const data = await res.json();
 
             if (!data.candidates || !data.candidates[0].content) {
-                console.error("API Response Error:", data);
-                throw new Error("API 回傳結構異常，可能被阻擋或 Key 失效");
+                    console.error("API Error Details:", data);
+                    throw new Error("API 回傳結構異常 (可能是 Key 錯誤或模型過載)");
             }
 
             const rawText = data.candidates[0].content.parts[0].text;
             
-            try {
-                return JSON.parse(rawText);
+                // 保存原始响应到全局变量，以便错误处理时使用
+                window.lastApiResponse = rawText;
+                
+                // 使用強力解析器
+                return cleanAndParseJSON(rawText);
+
             } catch (e) {
-                console.log("Direct parse failed, trying Regex extraction...");
-                const jsonArrayMatch = rawText.match(/\[[\s\S]*\]/);
-                const jsonObjectMatch = rawText.match(/\{[\s\S]*\}/);
-
-                let jsonStr = "";
-                if (jsonArrayMatch) jsonStr = jsonArrayMatch[0];
-                else if (jsonObjectMatch) jsonStr = jsonObjectMatch[0];
-                else throw new Error("無法在回應中找到有效的 JSON 區塊");
-
-                jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '');
-
-                try {
-                    return JSON.parse(jsonStr);
-                } catch (finalError) {
-                    throw new Error("JSON 解析失敗，請再試一次");
-                }
+                console.error("Gemini 呼叫錯誤:", e);
+                // 將錯誤往上拋，讓 planTrip 顯示 alert
+                throw e;
             }
         }
 
@@ -893,21 +2542,359 @@
             navigator.clipboard.writeText(text).then(() => alert("✅ 已複製 LINE 筆記格式！請直接貼上即可。"));
         }
 
-        function renderTrip() {
+        // --- 貨幣識別函式 ---
+        function getCurrencyInfo(city) {
+            if(!city) return { code: 'TWD', symbol: 'NT$', name: '新台幣' };
+            
+            const cityLower = city.toLowerCase();
+            
+            // 日本
+            if(cityLower.includes('東京') || cityLower.includes('大阪') || cityLower.includes('京都') || 
+               cityLower.includes('橫濱') || cityLower.includes('名古屋') || cityLower.includes('福岡') ||
+               cityLower.includes('札幌') || cityLower.includes('仙台') || cityLower.includes('廣島') ||
+               cityLower.includes('神戶') || cityLower.includes('奈良') || cityLower.includes('沖繩') ||
+               cityLower.includes('金澤') || cityLower.includes('高松') || cityLower.includes('函館') ||
+               cityLower.includes('小樽') || cityLower.includes('輕井澤') || cityLower.includes('箱根') ||
+               cityLower.includes('鎌倉') || cityLower.includes('日光') || cityLower.includes('白川鄉') ||
+               cityLower.includes('高山') || cityLower.includes('松本') || cityLower.includes('長野') ||
+               cityLower.includes('富山') || cityLower.includes('新潟') || cityLower.includes('靜岡') ||
+               cityLower.includes('熱海') || cityLower.includes('伊豆') || cityLower.includes('和歌山') ||
+               cityLower.includes('姬路') || cityLower.includes('倉敷') || cityLower.includes('岡山') ||
+               cityLower.includes('松山') || cityLower.includes('高知') || cityLower.includes('熊本') ||
+               cityLower.includes('鹿兒島') || cityLower.includes('宮崎') || cityLower.includes('大分') ||
+               cityLower.includes('長崎') || cityLower.includes('佐賀') || cityLower.includes('青森') ||
+               cityLower.includes('秋田') || cityLower.includes('山形') || cityLower.includes('福島') ||
+               cityLower.includes('岩手') || cityLower.includes('宮城') || cityLower.includes('茨城') ||
+               cityLower.includes('栃木') || cityLower.includes('群馬') || cityLower.includes('埼玉') ||
+               cityLower.includes('千葉') || cityLower.includes('神奈川') || cityLower.includes('山梨') ||
+               cityLower.includes('岐阜') || cityLower.includes('愛知') || cityLower.includes('三重') ||
+               cityLower.includes('滋賀') || cityLower.includes('兵庫') || cityLower.includes('鳥取') ||
+               cityLower.includes('島根') || cityLower.includes('山口') || cityLower.includes('德島') ||
+               cityLower.includes('香川') || cityLower.includes('愛媛') || cityLower.includes('tokyo') ||
+               cityLower.includes('osaka') || cityLower.includes('kyoto') || cityLower.includes('japan')) {
+                return { code: 'JPY', symbol: '¥', name: '日圓' };
+            }
+            
+            // 台灣
+            if(cityLower.includes('台北') || cityLower.includes('新北') || cityLower.includes('桃園') ||
+               cityLower.includes('台中') || cityLower.includes('台南') || cityLower.includes('高雄') ||
+               cityLower.includes('基隆') || cityLower.includes('新竹') || cityLower.includes('嘉義') ||
+               cityLower.includes('屏東') || cityLower.includes('宜蘭') || cityLower.includes('花蓮') ||
+               cityLower.includes('台東') || cityLower.includes('南投') || cityLower.includes('苗栗') ||
+               cityLower.includes('彰化') || cityLower.includes('雲林') || cityLower.includes('澎湖') ||
+               cityLower.includes('金門') || cityLower.includes('馬祖') || cityLower.includes('墾丁') ||
+               cityLower.includes('九份') || cityLower.includes('淡水') || cityLower.includes('日月潭') ||
+               cityLower.includes('阿里山') || cityLower.includes('太魯閣') || cityLower.includes('taipei') ||
+               cityLower.includes('taiwan')) {
+                return { code: 'TWD', symbol: 'NT$', name: '新台幣' };
+            }
+            
+            // 中國大陸
+            if(cityLower.includes('北京') || cityLower.includes('上海') || cityLower.includes('廣州') ||
+               cityLower.includes('深圳') || cityLower.includes('成都') || cityLower.includes('重慶') ||
+               cityLower.includes('杭州') || cityLower.includes('南京') || cityLower.includes('武漢') ||
+               cityLower.includes('西安') || cityLower.includes('蘇州') || cityLower.includes('廈門') ||
+               cityLower.includes('青島') || cityLower.includes('大連') || cityLower.includes('天津') ||
+               cityLower.includes('長沙') || cityLower.includes('鄭州') || cityLower.includes('昆明') ||
+               cityLower.includes('瀋陽') || cityLower.includes('哈爾濱') || cityLower.includes('長春') ||
+               cityLower.includes('濟南') || cityLower.includes('福州') || cityLower.includes('無錫') ||
+               cityLower.includes('寧波') || cityLower.includes('珠海') || cityLower.includes('三亞') ||
+               cityLower.includes('麗江') || cityLower.includes('大理') || cityLower.includes('張家界') ||
+               cityLower.includes('桂林') || cityLower.includes('陽朔') || cityLower.includes('九寨溝') ||
+               cityLower.includes('黃山') || cityLower.includes('烏鎮') || cityLower.includes('周莊') ||
+               cityLower.includes('鳳凰古城') || cityLower.includes('beijing') || cityLower.includes('shanghai') ||
+               cityLower.includes('china')) {
+                return { code: 'CNY', symbol: '¥', name: '人民幣' };
+            }
+            
+            // 泰國
+            if(cityLower.includes('曼谷') || cityLower.includes('清邁') || cityLower.includes('清萊') ||
+               cityLower.includes('普吉島') || cityLower.includes('芭達雅') || cityLower.includes('華欣') ||
+               cityLower.includes('蘇梅島') || cityLower.includes('象島') || cityLower.includes('甲米') ||
+               cityLower.includes('皮皮島') || cityLower.includes('拜縣') || cityLower.includes('大城') ||
+               cityLower.includes('素可泰') || cityLower.includes('合艾') || cityLower.includes('董里') ||
+               cityLower.includes('bangkok') || cityLower.includes('chiang mai') || cityLower.includes('phuket') ||
+               cityLower.includes('thailand')) {
+                return { code: 'THB', symbol: '฿', name: '泰銖' };
+            }
+            
+            // 越南
+            if(cityLower.includes('胡志明市') || cityLower.includes('河內') || cityLower.includes('峴港') ||
+               cityLower.includes('會安') || cityLower.includes('芽莊') || cityLower.includes('大叻') ||
+               cityLower.includes('順化') || cityLower.includes('下龍灣') || cityLower.includes('沙壩') ||
+               cityLower.includes('美奈') || cityLower.includes('富國島') || cityLower.includes('芹苴') ||
+               cityLower.includes('寧平') || cityLower.includes('ho chi minh') || cityLower.includes('hanoi') ||
+               cityLower.includes('vietnam')) {
+                return { code: 'VND', symbol: '₫', name: '越南盾' };
+            }
+            
+            // 美國
+            if(cityLower.includes('紐約') || cityLower.includes('洛杉磯') || cityLower.includes('舊金山') ||
+               cityLower.includes('芝加哥') || cityLower.includes('波士頓') || cityLower.includes('華盛頓') ||
+               cityLower.includes('邁阿密') || cityLower.includes('拉斯維加斯') || cityLower.includes('西雅圖') ||
+               cityLower.includes('休士頓') || cityLower.includes('達拉斯') || cityLower.includes('費城') ||
+               cityLower.includes('亞特蘭大') || cityLower.includes('鳳凰城') || cityLower.includes('聖地牙哥') ||
+               cityLower.includes('丹佛') || cityLower.includes('波特蘭') || cityLower.includes('新奧爾良') ||
+               cityLower.includes('夏威夷') || cityLower.includes('檀香山') || cityLower.includes('火奴魯魯') ||
+               cityLower.includes('奧蘭多') || cityLower.includes('聖安東尼奧') || cityLower.includes('聖荷西') ||
+               cityLower.includes('奧斯汀') || cityLower.includes('納什維爾') || cityLower.includes('查爾斯頓') ||
+               cityLower.includes('薩凡納') || cityLower.includes('new york') || cityLower.includes('los angeles') ||
+               cityLower.includes('san francisco') || cityLower.includes('chicago') || cityLower.includes('usa') ||
+               cityLower.includes('united states')) {
+                return { code: 'USD', symbol: '$', name: '美元' };
+            }
+            
+            // 加拿大
+            if(cityLower.includes('多倫多') || cityLower.includes('溫哥華') || cityLower.includes('蒙特婁') ||
+               cityLower.includes('渥太華') || cityLower.includes('卡加利') || cityLower.includes('魁北克') ||
+               cityLower.includes('維多利亞') || cityLower.includes('哈利法克斯') || cityLower.includes('toronto') ||
+               cityLower.includes('vancouver') || cityLower.includes('canada')) {
+                return { code: 'CAD', symbol: 'C$', name: '加幣' };
+            }
+            
+            // 歐洲（歐元區）
+            if(cityLower.includes('巴黎') || cityLower.includes('羅馬') || cityLower.includes('米蘭') ||
+               cityLower.includes('威尼斯') || cityLower.includes('佛羅倫斯') || cityLower.includes('巴塞隆納') ||
+               cityLower.includes('馬德里') || cityLower.includes('阿姆斯特丹') || cityLower.includes('柏林') ||
+               cityLower.includes('慕尼黑') || cityLower.includes('維也納') || cityLower.includes('里斯本') ||
+               cityLower.includes('雅典') || cityLower.includes('布魯塞爾') || cityLower.includes('盧森堡') ||
+               cityLower.includes('paris') || cityLower.includes('rome') || cityLower.includes('milan') ||
+               cityLower.includes('barcelona') || cityLower.includes('madrid') || cityLower.includes('amsterdam') ||
+               cityLower.includes('berlin') || cityLower.includes('vienna') || cityLower.includes('europe')) {
+                return { code: 'EUR', symbol: '€', name: '歐元' };
+            }
+            
+            // 英國
+            if(cityLower.includes('倫敦') || cityLower.includes('愛丁堡') || cityLower.includes('london') ||
+               cityLower.includes('edinburgh') || cityLower.includes('uk') || cityLower.includes('united kingdom')) {
+                return { code: 'GBP', symbol: '£', name: '英鎊' };
+            }
+            
+            // 瑞士
+            if(cityLower.includes('蘇黎世') || cityLower.includes('日內瓦') || cityLower.includes('zurich') ||
+               cityLower.includes('geneva') || cityLower.includes('switzerland')) {
+                return { code: 'CHF', symbol: 'CHF', name: '瑞士法郎' };
+            }
+            
+            // 預設：日圓（因為原本主要針對日本）
+            return { code: 'JPY', symbol: '¥', name: '日圓' };
+        }
+        
+        // --- 獲取匯率函式 ---
+        let exchangeRateCache = { rate: null, timestamp: 0, fromCurrency: null };
+        const CACHE_DURATION = 3600000; // 1小時快取
+        
+        async function getExchangeRate(fromCurrency, toCurrency = 'TWD') {
+            if(fromCurrency === toCurrency) return 1;
+            
+            // 檢查快取
+            const now = Date.now();
+            if(exchangeRateCache.fromCurrency === fromCurrency && 
+               exchangeRateCache.rate && 
+               (now - exchangeRateCache.timestamp) < CACHE_DURATION) {
+                return exchangeRateCache.rate;
+            }
+            
+            try {
+                // 使用免費的 ExchangeRate-API
+                const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`);
+                if(!response.ok) throw new Error('匯率API失敗');
+                
+                const data = await response.json();
+                const rate = data.rates[toCurrency];
+                
+                if(rate) {
+                    exchangeRateCache = {
+                        rate: rate,
+                        timestamp: now,
+                        fromCurrency: fromCurrency
+                    };
+                    return rate;
+                }
+            } catch(e) {
+                console.warn('獲取匯率失敗，使用預設值:', e);
+            }
+            
+            // 預設匯率（如果API失敗）
+            const defaultRates = {
+                'JPY': 0.22,  // 1日圓 = 0.22台幣
+                'USD': 32,    // 1美元 = 32台幣
+                'EUR': 35,    // 1歐元 = 35台幣
+                'GBP': 40,    // 1英鎊 = 40台幣
+                'CNY': 4.5,   // 1人民幣 = 4.5台幣
+                'THB': 0.9,   // 1泰銖 = 0.9台幣
+                'VND': 0.0013, // 1越南盾 = 0.0013台幣
+                'CAD': 24,    // 1加幣 = 24台幣
+                'CHF': 36     // 1瑞士法郎 = 36台幣
+            };
+            
+            return defaultRates[fromCurrency] || 1;
+        }
+        
+        // --- 計算費用函式（支援貨幣識別） ---
+        function calculateTotalCost(day, currencyInfo = null) {
+            let total = 0;
+            if(day && day.itinerary) {
+                day.itinerary.forEach(item => {
+                    if(item.cost) {
+                        // 用正則表達式提取數字（支援各種格式：1500円、1500-2000円、免費等）
+                        const costStr = item.cost.toString();
+                        if(costStr.includes('免費') || costStr.toLowerCase().includes('free')) {
+                            return; // 免費項目不計算
+                        }
+                        // 提取所有數字，取第一個（如果是範圍如1500-2000，取平均值）
+                        const numbers = costStr.match(/\d+/g);
+                        if(numbers && numbers.length > 0) {
+                            if(numbers.length > 1) {
+                                // 範圍格式，取平均值
+                                const min = parseInt(numbers[0]);
+                                const max = parseInt(numbers[numbers.length - 1]);
+                                total += Math.round((min + max) / 2);
+                            } else {
+                                total += parseInt(numbers[0]) || 0;
+                            }
+                        }
+                    }
+                });
+            }
+            return { amount: total, currency: currencyInfo };
+        }
+        
+        // --- 生成當日路線圖連結 ---
+        // 支援三種飯店輸入格式：
+        // 1. 完整地址（例如：東京都新宿區西新宿2-8-1）
+        // 2. 車站/地標（例如：新宿站、淺草雷門）
+        // 3. Airbnb 房源標題（例如：Cozy Apartment near Shibuya Crossing）
+        // Google Maps 的 dir API 可以自動識別這些格式
+        function generateDayRouteUrl(day, hotel) {
+            const locations = [];
+            const city = document.getElementById('city').value || '';
+            
+            // 收集所有景點和餐廳（排除交通項目）
+            day.itinerary.forEach(item => {
+                if(item.type !== 'TRANSPORT' && item.title) {
+                    // 優先使用地址，沒有地址則使用名稱+城市
+                    let location = item.address;
+                    if(!location) {
+                        location = item.title;
+                        if(city) location += " " + city;
+                    }
+                    if(location) locations.push(location);
+                }
+            });
+            
+            // 如果沒有景點，返回 null
+            if(locations.length === 0) return null;
+            
+            // 如果有飯店（支援地址、車站、地標、Airbnb 標題等各種格式），作為起點和終點
+            if(hotel && hotel.trim()) {
+                locations.unshift(hotel.trim()); // 起點
+                if(locations.length > 2) {
+                    locations.push(hotel.trim()); // 終點（只有多於2個地點時才加終點）
+                }
+            }
+            
+            // 至少需要2個地點才能生成路線
+            if(locations.length < 2) return null;
+            
+            // 使用標準的 Google Maps Universal Link 格式
+            const origin = encodeURIComponent(locations[0]);
+            const destination = encodeURIComponent(locations[locations.length - 1]);
+            
+            // 如果有中間點（waypoints）
+            let waypoints = '';
+            if(locations.length > 2) {
+                const waypointList = locations.slice(1, -1).map(l => encodeURIComponent(l)).join('|');
+                waypoints = `&waypoints=${waypointList}`;
+            }
+            
+            return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints}&travelmode=driving`;
+        }
+
+        async function renderTrip() {
             const container = document.getElementById('tripContainer');
             const exportBar = document.getElementById('exportBar');
             const ph = document.getElementById('placeholderMsg');
             
-            if(!tripData.length) { ph.style.display='block'; exportBar.style.display = 'none'; return; }
+            if(!tripData.length) { 
+                if(ph) ph.style.display='block'; 
+                if(exportBar) exportBar.style.display = 'none'; 
+                return; 
+            }
 
-            ph.style.display = 'none';
-            exportBar.style.display = 'flex';
+            if(ph) ph.style.display = 'none';
+            if(exportBar) exportBar.style.display = 'flex';
             
+            // 清空所有旧内容（包括 details 和 total-cost-summary）
+            // 但保留 placeholderMsg（如果它存在）
             const details = container.querySelectorAll('details');
             details.forEach(d => d.remove());
+            const totalCostSummary = container.querySelector('.total-cost-summary');
+            if(totalCostSummary) totalCostSummary.remove();
+            
+            // 識別貨幣
+            const city = document.getElementById('city').value || '';
+            const currencyInfo = getCurrencyInfo(city);
+            
+            // 獲取匯率（如果是新台幣則不需要）
+            let exchangeRate = 1;
+            if(currencyInfo.code !== 'TWD') {
+                exchangeRate = await getExchangeRate(currencyInfo.code, 'TWD');
+                console.log('貨幣:', currencyInfo.code, '匯率:', exchangeRate);
+            }
+            
+            // 計算總行程費用
+            let totalTripCost = 0;
+            tripData.forEach(day => {
+                const costResult = calculateTotalCost(day, currencyInfo);
+                totalTripCost += costResult.amount;
+            });
+            
+            const hotel = document.getElementById('hotel').value || '';
 
             tripData.forEach((day, index) => {
                 const isOpen = index === 0 ? 'open' : '';
+                
+                // 計算當日總費用
+                const costResult = calculateTotalCost(day, currencyInfo);
+                const dayTotalCost = costResult.amount;
+                
+                // 計算台幣等值
+                const twdAmount = Math.round(dayTotalCost * exchangeRate);
+                
+                // 格式化顯示（當地貨幣 + 台幣等值）
+                let dayCostHtml = '';
+                if(dayTotalCost > 0) {
+                    // 越南盾需要特殊處理（數字太大）
+                    let localAmount;
+                    if(currencyInfo.code === 'VND') {
+                        // 越南盾以千為單位顯示
+                        localAmount = (dayTotalCost / 1000).toFixed(0) + 'K';
+                    } else {
+                        localAmount = dayTotalCost.toLocaleString();
+                    }
+                    
+                    // 如果是新台幣，只顯示新台幣；否則顯示當地貨幣和台幣兩種
+                    if(currencyInfo.code === 'TWD') {
+                        dayCostHtml = `<div class="day-cost-badge">💰 預估花費：${currencyInfo.symbol}${localAmount}</div>`;
+                    } else {
+                        // 確保有有效的匯率
+                        if(exchangeRate && exchangeRate !== 1 && !isNaN(exchangeRate)) {
+                            const twdFormatted = twdAmount.toLocaleString();
+                            dayCostHtml = `<div class="day-cost-badge">💰 預估花費：${currencyInfo.symbol}${localAmount} / 約 NT$${twdFormatted}</div>`;
+                        } else {
+                            // 如果匯率獲取失敗，只顯示當地貨幣
+                            dayCostHtml = `<div class="day-cost-badge">💰 預估花費：${currencyInfo.symbol}${localAmount}</div>`;
+                        }
+                    }
+                }
+                
+                // 生成當日路線圖連結
+                const routeUrl = generateDayRouteUrl(day, hotel);
+                const routeButtonHtml = routeUrl ? `<a href="${routeUrl}" target="_blank" class="btn-route">🗺️ 查看當日路線圖</a>` : '';
+                
+                // 構建微調按鈕 HTML（避免在模板字符串中嵌套）
+                const modifyButtonHtml = '<button onclick="openModifyModal(' + index + ')" class="btn-modify">AI 微調這天</button>';
                 
                 let weatherHtml = '';
                 if(day.weather) {
@@ -923,6 +2910,7 @@
                         <div class="day-header">
                             <div class="day-date">${day.date}</div>
                             <div class="day-summary">${day.day_title}</div>
+                            ${dayCostHtml}
                             ${weatherHtml}
                         </div>
                     </summary>
@@ -939,37 +2927,214 @@
                                 
                                 const addressHtml = item.address ? `<div class="address-line">${item.address}</div>` : '';
                                 const mapQuery = item.title + " " + (item.address || document.getElementById('city').value);
+                                // 使用標準的 Google Maps 搜尋連結
                                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
 
                                 let transitHtml = '';
                                 if(item.transit && item.transit.length > 0) {
+                                    const transitOptions = item.transit.map((t, i) => {
+                                        const badge = i === 0 ? 'A' : 'B';
+                                        return `<div class="transit-option"><span class="transit-badge">${badge}</span><b>${t.mode}</b> (${t.time}) - ${t.desc}</div>`;
+                                    }).join('');
                                     transitHtml = `
                                     <div class="transit-box">
                                         <div class="transit-title">🚦 建議交通 (From 上一站)</div>
                                         <div class="transit-options">
-                                            ${item.transit.map((t, i) => `
-                                                <div class="transit-option">
-                                                    <span class="transit-badge">${i===0 ? 'A' : 'B'}</span>
-                                                    <b>${t.mode}</b> (${t.time}) - ${t.desc}
-                                                </div>
-                                            `).join('')}
+                                            ${transitOptions}
                                         </div>
                                     </div>`;
                                 }
 
-                                return `<div class="itinerary-item ${typeClass}"><span class="time">${item.time}</span><div class="activity-card"><div class="tags-row">${tagHtml} ${costHtml} ${ticketHtml}</div><div class="activity-title">${item.title}</div><div class="desc">${item.desc}</div>${addressHtml}${transitHtml}${item.tips ? `<div class="tips">${item.tips}</div>` : ''}</div><a href="${mapUrl}" target="_blank" style="display:inline-block; margin-top:8px; margin-left:15px; font-size:0.85rem; color:var(--primary); text-decoration:none; font-weight:600;">📍 Map</a></div>`;
+                                const tipsHtml = item.tips ? '<div class="tips">' + item.tips + '</div>' : '';
+                                return `<div class="itinerary-item ${typeClass}"><span class="time">${item.time}</span><div class="activity-card"><div class="tags-row">${tagHtml} ${costHtml} ${ticketHtml}</div><div class="activity-title">${item.title}</div><div class="desc">${item.desc}</div>${addressHtml}${transitHtml}${tipsHtml}</div><a href="${mapUrl}" target="_blank" style="display:inline-block; margin-top:8px; margin-left:15px; font-size:0.85rem; color:var(--primary); text-decoration:none; font-weight:600;">📍 Map</a></div>`;
                             }).join('')}
                         </div>
-                        <button onclick="openModifyModal(${index})" class="btn-modify">🤖 AI 微調這天</button>
+                        <div class="day-actions">
+                            ${routeButtonHtml}
+                            ${modifyButtonHtml}
+                        </div>
                         <div class="watermark">Generated by AI Trip Planner • Create your journey</div>
                     </div>
                 </details>`;
                 container.insertAdjacentHTML('beforeend', html);
             });
+            
+            // 在行程最後顯示總費用
+            if(totalTripCost > 0) {
+                // 越南盾需要特殊處理（數字太大）
+                let localFormatted;
+                if(currencyInfo.code === 'VND') {
+                    // 越南盾以千為單位顯示
+                    localFormatted = (totalTripCost / 1000).toFixed(0) + 'K';
+                } else {
+                    localFormatted = totalTripCost.toLocaleString();
+                }
+                
+                // 如果是新台幣，只顯示新台幣；否則顯示當地貨幣和台幣兩種
+                let totalCostHtml = '';
+                if(currencyInfo.code === 'TWD') {
+                    totalCostHtml = `
+                    <div class="total-cost-summary">
+                        <div class="total-cost-card">
+                            <div class="total-cost-title">💰 行程總預估花費</div>
+                            <div class="total-cost-amount">
+                                <div class="local-currency">${currencyInfo.symbol}${localFormatted} ${currencyInfo.name}</div>
+                            </div>
+                            <div class="total-cost-note">* 此為預估值，實際花費可能因個人消費習慣而有所不同</div>
+                        </div>
+                    </div>`;
+                } else {
+                    // 確保有有效的匯率
+                    if(exchangeRate && exchangeRate !== 1 && !isNaN(exchangeRate)) {
+                        const totalTwdAmount = Math.round(totalTripCost * exchangeRate);
+                        const twdFormatted = totalTwdAmount.toLocaleString();
+                        const rateDate = new Date().toLocaleDateString('zh-TW');
+                        totalCostHtml = `
+                        <div class="total-cost-summary">
+                            <div class="total-cost-card">
+                                <div class="total-cost-title">💰 行程總預估花費</div>
+                                <div class="total-cost-amount">
+                                    <div class="local-currency">${currencyInfo.symbol}${localFormatted} ${currencyInfo.name}</div>
+                                    <div class="twd-currency">約 NT$${twdFormatted}</div>
+                                </div>
+                                <div class="total-cost-note">* 此為預估值，實際花費可能因個人消費習慣而有所不同<br>* 匯率：1 ${currencyInfo.code} = ${exchangeRate.toFixed(4)} TWD（${rateDate}）</div>
+                            </div>
+                        </div>`;
+                    } else {
+                        // 如果匯率獲取失敗，只顯示當地貨幣
+                        totalCostHtml = `
+                        <div class="total-cost-summary">
+                            <div class="total-cost-card">
+                                <div class="total-cost-title">💰 行程總預估花費</div>
+                                <div class="total-cost-amount">
+                                    <div class="local-currency">${currencyInfo.symbol}${localFormatted} ${currencyInfo.name}</div>
+                                </div>
+                                <div class="total-cost-note">* 此為預估值，實際花費可能因個人消費習慣而有所不同<br>* 匯率獲取失敗，僅顯示當地貨幣</div>
+                            </div>
+                        </div>`;
+                    }
+                }
+                container.insertAdjacentHTML('beforeend', totalCostHtml);
+            }
+        }
+
+        // --- 🛠️ 強力 JSON 清洗與修復工具 ---
+        function cleanAndParseJSON(rawText) {
+            console.log("原始回應長度:", rawText.length);
+            
+            // 1. 移除 Markdown標記 (```json ... ```)
+            let cleaned = rawText.replace(/```json/g, '').replace(/```/g, '');
+            
+            // 2. 嘗試提取核心 JSON 區塊 (從第一個 [ 或 { 開始，到最後一個 ] 或 } 結束)
+            // 這樣可以過濾掉 AI 在開頭或結尾講的廢話
+            const firstBracket = cleaned.indexOf('[');
+            const firstBrace = cleaned.indexOf('{');
+            const lastBracket = cleaned.lastIndexOf(']');
+            const lastBrace = cleaned.lastIndexOf('}');
+            
+            let start = -1;
+            let end = -1;
+
+            // 判斷是陣列還是物件開頭
+            if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+                start = firstBracket;
+            } else if (firstBrace !== -1) {
+                start = firstBrace;
+            }
+
+            // 判斷結尾
+            if (lastBracket !== -1 && (lastBrace === -1 || lastBracket > lastBrace)) {
+                end = lastBracket;
+            } else if (lastBrace !== -1) {
+                end = lastBrace;
+            }
+
+            if (start !== -1 && end !== -1) {
+                cleaned = cleaned.substring(start, end + 1);
+            }
+
+            // 3. 常見語法錯誤修正 (移除尾隨逗號)
+            // 例如: {"a": 1, } -> {"a": 1 }
+            cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1');
+
+            try {
+                return JSON.parse(cleaned);
+            } catch (e) {
+                console.error("第一次解析失敗，嘗試修復截斷...", e);
+                // 4. (進階) 處理被截斷的 JSON
+                // 如果是因為 token 不夠導致結尾少了 ] 或 }，嘗試補上
+                try {
+                    if (cleaned.trim().startsWith('[')) {
+                        // 如果是陣列，嘗試補上 ]
+                        if (!cleaned.trim().endsWith(']')) {
+                           // 尋找最後一個完整的物件結束點
+                           const lastObjEnd = cleaned.lastIndexOf('}');
+                           if(lastObjEnd !== -1) {
+                               cleaned = cleaned.substring(0, lastObjEnd + 1) + ']';
+                           }
+                        }
+                    }
+                    return JSON.parse(cleaned);
+                } catch (e2) {
+                    console.error("最終解析失敗。清洗後的文字:", cleaned);
+                    throw new Error("無法解析行程資料，請檢查 Token 數量或 AI 回應格式。");
+                }
+            }
         }
 
         function getApiKey() { const k=document.getElementById('apiKey').value.trim(); if(!k) openModal('apiModal'); return k; }
-        function setLoading(isLoading) { document.getElementById('loading').style.display = isLoading ? 'block' : 'none'; document.getElementById('tripContainer').style.display = isLoading ? 'none' : 'flex'; document.getElementById('planBtn').disabled = isLoading; }
+        
+        let loadingInterval = null;
+        const loadingMessages = [
+            "正在搜尋當地美食...",
+            "正在計算最佳路線...",
+            "正在查詢天氣預報...",
+            "正在整理隱藏景點...",
+            "正在優化行程順序...",
+            "正在生成詳細資訊..."
+        ];
+        let currentMessageIndex = 0;
+        
+        function setLoading(isLoading) { 
+            const loadingEl = document.getElementById('loading');
+            const containerEl = document.getElementById('tripContainer');
+            const loadingTextEl = document.getElementById('loadingText');
+            const planBtn = document.getElementById('planBtn');
+            
+            if(isLoading) {
+                loadingEl.style.display = 'block';
+                containerEl.style.display = 'none';
+                planBtn.disabled = true;
+                
+                // 重置訊息索引
+                currentMessageIndex = 0;
+                loadingTextEl.textContent = loadingMessages[0];
+                
+                // 開始動態切換訊息
+                loadingInterval = setInterval(() => {
+                    currentMessageIndex = (currentMessageIndex + 1) % loadingMessages.length;
+                    loadingTextEl.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingTextEl.textContent = loadingMessages[currentMessageIndex];
+                        loadingTextEl.style.opacity = '1';
+                    }, 200);
+                }, 2000);
+            } else {
+                loadingEl.style.display = 'none';
+                containerEl.style.display = 'flex';
+                planBtn.disabled = false;
+                
+                // 清除定時器
+                if(loadingInterval) {
+                    clearInterval(loadingInterval);
+                    loadingInterval = null;
+                }
+                
+                // 重置為預設訊息
+                loadingTextEl.textContent = "AI 正在為您規劃完美旅程...";
+                loadingTextEl.style.opacity = '1';
+            }
+        }
         
         function saveInputs() { 
             const i={}; 
@@ -1001,6 +3166,142 @@
         function saveAndCloseModal() { localStorage.setItem('geminiApiKey', document.getElementById('apiKey').value.trim()); closeModal('apiModal'); }
         window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display="none"; }
         function openModifyModal(idx) { currentModifyIndex=idx; document.getElementById('modifyDateDisplay').innerText=`${tripData[idx].date}`; openModal('modifyModal'); }
+
+        // ==========================================
+        // 🚀 核彈級 JSON 修復與 API 呼叫函式
+        // (請將此段程式碼貼到 <script> 的最後方以覆蓋舊邏輯)
+        // ==========================================
+
+        // 1. 智慧 JSON 修復引擎
+        function smartJsonRepair(jsonStr) {
+            if (!jsonStr) return null;
+            
+            // 步驟 A: 移除 Markdown 與頭尾雜訊
+            let fixed = jsonStr
+                .replace(/```json/gi, '')
+                .replace(/```/g, '')
+                .trim();
+
+            // 嘗試抓取最外層的 [ ] 或 { }
+            const firstBracket = fixed.indexOf('[');
+            const firstBrace = fixed.indexOf('{');
+            const lastBracket = fixed.lastIndexOf(']');
+            const lastBrace = fixed.lastIndexOf('}');
+            
+            let start = 0;
+            let end = fixed.length;
+
+            // 判斷是陣列還是物件
+            if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+                start = firstBracket;
+                end = lastBracket !== -1 ? lastBracket + 1 : fixed.length;
+            } else if (firstBrace !== -1) {
+                start = firstBrace;
+                end = lastBrace !== -1 ? lastBrace + 1 : fixed.length;
+            }
+            
+            fixed = fixed.substring(start, end);
+
+            // 步驟 B: 暴力修復常見語法錯誤
+            
+            // 1. 處理未轉義的換行符 (這是最常見的錯誤)
+            // 邏輯：在字串值裡面的換行，替換成 \n
+            // 這裡使用簡單替換：將所有真實換行替換為空格 (為了安全)
+            fixed = fixed.replace(/\n/g, ' '); 
+
+            // 2. 處理尾隨逗號 (例如: "a":1, })
+            fixed = fixed.replace(/,\s*([}\]])/g, '$1');
+
+            // 3. 嘗試解析
+            try {
+                return JSON.parse(fixed);
+            } catch (e) {
+                console.warn("第一次解析失敗，嘗試進階修復...", e);
+                
+                // 步驟 C: 處理被截斷的 JSON (補齊括號)
+                try {
+                    // 簡單判斷缺多少括號 (這是一個粗略的估計)
+                    let openBraces = (fixed.match(/{/g) || []).length;
+                    let closeBraces = (fixed.match(/}/g) || []).length;
+                    let openBrackets = (fixed.match(/\[/g) || []).length;
+                    let closeBrackets = (fixed.match(/]/g) || []).length;
+
+                    while (openBraces > closeBraces) { fixed += '}'; closeBraces++; }
+                    while (openBrackets > closeBrackets) { fixed += ']'; closeBrackets++; }
+                    
+                    return JSON.parse(fixed);
+                } catch (e2) {
+                    console.error("修復失敗。原始字串片段:", fixed.substring(0, 100) + "...");
+                    return null; // 真的沒救了
+                }
+            }
+        }
+
+        // 2. 強化版 API 呼叫
+        async function callGemini(key, prompt) {
+            const model = document.getElementById('modelSelect').value;
+            
+            // 設定較高的 Token 限制
+            const requestBody = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    // ⚠️ 暫時移除 application/json 強制模式，改用純文字模式解析
+                    // 因為有些模型在 json mode 下會因為內容過長而直接報錯
+                    // responseMimeType: "application/json", 
+                    maxOutputTokens: 8192,
+                    temperature: 0.7
+                }
+            };
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await res.json();
+
+                // 錯誤處理：檢查 API 是否回傳錯誤
+                if (data.error) {
+                    throw new Error(`API Error: ${data.error.message}`);
+                }
+
+                if (!data.candidates || !data.candidates[0].content) {
+                    throw new Error("API 回傳結構異常 (可能是被安全性阻擋)");
+                }
+
+                const rawText = data.candidates[0].content.parts[0].text;
+                
+                // 使用上面的修復引擎
+                const parsedData = smartJsonRepair(rawText);
+
+                if (!parsedData) {
+                    // 如果真的解析失敗，拋出詳細錯誤讓使用者知道
+                    console.log("Raw Response:", rawText); // 在 Console 印出原始回應以便除錯
+                    throw new Error("JSON 解析失敗。請按 F12 開啟 Console 查看 'Raw Response'，或嘗試縮短行程天數。");
+                }
+
+                return parsedData;
+
+            } catch (e) {
+                console.error("Gemini Critical Error:", e);
+                
+                // 顯示錯誤給使用者
+                alert(`❌ 生成失敗：${e.message}\n\n建議：\n1. 檢查 API Key 是否正確\n2. 嘗試減少「必去景點」或「天數」\n3. 換一個 AI 模型試試`);
+                
+                throw e; // 終止後續動作
+            }
+        }
+
+        // 3. 格式化輸出輔助 (防止 undefined)
+        function formatAIOutput(data) {
+            if (!data) return "";
+            if (typeof data === 'string') return data;
+            if (Array.isArray(data)) return data.join("、");
+            if (typeof data === 'object') return Object.values(data).join(" ");
+            return "";
+        }
     </script>
 </body>
 </html>
