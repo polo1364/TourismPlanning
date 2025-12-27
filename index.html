@@ -852,6 +852,292 @@
             background: var(--tag-trans);
         }
 
+        /* 表格卡片樣式 */
+        .itinerary-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 0;
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .itinerary-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .itinerary-table th {
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        
+        .itinerary-table th:first-child {
+            width: 100px;
+        }
+        
+        .itinerary-table th:nth-child(2) {
+            width: 100px;
+        }
+        
+        .itinerary-table th:nth-child(3) {
+            min-width: 180px;
+        }
+        
+        .itinerary-table th:nth-child(4) {
+            min-width: 250px;
+        }
+        
+        .itinerary-table th:nth-child(5) {
+            width: 100px;
+        }
+        
+        .itinerary-table tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.2s ease;
+            animation: fadeInRow 0.4s ease forwards;
+            opacity: 0;
+        }
+        
+        .itinerary-table tbody tr:nth-child(1) { animation-delay: 0.05s; }
+        .itinerary-table tbody tr:nth-child(2) { animation-delay: 0.1s; }
+        .itinerary-table tbody tr:nth-child(3) { animation-delay: 0.15s; }
+        .itinerary-table tbody tr:nth-child(4) { animation-delay: 0.2s; }
+        .itinerary-table tbody tr:nth-child(5) { animation-delay: 0.25s; }
+        .itinerary-table tbody tr:nth-child(n+6) { animation-delay: 0.3s; }
+        
+        @keyframes fadeInRow {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .itinerary-table tbody tr:hover {
+            background: #f8fafc;
+            transform: scale(1.01);
+        }
+        
+        .itinerary-table tbody tr:last-child {
+            border-bottom: none;
+        }
+        
+        .itinerary-table td {
+            padding: 16px;
+            vertical-align: top;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .itinerary-table .time-cell {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+        
+        .itinerary-table .type-cell {
+            text-align: center;
+        }
+        
+        .itinerary-table .title-cell {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.95rem;
+        }
+        
+        .itinerary-table .desc-cell {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        
+        .itinerary-table .desc-cell > div:first-child {
+            margin-bottom: 8px;
+        }
+        
+        .itinerary-table .action-cell {
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .table-tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        
+        .table-tag.spot {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .table-tag.food {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .table-tag.transport {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+        
+        .table-cost {
+            display: inline-block;
+            font-size: 0.8rem;
+            color: #059669;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        .table-address {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .table-map-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .table-map-link:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .table-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        
+        .table-badge.booking {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .table-transit {
+            margin-top: 8px;
+            padding: 8px;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: #475569;
+        }
+        
+        .table-tips {
+            margin-top: 8px;
+            padding: 8px;
+            background: #fef3c7;
+            border-left: 3px solid #f59e0b;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #92400e;
+        }
+
+        /* 響應式設計 - 手機版 */
+        @media (max-width: 768px) {
+            .itinerary-table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .itinerary-table thead {
+                display: none;
+            }
+            
+            .itinerary-table tbody {
+                display: block;
+            }
+            
+            .itinerary-table tbody tr {
+                display: block;
+                margin-bottom: 16px;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 12px;
+                background: #fff;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            }
+            
+            .itinerary-table tbody tr:hover {
+                transform: none;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+            
+            .itinerary-table td {
+                display: block;
+                padding: 8px 0;
+                text-align: left !important;
+                border: none;
+            }
+            
+            .itinerary-table td:before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: var(--primary);
+                display: block;
+                margin-bottom: 4px;
+                font-size: 0.85rem;
+            }
+            
+            .itinerary-table .time-cell:before {
+                content: "⏰ 時間：";
+            }
+            
+            .itinerary-table .type-cell:before {
+                content: "🏷️ 類型：";
+            }
+            
+            .itinerary-table .title-cell:before {
+                content: "📍 活動：";
+            }
+            
+            .itinerary-table .desc-cell:before {
+                content: "📝 說明：";
+            }
+            
+            .itinerary-table .action-cell:before {
+                content: "🔗 操作：";
+            }
+            
+            .itinerary-table .action-cell {
+                padding-top: 12px;
+                border-top: 1px solid #f1f5f9;
+                margin-top: 8px;
+            }
+        }
+
         .time { 
             font-size: 0.95rem; 
             font-weight: 800; 
@@ -1697,6 +1983,31 @@
         let currentModifyIndex = null;
         const inputIds = ['origin', 'city', 'hotel', 'entryType', 'flightArrival', 'flightDeparture', 'spots', 'foodList', 'transport', 'pace', 'guideStyle', 'customPrefs'];
         
+        // ✨ 用於按天生成的狀態變數
+        let generationState = {
+            allVisitedSpots: [],
+            previousLocation: null,
+            weatherInfo: null,
+            totalDays: 0,
+            startDate: null,
+            endDate: null,
+            city: null,
+            hotel: null,
+            flightArr: null,
+            flightDep: null,
+            transport: null,
+            pace: null,
+            tags: null,
+            spots: null,
+            foodList: null,
+            combinedPrefs: null,
+            guideRole: null,
+            entryName: null,
+            transportInstruction: null,
+            dailySpotCount: null,
+            foodInstruction: null
+        };
+        
         // 城市搜索数据（热门城市，带图标和分类）
         const citySearchData = [
             // 日本热门城市
@@ -1833,6 +2144,26 @@
 
             const storedTrip = localStorage.getItem('myTrip_v27');
             if(storedTrip) { try { tripData = JSON.parse(storedTrip); if(tripData.length) renderTrip(); } catch(e){} }
+
+            // ✨ 恢復生成狀態
+            const storedGenerationState = localStorage.getItem('generationState_v27');
+            if(storedGenerationState) {
+                try {
+                    const restoredState = JSON.parse(storedGenerationState);
+                    // 恢復 generationState，但需要處理日期對象
+                    generationState = {
+                        ...restoredState,
+                        startDate: restoredState.startDate ? new Date(restoredState.startDate) : null,
+                        endDate: restoredState.endDate ? new Date(restoredState.endDate) : null
+                    };
+                    // 如果恢復了狀態且有未完成的天數，重新渲染以顯示按鈕
+                    if(tripData.length > 0 && generationState.totalDays > 0 && tripData.length < generationState.totalDays) {
+                        renderTrip();
+                    }
+                } catch(e) {
+                    console.error('Failed to restore generationState:', e);
+                }
+            }
 
             loadInputs(); updateDuration();
             initCitySearch(); // 初始化城市搜索
@@ -1985,15 +2316,15 @@
         }
 
         // 輔助：生成單日 Prompt (防重複版 v3.0)
+        // 輔助：生成單日 Prompt (防錯升級版 v4.0)
         function generateSingleDayPrompt(params) {
             const { city, hotel, dateStr, dayIndex, totalDays, isFirstDay, isLastDay,
                     flightArr, flightDep, transport, pace, tags, previousLocation,
                     spots, foodList, combinedPrefs, guideRole, entryName, transportInstruction,
                     dailySpotCount, foodInstruction, 
                     weatherDesc, weekDay, isWeekend, 
-                    visitedSpots } = params; // ✨ 新增 visitedSpots 參數
+                    visitedSpots } = params;
 
-            // ✨ 根據天氣生成特殊指令
             let weatherInstruction = "";
             if (weatherDesc && (weatherDesc.includes("雨") || weatherDesc.includes("雷"))) {
                 weatherInstruction = `⚠️ **天氣警示**：預報顯示今天是【${weatherDesc}】。請盡量安排「室內景點」或「有遮蔽的商店街/百貨」。`;
@@ -2001,13 +2332,11 @@
                 weatherInstruction = `⚠️ **天氣警示**：預報顯示今天是【${weatherDesc}】。請提醒穿著保暖防滑鞋。`;
             }
 
-            // ✨ 根據週末生成特殊指令
             let weekendInstruction = "";
             if (isWeekend) {
                 weekendInstruction = `⚠️ **人潮警示**：今天是【${weekDay}】（週末假日）。熱門景點人潮眾多，請建議「避開尖峰時段」。`;
             }
 
-            // ✨ 處理已去過的景點字串
             const visitedStr = (visitedSpots && visitedSpots.length > 0) ? visitedSpots.join('、') : "無";
 
             return `
@@ -2025,21 +2354,22 @@ ${guideRole}
 - 風格：${pace}
 - 每日景點數：約 ${dailySpotCount}
 
-【⛔ 避開名單 (非常重要)】
-- **已安排過的景點/餐廳 (絕對禁止重複)**：${visitedStr}
-- 請挖掘 ${city} 的其他區域或不同類型的景點，不要一直重複熱門地標。
+【⛔ 避開名單】
+- 已安排過：${visitedStr} (禁止重複)
 
 【今日特殊條件】
-${isFirstDay ? `- 第一天，${entryName} ${flightArr} **抵達**。請考慮出關交通。${transportInstruction}` : ''}
-${isLastDay ? `- 最後一天，${entryName} ${flightDep} **出發**。請務必安排提前抵達機場。${transportInstruction}` : ''}
+${isFirstDay ? `- 第一天，${entryName} ${flightArr} **出發**（這是從出發地的出發時間，實際抵達目的地時間會晚於此時間）。行程請從抵達目的地後開始安排，請考慮出關交通。${transportInstruction}` : ''}
+${isLastDay ? `- 最後一天，${entryName} ${flightDep} **出發**（這是從目的地的回程出發時間）。請務必安排提前抵達機場/車站/碼頭。${transportInstruction}` : ''}
 ${!isFirstDay && !isLastDay ? `- 完整的一天，請安排順路行程。` : ''}
 
 【嚴格規劃規則】
 1. **時間邏輯**：行程需從早到晚閉環。
-2. **不重複原則**：絕對不要安排「避開名單」裡的景點。
-3. **飲食細節**：午晚餐必須有「具體餐廳名稱」。
-4. **交通建議**：提供具體搭乘方式 (如: 搭乘 JR 山手線)。
-5. **描述風格**：符合導遊人設。
+2. **飲食細節**：午晚餐必須有「具體餐廳名稱」。
+3. **格式與引號規定 (非常重要)**：
+   - JSON 的 Key 和 Value 必須用雙引號。
+   - **內容描述(desc, tips)內部若有引號，一律使用單引號 ( ' )**。
+   - 範例： "desc": "這裡被稱為 '小京都'，非常美麗" (O)
+   - 禁止： "desc": "這裡被稱為 "小京都"，非常美麗" (X) -> 這會導致解析錯誤！
 
 【JSON 輸出格式】
 請回傳一個 JSON 物件:
@@ -2052,7 +2382,7 @@ ${!isFirstDay && !isLastDay ? `- 完整的一天，請安排順路行程。` : '
       "time": "HH:MM",
       "type": "SPOT" | "FOOD" | "TRANSPORT",
       "title": "地點名稱",
-      "desc": "介紹",
+      "desc": "介紹 (內容請用單引號，勿用雙引號)",
       "address": "地址",
       "cost": "預估費用",
       "booking": false,
@@ -2065,7 +2395,188 @@ Output strictly in Traditional Chinese (Taiwan).
 `;
         }
 
-        // --- Plan Trip (序列化生成版本) ---
+        // ✨ 生成下一天（按鈕觸發）
+        async function generateNextDay() {
+            const apiKey = getApiKey();
+            if(!apiKey) {
+                alert("請先設定 API Key！");
+                return;
+            }
+            
+            // 檢查狀態是否有效
+            if(!generationState.totalDays || tripData.length >= generationState.totalDays) {
+                alert("所有天數已生成完成！");
+                return;
+            }
+            
+            // ✨ 不隱藏容器，只顯示進度提示（保持已生成的天數可見）
+            const containerEl = document.getElementById('tripContainer');
+            
+            // 確保容器保持顯示
+            if(containerEl) {
+                containerEl.style.display = 'flex';
+            }
+            
+            // ✨ 顯示生成按鈕區域的進度條
+            const generateBtn = document.getElementById('generateNextDayBtn');
+            const progressContainer = document.getElementById('generateProgressContainer');
+            const progressBar = document.getElementById('generateProgressBar');
+            const progressText = document.getElementById('generateProgressText');
+            const progressPercent = document.getElementById('generateProgressPercent');
+            
+            if(generateBtn) generateBtn.style.display = 'none';
+            if(progressContainer) progressContainer.style.display = 'block';
+            if(progressBar) progressBar.style.width = '0%';
+            if(progressText) progressText.textContent = '正在生成新的一天...';
+            if(progressPercent) progressPercent.innerText = '0%';
+            
+            try {
+                const i = tripData.length; // 當前要生成的天數索引
+                
+                // 計算當天日期（使用本地時間，避免時區問題）
+                let currentDate = new Date(generationState.startDate);
+                currentDate.setDate(generationState.startDate.getDate() + i);
+                const dateStr = formatLocalDate(currentDate);
+                
+                // ✨ 更新生成按鈕區域的進度條
+                const percent = Math.round(((i + 1) / generationState.totalDays) * 100);
+                
+                if(progressBar) progressBar.style.width = percent + '%';
+                if(progressText) progressText.textContent = `正在規劃第 ${i + 1} 天 (${dateStr})...`;
+                if(progressPercent) progressPercent.innerText = percent + '%';
+                
+                // 判斷是否為第一天或最後一天 (影響 Prompt)
+                const isFirstDay = (i === 0);
+                const isLastDay = (i === generationState.totalDays - 1);
+                
+                // ✨ 1. 計算天氣描述
+                let weatherDesc = "";
+                let weatherCode = null;
+                if(generationState.weatherInfo && generationState.weatherInfo.daily && generationState.weatherInfo.daily.weather_code[i] !== undefined) {
+                    weatherCode = generationState.weatherInfo.daily.weather_code[i];
+                    // WMO 天氣代碼映射 (Open-Meteo 使用)
+                    const codeMap = {
+                        0: '晴天', 1: '多雲', 2: '陰天', 3: '陰天',
+                        45: '霧', 48: '霧',
+                        51: '小雨', 53: '小雨', 55: '小雨',
+                        56: '雨夾雪', 57: '雨夾雪',
+                        61: '小雨', 63: '雨天', 65: '大雨',
+                        66: '凍雨', 67: '凍雨',
+                        71: '小雪', 73: '下雪', 75: '大雪',
+                        77: '雪粒', 80: '雷雨', 81: '雷雨', 82: '強雷雨',
+                        85: '雪', 86: '雪',
+                        95: '雷雨', 96: '雷雨', 99: '強雷雨'
+                    };
+                    weatherDesc = codeMap[weatherCode] || "多雲時晴";
+                    
+                    // 加上氣溫
+                    const maxT = Math.round(generationState.weatherInfo.daily.temperature_2m_max[i]);
+                    const minT = Math.round(generationState.weatherInfo.daily.temperature_2m_min[i]);
+                    weatherDesc += `，氣溫 ${minT}°C~${maxT}°C`;
+                }
+                
+                // ✨ 2. 計算星期幾
+                const weekDayIndex = currentDate.getDay(); // 0 是週日
+                const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+                const weekDay = weekDays[weekDayIndex];
+                const isWeekend = (weekDayIndex === 0 || weekDayIndex === 6);
+                
+                // 3. 動態生成 Prompt
+                const dayPrompt = generateSingleDayPrompt({
+                    city: generationState.city,
+                    hotel: generationState.hotel,
+                    dateStr: dateStr,
+                    dayIndex: i + 1,
+                    totalDays: generationState.totalDays,
+                    isFirstDay: isFirstDay,
+                    isLastDay: isLastDay,
+                    flightArr: generationState.flightArr,
+                    flightDep: generationState.flightDep,
+                    transport: generationState.transport,
+                    pace: generationState.pace,
+                    tags: generationState.tags.join('、'),
+                    previousLocation: generationState.previousLocation,
+                    spots: generationState.spots,
+                    foodList: generationState.foodList,
+                    combinedPrefs: generationState.combinedPrefs,
+                    guideRole: generationState.guideRole,
+                    entryName: generationState.entryName,
+                    transportInstruction: generationState.transportInstruction,
+                    dailySpotCount: generationState.dailySpotCount,
+                    foodInstruction: generationState.foodInstruction,
+                    weatherDesc: weatherDesc,
+                    weekDay: weekDay,
+                    isWeekend: isWeekend,
+                    visitedSpots: generationState.allVisitedSpots
+                });
+                
+                // 4. 呼叫 AI
+                const dayResult = await callGemini(apiKey, dayPrompt);
+                
+                // 5. 格式校正
+                let finalDayData = Array.isArray(dayResult) ? dayResult[0] : dayResult;
+                
+                // 強制寫入正確日期 (防止 AI 寫錯)
+                finalDayData.date = dateStr;
+                
+                // 6. 加入天氣資訊
+                if(generationState.weatherInfo && generationState.weatherInfo.daily && generationState.weatherInfo.daily.time[i]) {
+                    finalDayData.weather = {
+                        code: generationState.weatherInfo.daily.weather_code[i],
+                        max: generationState.weatherInfo.daily.temperature_2m_max[i],
+                        min: generationState.weatherInfo.daily.temperature_2m_min[i],
+                        isSimulated: generationState.weatherInfo.isSimulated
+                    };
+                }
+                
+                // 7. 儲存結果並更新狀態
+                tripData.push(finalDayData);
+                
+                // ✨ 關鍵步驟：將今天生成的景點加入「已去過名單」
+                if (finalDayData.itinerary) {
+                    finalDayData.itinerary.forEach(item => {
+                        // 只紀錄景點和餐廳，不紀錄交通
+                        if ((item.type === 'SPOT' || item.type === 'FOOD') && item.title) {
+                            generationState.allVisitedSpots.push(item.title);
+                        }
+                    });
+                }
+                
+                // 更新上一地點
+                if(finalDayData.itinerary && finalDayData.itinerary.length > 0) {
+                    const lastItem = finalDayData.itinerary[finalDayData.itinerary.length - 1];
+                    generationState.previousLocation = lastItem.title || generationState.hotel;
+                }
+                
+                // 8. 保存到 localStorage
+                localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
+                // ✨ 同時保存生成狀態
+                localStorage.setItem('generationState_v27', JSON.stringify(generationState));
+                
+                // 9. 更新進度條到100%
+                if(progressBar) progressBar.style.width = '100%';
+                if(progressText) progressText.textContent = `第 ${i + 1} 天生成完成！`;
+                if(progressPercent) progressPercent.innerText = '100%';
+                
+                // ✨ 只在生成完成後統一渲染所有天數
+                // 這樣第一天的內容不會消失，會和第二天一起顯示
+                await new Promise(r => setTimeout(r, 500));
+                renderTrip();
+                
+            } catch (e) {
+                console.error(e);
+                alert(`生成第 ${tripData.length + 1} 天時發生錯誤：${e.message}`);
+            } finally {
+                // ✨ 恢復生成按鈕顯示，隱藏進度條
+                const generateBtn = document.getElementById('generateNextDayBtn');
+                const progressContainer = document.getElementById('generateProgressContainer');
+                
+                if(generateBtn) generateBtn.style.display = 'inline-block';
+                if(progressContainer) progressContainer.style.display = 'none';
+            }
+        }
+        
+        // --- Plan Trip (序列化生成版本 - 只生成第一天) ---
         async function planTrip() {
             const apiKey = getApiKey(); if(!apiKey) return;
             saveInputs();
@@ -2185,9 +2696,37 @@ Output strictly in Traditional Chinese (Taiwan).
                 weatherInfo = getSimulatedClimate(new Date(startDateStr), new Date(endDateStr));
             }
             
+            // ✨ 保存生成狀態到全局變數
+            generationState = {
+                allVisitedSpots: [],
+                previousLocation: hotel,
+                weatherInfo: weatherInfo,
+                totalDays: totalDays,
+                startDate: startDate,
+                endDate: endDate,
+                city: city,
+                hotel: hotel,
+                flightArr: flightArr,
+                flightDep: flightDep,
+                transport: transport,
+                pace: pace,
+                tags: tags,
+                spots: spots,
+                foodList: foodList,
+                combinedPrefs: combinedPrefs,
+                guideRole: guideRole,
+                entryName: entryName,
+                transportInstruction: transportInstruction,
+                dailySpotCount: dailySpotCount,
+                foodInstruction: foodInstruction
+            };
+            
+            // ✨ 保存生成狀態到 localStorage
+            localStorage.setItem('generationState_v27', JSON.stringify(generationState));
+            
             try {
-                // 5. 開始迴圈：一天一天生成
-                for (let i = 0; i < totalDays; i++) {
+                // 5. 只生成第一天（i=0）
+                const i = 0;
                     // 計算當天日期（使用本地時間，避免時區問題）
                     let currentDate = new Date(startDate);
                     currentDate.setDate(startDate.getDate() + i);
@@ -2285,16 +2824,21 @@ Output strictly in Traditional Chinese (Taiwan).
                         const lastItem = finalDayData.itinerary[finalDayData.itinerary.length - 1];
                         previousLocation = lastItem.title || hotel;
                     }
+                    
+                    // ✨ 更新全局狀態
+                    generationState.allVisitedSpots = allVisitedSpots;
+                    generationState.previousLocation = previousLocation;
 
                     // (可選) 這裡可以做一個簡單的延遲，避免 API Rate Limit (雖然 Gemini 限制很寬鬆)
                     await new Promise(r => setTimeout(r, 500));
-                }
-
-                // 11. 全部完成
-                updateProgress(100, "行程整合中...");
-                    localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
                 
-                    renderTrip();
+                // 11. 第一天完成
+                updateProgress(100, "第一天生成完成");
+                localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
+                // ✨ 同時保存生成狀態
+                localStorage.setItem('generationState_v27', JSON.stringify(generationState));
+                
+                renderTrip();
 
             } catch (e) {
                 console.error(e);
@@ -2322,63 +2866,7 @@ Output strictly in Traditional Chinese (Taiwan).
             } catch(e) { alert("微調失敗：" + e.message); } finally { setLoading(false); }
         }
 
-        function formatAIOutput(data) {
-            if (!data) return "";
-            if (typeof data === 'string') return data;
-            if (Array.isArray(data)) {
-                return data.map(item => {
-                    if (typeof item === 'string') return item;
-                    if (typeof item === 'object' && item !== null) {
-                        return item.name || item.title || item.place || item.description || Object.values(item)[0] || "";
-                    }
-                    return "";
-                }).filter(s => s).join("、");
-            }
-            if (typeof data === 'object' && data !== null) return Object.values(data).join(" ");
-            return "";
-        }
-
-        async function callGemini(key, prompt) {
-            const model = document.getElementById('modelSelect').value;
-            
-            const requestBody = {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    // ⚠️ 關鍵：調高 Token 上限，防止行程寫到一半被腰斬
-                    maxOutputTokens: 8192, 
-                    temperature: 0.7
-                }
-            };
-
-            try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
-                });
-                
-                const data = await res.json();
-
-            if (!data.candidates || !data.candidates[0].content) {
-                    console.error("API Error Details:", data);
-                    throw new Error("API 回傳結構異常 (可能是 Key 錯誤或模型過載)");
-            }
-
-            const rawText = data.candidates[0].content.parts[0].text;
-            
-                // 保存原始响应到全局变量，以便错误处理时使用
-                window.lastApiResponse = rawText;
-                
-                // 使用強力解析器
-                return cleanAndParseJSON(rawText);
-
-            } catch (e) {
-                console.error("Gemini 呼叫錯誤:", e);
-                // 將錯誤往上拋，讓 planTrip 顯示 alert
-                throw e;
-            }
-        }
+        // formatAIOutput 和 callGemini 函式已移至檔案末端統一管理
 
         // --- Helper functions for export ---
         function prepareExport() {
@@ -2825,12 +3313,22 @@ Output strictly in Traditional Chinese (Taiwan).
             if(ph) ph.style.display = 'none';
             if(exportBar) exportBar.style.display = 'flex';
             
-            // 清空所有旧内容（包括 details 和 total-cost-summary）
-            // 但保留 placeholderMsg（如果它存在）
-            const details = container.querySelectorAll('details');
-            details.forEach(d => d.remove());
+            // ✨ 智能渲染：只清除總費用和生成按鈕，保留已存在的天數卡片
             const totalCostSummary = container.querySelector('.total-cost-summary');
             if(totalCostSummary) totalCostSummary.remove();
+            // ✨ 清除旧的生成按钮
+            const oldGenerateButton = container.querySelector('.generate-next-day-button');
+            if(oldGenerateButton) oldGenerateButton.remove();
+            
+            // ✨ 檢查已存在的天數，只渲染新的天數
+            const existingDates = new Set();
+            const existingDetails = container.querySelectorAll('details');
+            existingDetails.forEach(detail => {
+                const dateElement = detail.querySelector('.day-date');
+                if(dateElement) {
+                    existingDates.add(dateElement.textContent.trim());
+                }
+            });
             
             // 識別貨幣
             const city = document.getElementById('city').value || '';
@@ -2853,6 +3351,11 @@ Output strictly in Traditional Chinese (Taiwan).
             const hotel = document.getElementById('hotel').value || '';
 
             tripData.forEach((day, index) => {
+                // ✨ 如果這個天數已經存在，跳過渲染（保持顯示）
+                if(existingDates.has(day.date)) {
+                    return;
+                }
+                
                 const isOpen = index === 0 ? 'open' : '';
                 
                 // 計算當日總費用
@@ -2915,40 +3418,62 @@ Output strictly in Traditional Chinese (Taiwan).
                         </div>
                     </summary>
                     <div class="day-content">
-                        <div class="timeline">
-                            ${day.itinerary.map(item => {
-                                const typeMap = { 'SPOT': '景點', 'FOOD': '美食', 'TRANSPORT': '交通' };
-                                const typeLabel = typeMap[item.type] || item.type;
+                        <table class="itinerary-table">
+                            <thead>
+                                <tr>
+                                    <th>時間</th>
+                                    <th>類型</th>
+                                    <th>活動</th>
+                                    <th>說明</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${day.itinerary.map(item => {
+                                    const typeMap = { 'SPOT': '景點', 'FOOD': '美食', 'TRANSPORT': '交通' };
+                                    const typeLabel = typeMap[item.type] || item.type;
+                                    const typeClass = item.type.toLowerCase();
 
-                                let typeClass = item.type === 'SPOT' ? 'type-spot' : item.type === 'FOOD' ? 'type-food' : 'type-transport';
-                                let tagHtml = `<span class="tag ${item.type.toLowerCase()}">${typeLabel}</span>`;
-                                let costHtml = item.cost ? `<span class="cost-badge">💰 ${item.cost}</span>` : '';
-                                let ticketHtml = item.booking ? '<span class="ticket-badge">🎟️ 需預約</span>' : '';
-                                
-                                const addressHtml = item.address ? `<div class="address-line">${item.address}</div>` : '';
-                                const mapQuery = item.title + " " + (item.address || document.getElementById('city').value);
-                                // 使用標準的 Google Maps 搜尋連結
-                                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+                                    let tagHtml = `<span class="table-tag ${typeClass}">${typeLabel}</span>`;
+                                    let costHtml = item.cost ? `<div class="table-cost">💰 ${item.cost}</div>` : '';
+                                    let ticketHtml = item.booking ? '<span class="table-badge booking">🎟️ 需預約</span>' : '';
+                                    
+                                    const addressHtml = item.address ? `<div class="table-address">📍 ${item.address}</div>` : '';
+                                    const mapQuery = item.title + " " + (item.address || document.getElementById('city').value);
+                                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
 
-                                let transitHtml = '';
-                                if(item.transit && item.transit.length > 0) {
-                                    const transitOptions = item.transit.map((t, i) => {
-                                        const badge = i === 0 ? 'A' : 'B';
-                                        return `<div class="transit-option"><span class="transit-badge">${badge}</span><b>${t.mode}</b> (${t.time}) - ${t.desc}</div>`;
-                                    }).join('');
-                                    transitHtml = `
-                                    <div class="transit-box">
-                                        <div class="transit-title">🚦 建議交通 (From 上一站)</div>
-                                        <div class="transit-options">
-                                            ${transitOptions}
-                                        </div>
-                                    </div>`;
-                                }
+                                    let transitHtml = '';
+                                    if(item.transit && item.transit.length > 0) {
+                                        const transitOptions = item.transit.map((t, i) => {
+                                            const badge = i === 0 ? 'A' : 'B';
+                                            return `<div><span style="font-weight:700; color:var(--primary);">${badge}</span> <b>${t.mode}</b> (${t.time}) - ${t.desc}</div>`;
+                                        }).join('');
+                                        transitHtml = `<div class="table-transit">🚦 ${transitOptions}</div>`;
+                                    }
 
-                                const tipsHtml = item.tips ? '<div class="tips">' + item.tips + '</div>' : '';
-                                return `<div class="itinerary-item ${typeClass}"><span class="time">${item.time}</span><div class="activity-card"><div class="tags-row">${tagHtml} ${costHtml} ${ticketHtml}</div><div class="activity-title">${item.title}</div><div class="desc">${item.desc}</div>${addressHtml}${transitHtml}${tipsHtml}</div><a href="${mapUrl}" target="_blank" style="display:inline-block; margin-top:8px; margin-left:15px; font-size:0.85rem; color:var(--primary); text-decoration:none; font-weight:600;">📍 Map</a></div>`;
-                            }).join('')}
-                        </div>
+                                    const tipsHtml = item.tips ? `<div class="table-tips">💡 ${item.tips}</div>` : '';
+                                    
+                                    return `
+                                    <tr>
+                                        <td class="time-cell">${item.time}</td>
+                                        <td class="type-cell">${tagHtml}${ticketHtml}</td>
+                                        <td class="title-cell">
+                                            <div style="font-weight:600; margin-bottom:4px;">${item.title}</div>
+                                            ${costHtml}
+                                            ${addressHtml}
+                                        </td>
+                                        <td class="desc-cell">
+                                            <div>${item.desc}</div>
+                                            ${transitHtml}
+                                            ${tipsHtml}
+                                        </td>
+                                        <td class="action-cell">
+                                            <a href="${mapUrl}" target="_blank" class="table-map-link">📍 地圖</a>
+                                        </td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
                         <div class="day-actions">
                             ${routeButtonHtml}
                             ${modifyButtonHtml}
@@ -3016,72 +3541,41 @@ Output strictly in Traditional Chinese (Taiwan).
                 }
                 container.insertAdjacentHTML('beforeend', totalCostHtml);
             }
+            
+            // ✨ 檢查是否還有未生成的天數，如果有則顯示按鈕
+            if(generationState.totalDays > 0 && tripData.length < generationState.totalDays) {
+                const nextDayIndex = tripData.length + 1;
+                const nextDayDate = new Date(generationState.startDate);
+                nextDayDate.setDate(generationState.startDate.getDate() + tripData.length);
+                const nextDayDateStr = formatLocalDate(nextDayDate);
+                
+                const generateButtonHtml = `
+                    <div class="generate-next-day-button" style="text-align: center; margin: 30px 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        <p style="color: #fff; font-size: 1.1rem; margin-bottom: 15px; font-weight: 600;">
+                            ${tripData.length === 1 ? '第一天已生成！' : `已生成 ${tripData.length} 天`}
+                        </p>
+                        <button id="generateNextDayBtn" onclick="generateNextDay()" 
+                                style="background: #fff; color: #667eea; border: none; padding: 12px 30px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.2);"
+                                onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.3)';"
+                                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.2)';">
+                            🚀 生成第 ${nextDayIndex} 天 (${nextDayDateStr})
+                        </button>
+                        <div id="generateProgressContainer" style="display: none; margin-top: 15px;">
+                            <p id="generateProgressText" style="color: #fff; font-size: 0.95rem; margin-bottom: 10px; font-weight: 600;">正在生成...</p>
+                            <div style="width: 100%; max-width: 400px; margin: 0 auto; height: 12px; background: rgba(255,255,255,0.3); border-radius: 6px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                                <div id="generateProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%); transition: width 0.5s ease; box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);"></div>
+                            </div>
+                            <p id="generateProgressPercent" style="color: rgba(255,255,255,0.9); font-size: 0.85rem; margin-top: 8px; font-weight: 600;">0%</p>
+                        </div>
+                        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 10px;">
+                            還剩 ${generationState.totalDays - tripData.length} 天未生成
+                        </p>
+                    </div>`;
+                container.insertAdjacentHTML('beforeend', generateButtonHtml);
+            }
         }
 
         // --- 🛠️ 強力 JSON 清洗與修復工具 ---
-        function cleanAndParseJSON(rawText) {
-            console.log("原始回應長度:", rawText.length);
-            
-            // 1. 移除 Markdown標記 (```json ... ```)
-            let cleaned = rawText.replace(/```json/g, '').replace(/```/g, '');
-            
-            // 2. 嘗試提取核心 JSON 區塊 (從第一個 [ 或 { 開始，到最後一個 ] 或 } 結束)
-            // 這樣可以過濾掉 AI 在開頭或結尾講的廢話
-            const firstBracket = cleaned.indexOf('[');
-            const firstBrace = cleaned.indexOf('{');
-            const lastBracket = cleaned.lastIndexOf(']');
-            const lastBrace = cleaned.lastIndexOf('}');
-            
-            let start = -1;
-            let end = -1;
-
-            // 判斷是陣列還是物件開頭
-            if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
-                start = firstBracket;
-            } else if (firstBrace !== -1) {
-                start = firstBrace;
-            }
-
-            // 判斷結尾
-            if (lastBracket !== -1 && (lastBrace === -1 || lastBracket > lastBrace)) {
-                end = lastBracket;
-            } else if (lastBrace !== -1) {
-                end = lastBrace;
-            }
-
-            if (start !== -1 && end !== -1) {
-                cleaned = cleaned.substring(start, end + 1);
-            }
-
-            // 3. 常見語法錯誤修正 (移除尾隨逗號)
-            // 例如: {"a": 1, } -> {"a": 1 }
-            cleaned = cleaned.replace(/,(\s*[}\]])/g, '$1');
-
-            try {
-                return JSON.parse(cleaned);
-            } catch (e) {
-                console.error("第一次解析失敗，嘗試修復截斷...", e);
-                // 4. (進階) 處理被截斷的 JSON
-                // 如果是因為 token 不夠導致結尾少了 ] 或 }，嘗試補上
-                try {
-                    if (cleaned.trim().startsWith('[')) {
-                        // 如果是陣列，嘗試補上 ]
-                        if (!cleaned.trim().endsWith(']')) {
-                           // 尋找最後一個完整的物件結束點
-                           const lastObjEnd = cleaned.lastIndexOf('}');
-                           if(lastObjEnd !== -1) {
-                               cleaned = cleaned.substring(0, lastObjEnd + 1) + ']';
-                           }
-                        }
-                    }
-                    return JSON.parse(cleaned);
-                } catch (e2) {
-                    console.error("最終解析失敗。清洗後的文字:", cleaned);
-                    throw new Error("無法解析行程資料，請檢查 Token 數量或 AI 回應格式。");
-                }
-            }
-        }
-
         function getApiKey() { const k=document.getElementById('apiKey').value.trim(); if(!k) openModal('apiModal'); return k; }
         
         let loadingInterval = null;
@@ -3173,6 +3667,7 @@ Output strictly in Traditional Chinese (Taiwan).
         // ==========================================
 
         // 1. 智慧 JSON 修復引擎
+        // 1. 智慧 JSON 修復引擎 (增強版 v2)
         function smartJsonRepair(jsonStr) {
             if (!jsonStr) return null;
             
@@ -3191,7 +3686,6 @@ Output strictly in Traditional Chinese (Taiwan).
             let start = 0;
             let end = fixed.length;
 
-            // 判斷是陣列還是物件
             if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
                 start = firstBracket;
                 end = lastBracket !== -1 ? lastBracket + 1 : fixed.length;
@@ -3204,27 +3698,37 @@ Output strictly in Traditional Chinese (Taiwan).
 
             // 步驟 B: 暴力修復常見語法錯誤
             
-            // 1. 處理未轉義的換行符 (這是最常見的錯誤)
-            // 邏輯：在字串值裡面的換行，替換成 \n
-            // 這裡使用簡單替換：將所有真實換行替換為空格 (為了安全)
-            fixed = fixed.replace(/\n/g, ' '); 
+            // 1. 移除控制字符 (如 Tab, 換行等，除了空格)
+            // 這裡我們把所有換行符號變成空格，避免字串斷行錯誤
+            fixed = fixed.replace(/[\n\r\t]/g, ' ');
+            
+            // 2. 移除除了普通字符以外的奇怪控制符號 (ASCII 0-31)
+            // 這是為了防止 AI 輸出不可見的控制碼導致 JSON 壞掉
+            fixed = fixed.replace(/[\x00-\x1F]/g, "");
 
-            // 2. 處理尾隨逗號 (例如: "a":1, })
+            // 3. 處理尾隨逗號 (例如: "a":1, })
             fixed = fixed.replace(/,\s*([}\]])/g, '$1');
 
-            // 3. 嘗試解析
+            // 4. 嘗試解析
             try {
                 return JSON.parse(fixed);
             } catch (e) {
-                console.warn("第一次解析失敗，嘗試進階修復...", e);
+                console.warn("第一次解析失敗，嘗試補全括號...", e);
                 
                 // 步驟 C: 處理被截斷的 JSON (補齊括號)
                 try {
-                    // 簡單判斷缺多少括號 (這是一個粗略的估計)
+                    // 簡單判斷缺多少括號
                     let openBraces = (fixed.match(/{/g) || []).length;
                     let closeBraces = (fixed.match(/}/g) || []).length;
                     let openBrackets = (fixed.match(/\[/g) || []).length;
                     let closeBrackets = (fixed.match(/]/g) || []).length;
+
+                    // 補齊順序很重要
+                    // 檢查是否字串沒閉合 (奇數個引號)
+                    const quoteCount = (fixed.match(/"/g) || []).length;
+                    if (quoteCount % 2 !== 0) {
+                        fixed += '"';
+                    }
 
                     while (openBraces > closeBraces) { fixed += '}'; closeBraces++; }
                     while (openBrackets > closeBrackets) { fixed += ']'; closeBrackets++; }
@@ -3232,7 +3736,7 @@ Output strictly in Traditional Chinese (Taiwan).
                     return JSON.parse(fixed);
                 } catch (e2) {
                     console.error("修復失敗。原始字串片段:", fixed.substring(0, 100) + "...");
-                    return null; // 真的沒救了
+                    return null;
                 }
             }
         }
@@ -3294,14 +3798,6 @@ Output strictly in Traditional Chinese (Taiwan).
             }
         }
 
-        // 3. 格式化輸出輔助 (防止 undefined)
-        function formatAIOutput(data) {
-            if (!data) return "";
-            if (typeof data === 'string') return data;
-            if (Array.isArray(data)) return data.join("、");
-            if (typeof data === 'object') return Object.values(data).join(" ");
-            return "";
-        }
     </script>
 </body>
 </html>
