@@ -3086,11 +3086,14 @@ Output strictly in Traditional Chinese (Taiwan).
             let totalCost = 0;
             tripData.forEach(day => { totalCost += calculateTotalCost(day, currencyInfo).amount; });
 
+            const PDF_PAGE_W = 650;
+            const PDF_PAGE_H = 920;
+
             let pdfHtml = `
-            <div id="pdfPrintArea" style="font-family:'Noto Sans TC','Microsoft JhengHei','PingFang TC',sans-serif; color:#1e293b; width:794px; max-width:794px; padding:0; margin:0 auto; background:#fff; box-sizing:border-box;">
+            <div id="pdfPrintArea" style="font-family:'Noto Sans TC','Microsoft JhengHei','PingFang TC',sans-serif; color:#1e293b; width:${PDF_PAGE_W}px; max-width:${PDF_PAGE_W}px; padding:0; margin:0; background:#fff; box-sizing:border-box; overflow:hidden;">
 
                 <!-- 封面頁 -->
-                <div style="page-break-after:always; width:794px; min-height:1120px; box-sizing:border-box; text-align:center; padding:80px 40px 40px 40px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff;">
+                <div class="pdf-page" style="page-break-after:always; width:${PDF_PAGE_W}px; height:${PDF_PAGE_H}px; box-sizing:border-box; text-align:center; padding:60px 30px 40px 30px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; overflow:hidden;">
                     <div style="font-size:60px; margin-bottom:20px;">✈️</div>
                     <h1 style="font-size:36px; font-weight:900; margin:0 0 8px 0; letter-spacing:1px; text-shadow:0 2px 10px rgba(0,0,0,0.2);">${city} 旅遊行程手冊</h1>
                     <div style="width:80px; height:4px; background:rgba(255,255,255,0.6); border-radius:2px; margin:16px auto;"></div>
@@ -3119,7 +3122,7 @@ Output strictly in Traditional Chinese (Taiwan).
                 }
 
                 pdfHtml += `
-                <div style="page-break-before:${dayIdx > 0 ? 'always' : 'auto'}; width:794px; box-sizing:border-box; padding:28px 40px 24px 40px;">
+                <div class="pdf-page" style="page-break-before:${dayIdx > 0 ? 'always' : 'auto'}; page-break-inside:avoid; width:${PDF_PAGE_W}px; min-height:${PDF_PAGE_H}px; box-sizing:border-box; padding:24px 28px 24px 28px; overflow:hidden;">
                     <!-- 日期標題區 -->
                     <div style="display:flex; align-items:center; gap:14px; margin-bottom:6px; flex-wrap:wrap;">
                         <div style="background:linear-gradient(135deg,#6366f1,#a855f7); color:#fff; font-size:12px; font-weight:800; padding:5px 14px; border-radius:20px; letter-spacing:0.5px;">DAY ${dayIdx + 1}</div>
@@ -3133,13 +3136,13 @@ Output strictly in Traditional Chinese (Taiwan).
                     <div style="width:100%; height:2px; background:linear-gradient(90deg,#6366f1,#a855f7,transparent); border-radius:1px; margin-bottom:22px;"></div>
 
                     <!-- 行程表格 -->
-                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed;">
                         <thead>
                             <tr style="background:linear-gradient(135deg,#6366f1,#7c3aed); color:#fff;">
-                                <th style="padding:10px 12px; text-align:left; font-weight:700; width:65px; border-radius:8px 0 0 0;">時間</th>
-                                <th style="padding:10px 8px; text-align:center; font-weight:700; width:55px;">類型</th>
-                                <th style="padding:10px 12px; text-align:left; font-weight:700; width:150px;">活動 / 地點</th>
-                                <th style="padding:10px 12px; text-align:left; font-weight:700; border-radius:0 8px 0 0;">詳細說明</th>
+                                <th style="padding:8px 6px; text-align:left; font-weight:700; width:52px; border-radius:6px 0 0 0;">時間</th>
+                                <th style="padding:8px 4px; text-align:center; font-weight:700; width:48px;">類型</th>
+                                <th style="padding:8px 6px; text-align:left; font-weight:700; width:120px;">活動/地點</th>
+                                <th style="padding:8px 6px; text-align:left; font-weight:700; border-radius:0 6px 0 0;">詳細說明</th>
                             </tr>
                         </thead>
                         <tbody>`;
@@ -3163,19 +3166,17 @@ Output strictly in Traditional Chinese (Taiwan).
 
                     pdfHtml += `
                             <tr style="background:${bgRow}; border-bottom:1px solid #f1f5f9;">
-                                <td style="padding:12px; font-weight:800; color:#6366f1; white-space:nowrap; vertical-align:top;">${item.time}</td>
-                                <td style="padding:12px 8px; text-align:center; vertical-align:top;">
-                                    <span style="display:inline-block; background:${tBg}; color:${tColor}; font-size:11px; font-weight:700; padding:3px 8px; border-radius:8px; white-space:nowrap;">${tIcon} ${tLabel}</span>
+                                <td style="padding:10px 6px; font-weight:800; color:#6366f1; font-size:12px; white-space:nowrap; vertical-align:top;">${item.time}</td>
+                                <td style="padding:10px 4px; text-align:center; vertical-align:top;">
+                                    <span style="display:inline-block; background:${tBg}; color:${tColor}; font-size:10px; font-weight:700; padding:2px 6px; border-radius:6px; white-space:nowrap;">${tIcon} ${tLabel}</span>
                                 </td>
-                                <td style="padding:12px; vertical-align:top;">
-                                    <div style="font-weight:700; color:#1e293b; font-size:14px; margin-bottom:3px;">${item.title}</div>
-                                    ${item.cost ? `<div style="font-size:12px; color:#059669; font-weight:600;">💰 ${item.cost}</div>` : ''}
-                                    ${item.address ? `<div style="font-size:11px; color:#94a3b8; margin-top:3px;">📍 ${item.address}</div>` : ''}
-                                    ${item.booking ? `<div style="font-size:11px; color:#dc2626; font-weight:600; margin-top:3px;">🎟️ 需提前預約</div>` : ''}
+                                <td style="padding:10px 6px; vertical-align:top; word-wrap:break-word; overflow-wrap:break-word;">
+                                    <div style="font-weight:700; color:#1e293b; font-size:13px; margin-bottom:2px;">${item.title}</div>
+                                    ${item.cost ? `<div style="font-size:11px; color:#059669; font-weight:600;">💰 ${item.cost}</div>` : ''}
+                                    ${item.address ? `<div style="font-size:10px; color:#94a3b8; margin-top:2px;">📍 ${item.address}</div>` : ''}
+                                    ${item.booking ? `<div style="font-size:10px; color:#dc2626; font-weight:600;">🎟️ 需預約</div>` : ''}
                                 </td>
-                                <td style="padding:12px; vertical-align:top;">
-                                    ${descParts.join('')}
-                                </td>
+                                <td style="padding:10px 6px; vertical-align:top; word-wrap:break-word; overflow-wrap:break-word;">${descParts.join('')}</td>
                             </tr>`;
                 });
 
@@ -3187,7 +3188,7 @@ Output strictly in Traditional Chinese (Taiwan).
 
             // 尾頁
             pdfHtml += `
-                <div style="page-break-before:always; width:794px; min-height:1120px; box-sizing:border-box; text-align:center; padding:200px 40px 40px 40px; color:#94a3b8;">
+                <div class="pdf-page" style="page-break-before:always; width:${PDF_PAGE_W}px; height:${PDF_PAGE_H}px; box-sizing:border-box; text-align:center; padding:180px 28px 40px 28px; color:#94a3b8;">
                     <div style="font-size:40px; margin-bottom:16px;">🌏</div>
                     <p style="font-size:16px; font-weight:700; color:#64748b;">祝旅途愉快！</p>
                     <p style="font-size:12px; margin-top:8px;">Generated by AI 極速旅遊規劃師</p>
@@ -3200,8 +3201,8 @@ Output strictly in Traditional Chinese (Taiwan).
                 wrapper.style.position = 'fixed';
                 wrapper.style.left = '0';
                 wrapper.style.top = '0';
-                wrapper.style.width = '794px';
-                wrapper.style.minWidth = '794px';
+                wrapper.style.width = PDF_PAGE_W + 'px';
+                wrapper.style.minWidth = PDF_PAGE_W + 'px';
                 wrapper.style.background = '#fff';
                 wrapper.style.boxSizing = 'border-box';
                 wrapper.style.zIndex = '-9999';
@@ -3209,24 +3210,24 @@ Output strictly in Traditional Chinese (Taiwan).
                 wrapper.style.pointerEvents = 'none';
                 document.body.appendChild(wrapper);
 
-                await new Promise(r => setTimeout(r, 400));
+                await new Promise(r => setTimeout(r, 500));
 
                 const opt = {
-                    margin: [8, 8, 8, 8],
+                    margin: [12, 12, 12, 12],
                     filename: `${city}_全行程_${startDate}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
+                    image: { type: 'jpeg', quality: 0.95 },
                     html2canvas: {
-                        scale: 2,
+                        scale: 1,
                         backgroundColor: '#ffffff',
                         useCORS: true,
-                        windowWidth: 794,
-                        width: 794,
+                        windowWidth: PDF_PAGE_W,
+                        width: PDF_PAGE_W,
                         logging: false,
                         scrollX: 0,
                         scrollY: 0
                     },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', hotfixes: ['px_scaling'] },
-                    pagebreak: { mode: ['css', 'legacy'], before: '.html2pdf__page-break' }
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['css', 'legacy'] }
                 };
 
                 await html2pdf().set(opt).from(wrapper.querySelector('#pdfPrintArea')).save();
