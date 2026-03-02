@@ -544,6 +544,31 @@
         .btn-pdf:hover { 
             background: linear-gradient(135deg, #475569 0%, #334155 100%); 
         }
+        .btn-pdf-full {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            flex-basis: 100%;
+            font-size: 1.05rem !important;
+            padding: 16px 20px !important;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-pdf-full:hover {
+            background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+        }
+        .btn-pdf-full::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.6s;
+        }
+        .btn-pdf-full:hover::after {
+            left: 100%;
+        }
 
         /* 行程列表容器 - 垂直排列 */
         #tripContainer { 
@@ -1966,6 +1991,7 @@
                 <button onclick="exportToA4Image()" class="btn-export btn-img">📸 下載 A4 手冊圖</button>
                 <button onclick="exportToMobileImages()" class="btn-export btn-img">📱 下載手機版行程圖</button>
                 <button onclick="exportToText()" class="btn-export btn-txt">📋 複製 LINE 筆記格式</button>
+                <button onclick="exportToFullPDF()" class="btn-export btn-pdf-full">📄 一鍵下載全行程 PDF</button>
             </div>
             
             <div id="tripContainer">
@@ -3028,6 +3054,184 @@ Output strictly in Traditional Chinese (Taiwan).
             });
 
             navigator.clipboard.writeText(text).then(() => alert("✅ 已複製 LINE 筆記格式！請直接貼上即可。"));
+        }
+
+        // --- 一鍵下載全行程 PDF ---
+        async function exportToFullPDF() {
+            if(!tripData || tripData.length === 0) {
+                alert('尚無行程資料，請先生成行程！');
+                return;
+            }
+
+            const pdfBtn = document.querySelector('.btn-pdf-full');
+            if(pdfBtn) { pdfBtn.disabled = true; pdfBtn.innerHTML = '⏳ PDF 生成中，請稍候...'; }
+
+            const city = document.getElementById('city').value || '旅遊';
+            const hotel = document.getElementById('hotel').value || '';
+            const origin = document.getElementById('origin').value || '';
+            const startDate = tripData[0]?.date || '';
+            const endDate = tripData[tripData.length - 1]?.date || '';
+            const currencyInfo = getCurrencyInfo(city);
+
+            let exchangeRate = 1;
+            if(currencyInfo.code !== 'TWD') {
+                try { exchangeRate = await getExchangeRate(currencyInfo.code, 'TWD'); } catch(e) {}
+            }
+
+            const typeIcon = { 'SPOT': '🏛️', 'FOOD': '🍽️', 'TRANSPORT': '🚃' };
+            const typeLabel = { 'SPOT': '景點', 'FOOD': '美食', 'TRANSPORT': '交通' };
+            const typeColor = { 'SPOT': '#e11d48', 'FOOD': '#ea580c', 'TRANSPORT': '#0284c7' };
+            const typeBg = { 'SPOT': '#fff1f2', 'FOOD': '#fff7ed', 'TRANSPORT': '#eff6ff' };
+
+            let totalCost = 0;
+            tripData.forEach(day => { totalCost += calculateTotalCost(day, currencyInfo).amount; });
+
+            let pdfHtml = `
+            <div id="pdfPrintArea" style="font-family:'Noto Sans TC','Microsoft JhengHei','PingFang TC',sans-serif; color:#1e293b; width:100%; padding:0; margin:0; background:#fff;">
+
+                <!-- 封面頁 -->
+                <div style="page-break-after:always; min-height:260mm; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:40px 30px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; position:relative; overflow:hidden;">
+                    <div style="position:absolute; top:-80px; right:-80px; width:300px; height:300px; border-radius:50%; background:rgba(255,255,255,0.06);"></div>
+                    <div style="position:absolute; bottom:-60px; left:-60px; width:250px; height:250px; border-radius:50%; background:rgba(255,255,255,0.04);"></div>
+                    <div style="font-size:60px; margin-bottom:20px;">✈️</div>
+                    <h1 style="font-size:36px; font-weight:900; margin:0 0 8px 0; letter-spacing:1px; text-shadow:0 2px 10px rgba(0,0,0,0.2);">${city} 旅遊行程手冊</h1>
+                    <div style="width:80px; height:4px; background:rgba(255,255,255,0.6); border-radius:2px; margin:16px auto;"></div>
+                    <p style="font-size:18px; opacity:0.9; margin:8px 0;">${startDate} ~ ${endDate}　|　共 ${tripData.length} 天</p>
+                    ${origin ? `<p style="font-size:15px; opacity:0.7; margin:6px 0;">出發地：${origin}</p>` : ''}
+                    ${hotel ? `<p style="font-size:15px; opacity:0.7; margin:6px 0;">住宿：${hotel}</p>` : ''}
+                    ${totalCost > 0 ? `<div style="margin-top:24px; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); border-radius:16px; padding:16px 32px; backdrop-filter:blur(4px);">
+                        <div style="font-size:13px; opacity:0.8; margin-bottom:4px;">預估總花費</div>
+                        <div style="font-size:28px; font-weight:900;">${currencyInfo.symbol}${currencyInfo.code === 'VND' ? (totalCost/1000).toFixed(0)+'K' : totalCost.toLocaleString()}</div>
+                        ${currencyInfo.code !== 'TWD' && exchangeRate !== 1 ? `<div style="font-size:14px; opacity:0.75; margin-top:4px;">≈ NT$${Math.round(totalCost * exchangeRate).toLocaleString()}</div>` : ''}
+                    </div>` : ''}
+                    <p style="font-size:12px; opacity:0.4; margin-top:40px;">由 AI 極速旅遊規劃師 生成</p>
+                </div>`;
+
+            tripData.forEach((day, dayIdx) => {
+                const dayCost = calculateTotalCost(day, currencyInfo).amount;
+                const weekDays = ['週日','週一','週二','週三','週四','週五','週六'];
+                const d = new Date(day.date + 'T00:00:00');
+                const weekDay = weekDays[d.getDay()];
+
+                let weatherHtml = '';
+                if(day.weather) {
+                    const icon = getWeatherIcon(day.weather.code);
+                    const label = day.weather.isSimulated ? '歷史均溫' : '預報';
+                    weatherHtml = `<span style="font-size:13px; color:#0369a1; background:#e0f2fe; padding:4px 10px; border-radius:10px; margin-left:10px;">${icon} ${Math.round(day.weather.max)}°/${Math.round(day.weather.min)}° (${label})</span>`;
+                }
+
+                pdfHtml += `
+                <div style="page-break-before:${dayIdx > 0 ? 'always' : 'auto'}; padding:30px 35px 20px 35px;">
+                    <!-- 日期標題區 -->
+                    <div style="display:flex; align-items:center; gap:14px; margin-bottom:6px; flex-wrap:wrap;">
+                        <div style="background:linear-gradient(135deg,#6366f1,#a855f7); color:#fff; font-size:12px; font-weight:800; padding:5px 14px; border-radius:20px; letter-spacing:0.5px;">DAY ${dayIdx + 1}</div>
+                        <h2 style="font-size:22px; font-weight:900; color:#1e293b; margin:0;">${day.date}　${weekDay}</h2>
+                        ${weatherHtml}
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
+                        <p style="font-size:15px; color:#6366f1; font-weight:700; margin:0;">📌 ${day.day_title || day.summary || ''}</p>
+                        ${dayCost > 0 ? `<span style="font-size:12px; color:#92400e; background:#fef3c7; border:1px solid #fde68a; padding:3px 10px; border-radius:10px; font-weight:600;">💰 ${currencyInfo.symbol}${currencyInfo.code === 'VND' ? (dayCost/1000).toFixed(0)+'K' : dayCost.toLocaleString()}${currencyInfo.code !== 'TWD' && exchangeRate !== 1 ? ' / ≈NT$'+Math.round(dayCost*exchangeRate).toLocaleString() : ''}</span>` : ''}
+                    </div>
+                    <div style="width:100%; height:2px; background:linear-gradient(90deg,#6366f1,#a855f7,transparent); border-radius:1px; margin-bottom:22px;"></div>
+
+                    <!-- 行程表格 -->
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#6366f1,#7c3aed); color:#fff;">
+                                <th style="padding:10px 12px; text-align:left; font-weight:700; width:65px; border-radius:8px 0 0 0;">時間</th>
+                                <th style="padding:10px 8px; text-align:center; font-weight:700; width:55px;">類型</th>
+                                <th style="padding:10px 12px; text-align:left; font-weight:700; width:150px;">活動 / 地點</th>
+                                <th style="padding:10px 12px; text-align:left; font-weight:700; border-radius:0 8px 0 0;">詳細說明</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+                (day.itinerary || []).forEach((item, itemIdx) => {
+                    const bgRow = itemIdx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                    const tColor = typeColor[item.type] || '#64748b';
+                    const tBg = typeBg[item.type] || '#f1f5f9';
+                    const tIcon = typeIcon[item.type] || '📍';
+                    const tLabel = typeLabel[item.type] || item.type;
+
+                    let descParts = [];
+                    if(item.desc) descParts.push(`<div style="color:#475569; line-height:1.7; margin-bottom:4px;">${item.desc}</div>`);
+                    if(item.transit && item.transit.length > 0) {
+                        const tHtml = item.transit.map(t => `<span style="color:#166534;">▸ <b>${t.mode}</b> (${t.time}) ${t.desc}</span>`).join('<br>');
+                        descParts.push(`<div style="background:#f0fdf4; border-left:3px solid #22c55e; padding:6px 10px; border-radius:4px; margin:4px 0; font-size:12px; line-height:1.6;">${tHtml}</div>`);
+                    }
+                    if(item.tips) {
+                        descParts.push(`<div style="background:#fffbeb; border-left:3px solid #f59e0b; padding:6px 10px; border-radius:4px; margin:4px 0; font-size:12px; color:#92400e; line-height:1.5;">💡 ${item.tips}</div>`);
+                    }
+
+                    pdfHtml += `
+                            <tr style="background:${bgRow}; border-bottom:1px solid #f1f5f9;">
+                                <td style="padding:12px; font-weight:800; color:#6366f1; white-space:nowrap; vertical-align:top;">${item.time}</td>
+                                <td style="padding:12px 8px; text-align:center; vertical-align:top;">
+                                    <span style="display:inline-block; background:${tBg}; color:${tColor}; font-size:11px; font-weight:700; padding:3px 8px; border-radius:8px; white-space:nowrap;">${tIcon} ${tLabel}</span>
+                                </td>
+                                <td style="padding:12px; vertical-align:top;">
+                                    <div style="font-weight:700; color:#1e293b; font-size:14px; margin-bottom:3px;">${item.title}</div>
+                                    ${item.cost ? `<div style="font-size:12px; color:#059669; font-weight:600;">💰 ${item.cost}</div>` : ''}
+                                    ${item.address ? `<div style="font-size:11px; color:#94a3b8; margin-top:3px;">📍 ${item.address}</div>` : ''}
+                                    ${item.booking ? `<div style="font-size:11px; color:#dc2626; font-weight:600; margin-top:3px;">🎟️ 需提前預約</div>` : ''}
+                                </td>
+                                <td style="padding:12px; vertical-align:top;">
+                                    ${descParts.join('')}
+                                </td>
+                            </tr>`;
+                });
+
+                pdfHtml += `
+                        </tbody>
+                    </table>
+                </div>`;
+            });
+
+            // 尾頁
+            pdfHtml += `
+                <div style="page-break-before:always; min-height:100mm; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:60px 30px; color:#94a3b8;">
+                    <div style="font-size:40px; margin-bottom:16px;">🌏</div>
+                    <p style="font-size:16px; font-weight:700; color:#64748b;">祝旅途愉快！</p>
+                    <p style="font-size:12px; margin-top:8px;">Generated by AI 極速旅遊規劃師</p>
+                </div>
+            </div>`;
+
+            try {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = pdfHtml;
+                wrapper.style.position = 'fixed';
+                wrapper.style.left = '-9999px';
+                wrapper.style.top = '0';
+                wrapper.style.width = '800px';
+                wrapper.style.background = '#fff';
+                document.body.appendChild(wrapper);
+
+                await new Promise(r => setTimeout(r, 300));
+
+                const opt = {
+                    margin: [0, 0, 0, 0],
+                    filename: `${city}_全行程_${startDate}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        backgroundColor: '#ffffff',
+                        useCORS: true,
+                        windowWidth: 800,
+                        logging: false
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['css', 'legacy'], before: '.html2pdf__page-break' }
+                };
+
+                await html2pdf().set(opt).from(wrapper.querySelector('#pdfPrintArea')).save();
+                document.body.removeChild(wrapper);
+                alert('✅ 全行程 PDF 已下載完成！');
+            } catch(e) {
+                console.error('PDF 生成失敗:', e);
+                alert('❌ PDF 生成失敗：' + e.message);
+            } finally {
+                if(pdfBtn) { pdfBtn.disabled = false; pdfBtn.innerHTML = '📄 一鍵下載全行程 PDF'; }
+            }
         }
 
         // --- 貨幣識別函式 ---
