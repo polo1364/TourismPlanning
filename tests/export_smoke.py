@@ -37,6 +37,7 @@ class ExportNetwork(Network):
 
 def itinerary_fixture():
     day = sample_day()
+    day['itinerary'][0]['userNote'] = '提前十分鐘到。\n記得帶現金與訂位簡訊。'
     day["itinerary"][0]["address"] = (
         "台北市大同區迪化街一段 123 號，靠近永樂市場與霞海城隍廟，"
         "請由延平北路側步行入口進入。"
@@ -116,9 +117,10 @@ def run(browser, base_url):
                 window.__realCaptureCalls = [];
                 window.html2canvas = async (element, options) => {
                     const bounds = element.getBoundingClientRect();
-                    const overflow = [...element.querySelectorAll('td, .table-tips, .watermark')].filter(child => {
+                    const overflow = [...element.querySelectorAll('td, .table-tips, .watermark, .table-map-link')].filter(child => {
                         const rect = child.getBoundingClientRect();
-                        return rect.width && (rect.right > bounds.right + 1 || rect.bottom > bounds.bottom + 1);
+                        const cell = child.closest('td')?.getBoundingClientRect();
+                        return rect.width && (rect.right > bounds.right + 1 || rect.bottom > bounds.bottom + 1 || (child.matches('.table-map-link') && cell && rect.right > cell.right + 1));
                     }).map(child => child.className);
                     const canvas = await original(element, options);
                     window.__realCaptureCalls.push({
@@ -126,6 +128,8 @@ def run(browser, base_url):
                         sourceWidth:bounds.width, sourceHeight:bounds.height,
                         canvasWidth:canvas.width, canvasHeight:canvas.height,
                         rowCount:element.querySelectorAll('tbody tr').length,
+                        routesExpanded:[...element.querySelectorAll('.transit-details')].every(detail=>detail.open),
+                        noteText:element.querySelector('.stop-note-text')?.textContent,
                         lastTitle:element.querySelector('tbody tr:last-child .title-cell')?.textContent,
                         overflow
                     });
@@ -146,6 +150,8 @@ def run(browser, base_url):
                 download.value.save_as(str(path))
                 page.wait_for_function("!isBusy", timeout=20000)
                 capture = page.evaluate("window.__realCaptureCalls.at(-1)")
+                check(label + ' exported routes retain full descriptions', capture['routesExpanded'], capture)
+                check(label + ' exported personal notes retain text', capture['noteText'] == '提前十分鐘到。\n記得帶現金與訂位簡訊。', capture)
                 image_info = inspect_image(path)
                 report["captures"].append({"viewport": viewport_name, "format": format_name, "capture": capture, "image": image_info})
                 check(label + " expected JPG width", image_info["width"] == expected_width, image_info)

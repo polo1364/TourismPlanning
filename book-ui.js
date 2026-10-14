@@ -46,7 +46,7 @@
         $('bookPrevious').disabled = selectedIndex <= 0;
         $('bookNext').disabled = selectedIndex >= days.length - 1;
         $('bookPageNumber').textContent = `${String(selectedIndex + 1).padStart(2, '0')} / ${String(days.length).padStart(2, '0')}`;
-        $('bookPageTitle').textContent = selectedDate ? `${selectedDate} · ${days[selectedIndex].day_title}` : '';
+        $('bookPageTitle').textContent = selectedDate ? `第 ${selectedIndex + 1} 天 · ${selectedDate.slice(5).replace('-', '/')}` : '';
         $('bookReadMode').textContent = continuous ? '切換逐日翻閱' : '連續閱讀';
         $('bookReadMode').setAttribute('aria-pressed', String(continuous));
         $('bookProgress').max = Math.max(1, days.length);

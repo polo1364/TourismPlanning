@@ -59,7 +59,7 @@ def main():
                     page.locator('#reviewBudgetForm button').click()
                     page.wait_for_function('!isBusy && generationState.budget===300')
                     check(label + ' budget updates without regenerating trip', len(network.ai_requests)==1 and '超出旅程預算' not in page.locator('#tripReview').inner_text() and page.evaluate("JSON.parse(localStorage.generationState_v27).budget===300 && JSON.parse(localStorage.tripDraft_v27).budget==='300'"))
-                    check(label + ' timeline has next stop and duration', page.locator('.next-stop').count()==2 and '待補' in page.locator('.stop-meta').first.inner_text())
+                    check(label + ' timeline keeps duration without repeating the next title', page.locator('.next-stop').count()==0 and '待補' in page.locator('.stop-meta').first.inner_text())
                     page.locator('.stop-edit').first.click()
                     page.locator('#stop_title').fill('編輯後景點')
                     page.locator('#stop_endTime').fill('08:00')

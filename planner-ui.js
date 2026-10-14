@@ -6,6 +6,33 @@
     let operation = null;
     let retryAction = null;
     let editing = null;
+    let editingNote = null;
+    let progressTimer = null;
+
+    function updateElapsed() {
+        if (!operation) return;
+        const seconds = Math.floor((performance.now() - operation.startedAt) / 1000);
+        $('operationElapsed').textContent = `已用時 ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+        const waiting = Math.floor((performance.now() - operation.stageStartedAt) / 1000);
+        $('operationHint').textContent = operation.waitingForAI
+            ? `本次 AI 回覆已等待 ${waiting} 秒。${waiting >= 60 ? '等待較久，仍未收到完整回覆；可取消後手動重試。' : '完整回覆到達後才會更新完成天數，請勿重複送出。'}`
+            : '完成一天就儲存一天；進度只計算已完成的天數。';
+    }
+    function stage(label, waitingForAI = false) {
+        if (!operation || operation.controller.signal.aborted) return;
+        operation.stageStartedAt = performance.now();
+        operation.waitingForAI = waitingForAI;
+        $('operationStage').textContent = label;
+        updateElapsed();
+    }
+    function stopProgress(label) {
+        updateElapsed();
+        clearInterval(progressTimer);
+        progressTimer = null;
+        $('operationStatus').dataset.active = 'false';
+        $('operationStage').textContent = label;
+        $('operationHint').textContent = '';
+    }
 
     function switchView(view, scroll = true) {
         window.TripMotion?.settle();
@@ -28,6 +55,11 @@
         operation = { controller: new AbortController(), action, itinerary, completed: tripData.length, total: generationState?.totalDays || getTripDayCount($('flightArrival').value, $('flightDeparture').value) || 1 };
         // A fresh plan has no completed days yet; the old trip remains visible until success.
         if (action === planTrip) { operation.completed = 0; operation.total = getTripDayCount($('flightArrival').value, $('flightDeparture').value); }
+        operation.startedAt = performance.now();
+        clearInterval(progressTimer);
+        $('operationStatus').dataset.active = 'true';
+        stage('正在準備生成');
+        progressTimer = setInterval(updateElapsed, 1000);
         retryAction = null;
         $('operationStatus').hidden = false;
         $('operationText').textContent = `${label}。已完成 ${operation.completed} / ${operation.total} 天；正在等待服務回應。`;
@@ -38,14 +70,17 @@
         $('retryOperation').hidden = true;
         $('retryOperation').textContent = '重試這一步';
         switchView('itinerary');
+        $('operationStatus').scrollIntoView({ block: 'start', behavior: 'instant' });
     }
     function cancel() {
         if (!operation) return;
         operation.controller.abort();
+        stopProgress('正在取消');
         $('cancelOperation').disabled = true;
         $('operationText').textContent = '正在取消並保留原有資料…';
     }
     function complete() {
+        stopProgress('生成完成');
         retryAction = null;
         $('operationText').textContent = operation?.itinerary
             ? `已完成 ${tripData.length} / ${generationState?.totalDays || tripData.length} 天，已儲存。${tripData.length < (generationState?.totalDays || 0) ? '可繼續完成旅遊書。' : '整本旅遊書已完成（100%），可直接翻閱。'}`
@@ -55,6 +90,7 @@
         else if (operation?.itinerary) window.TripBook?.showCurrent();
     }
     function bookProgress() {
+        stage('正在準備下一天');
         const total = generationState.totalDays;
         const completed = tripData.length;
         $('dayProgress').max = total;
@@ -62,6 +98,7 @@
         $('operationText').textContent = `正在編排第 ${completed + 1} / ${total} 天。已儲存 ${completed} / ${total} 天（${Math.round(completed / total * 100)}%），完成後將開啟旅遊書。`;
     }
     function failed(error, retryOverride) {
+        stopProgress(error.code === 'CANCELLED' ? '已取消生成' : '生成未完成');
         retryAction = retryOverride || operation?.action || null;
         $('operationText').textContent = `${error.code === 'CANCELLED' ? '已取消' : '這一步未完成'}：${error.message} 已保留原資料；可重試這一步。${error.code === 'CANCELLED' ? '取消不保證服務端停止計費。' : ''}`;
         $('dayProgress').max = generationState?.totalDays || Math.max(tripData.length, operation?.total || 1);
@@ -70,6 +107,9 @@
         $('retryOperation').textContent = retryAction === finishBook ? '繼續完成旅遊書' : '重試這一步';
     }
     function end() {
+        clearInterval(progressTimer);
+        progressTimer = null;
+        $('operationStatus').dataset.active = 'false';
         operation = null;
         $('cancelOperation').hidden = true;
         $('retryOperation').disabled = false;
@@ -90,8 +130,8 @@
     function timingHtml(day, index) {
         const item = day.itinerary[index];
         const duration = PlannerChecks.timing(item).duration;
-        const travel = Number.isFinite(item.travelMinutes) ? `抵達本站約 ${item.travelMinutes} 分鐘` : '移動時間待確認';
-        return `<div class="stop-meta"><span>${duration ? `停留 ${duration} 分鐘` : '停留時間待補'}</span>${index ? `<span>${travel}</span>` : ''}</div><div class="next-stop">${day.itinerary[index + 1] ? `下一站 → ${escapeHtml(day.itinerary[index + 1].title)}` : '當日最後一站'}</div>`;
+        const travel = Number.isFinite(item.travelMinutes) ? `站間移動約 ${item.travelMinutes} 分鐘` : '移動時間待確認';
+        return `<div class="stop-meta"><span>${duration ? `停留 ${duration} 分鐘` : '停留時間待補'}</span>${index ? `<span>${travel}</span>` : ''}</div>`;
     }
     function afterRender() {
         window.TripLibrary?.refresh();
@@ -130,6 +170,9 @@
         if (editing && $('stopModal')?.style.display === 'block') {
             const buttons = document.querySelectorAll('#tripContainer > details')[editing.dayIndex]?.querySelectorAll('.stop-edit');
             if (buttons?.length) modalReturnFocus = buttons[Math.min(editing.itemIndex, buttons.length - 1)];
+        }
+        if (editingNote && $('noteModal')?.style.display === 'block') {
+            modalReturnFocus = document.querySelector(`#tripContainer [data-note-day="${editingNote.dayIndex}"][data-note-item="${editingNote.itemIndex}"]`);
         }
         // New controls can be rendered while an existing API request still owns the lock.
         if (isBusy) document.querySelectorAll('#tripContainer button, #tripReview button, #tripReview input').forEach(button => {
@@ -228,6 +271,38 @@
         catch (error) { $('stop_error').textContent = error.message; }
         finally { setBusy(false); }
     }
+    function editNote(dayIndex, itemIndex) {
+        const item = tripData[dayIndex]?.itinerary[itemIndex];
+        if (isBusy || !item) return;
+        editingNote = { dayIndex, itemIndex };
+        $('noteStopTitle').textContent = item.title;
+        $('noteText').value = item.userNote || '';
+        $('noteError').textContent = '';
+        $('deleteNote').hidden = !item.userNote;
+        openModal('noteModal');
+        $('noteText').focus();
+    }
+    async function saveNote(remove = false) {
+        if (isBusy || !editingNote) return;
+        const { dayIndex, itemIndex } = editingNote;
+        if (!tripData[dayIndex]?.itinerary[itemIndex]) return;
+        const text = $('noteText').value.trim();
+        if (!remove && (!text || text.length > 1000)) { $('noteError').textContent = '請填寫 1 至 1000 字；移除便利貼請按「刪除便利貼」。'; return; }
+        if (remove && !confirm('刪除這一站的便利貼？行程內容會保留。')) return;
+        const days = structuredClone(tripData);
+        if (remove) delete days[dayIndex].itinerary[itemIndex].userNote;
+        else days[dayIndex].itinerary[itemIndex].userNote = text;
+        setBusy(true);
+        try {
+            await commitDays(days);
+            setBusy(false);
+            closeModal('noteModal');
+            editingNote = null;
+            invalidateRetry();
+            showSaveStatus(remove ? '便利貼已刪除，可復原上一步' : '便利貼已隨行程儲存');
+        } catch (error) { $('noteError').textContent = error.message; }
+        finally { if (isBusy) setBusy(false); }
+    }
     async function move(direction) {
         if (isBusy || !editing) return;
         const { dayIndex, itemIndex } = editing;
@@ -269,6 +344,8 @@
             const replacement = normalizeDay({ date: day.date, day_title: day.day_title, itinerary: [result.item] }).itinerary[0];
             replacement.time = original.time;
             replacement.endTime = original.endTime || '';
+            delete replacement.userNote;
+            if (original.userNote) replacement.userNote = original.userNote;
             if (original.durationMinutes !== undefined) replacement.durationMinutes = original.durationMinutes;
             days[dayIndex].itinerary[itemIndex] = replacement;
             clearRoute(days[dayIndex].itinerary, itemIndex);
@@ -282,6 +359,11 @@
     function init() {
         if (initialized) return;
         initialized = true;
+        document.body.insertAdjacentHTML('beforeend', `<div id="noteModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="noteTitle"><div class="modal-content note-editor">
+            <div class="editor-heading"><h3 id="noteTitle">我的便利貼</h3><button type="button" class="modal-close" aria-label="關閉便利貼" onclick="closeModal('noteModal')">×</button></div>
+            <p id="noteStopTitle"></p><form id="noteForm"><label for="noteText">這一站要特別留意什麼？</label><textarea id="noteText" rows="6" maxlength="1000" placeholder="例如：已訂位 12:00，提前 10 分鐘到。\n記得帶訂位簡訊；只收現金。" aria-describedby="noteHelp noteError"></textarea>
+            <p id="noteHelp">最多 1000 字，按儲存後隨行程保留。</p><p id="noteError" role="alert"></p><div class="note-editor-actions"><button type="submit" class="btn-primary">儲存便利貼</button><button type="button" class="btn-outline" onclick="closeModal('noteModal')">取消</button><button type="button" id="deleteNote" class="btn-danger" onclick="PlannerUI.deleteNote()">刪除便利貼</button></div></form></div></div>`);
+        $('noteForm').addEventListener('submit', event => { event.preventDefault(); void saveNote(); });
         document.body.insertAdjacentHTML('beforeend', `<div id="stopModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="stopTitle"><div class="modal-content stop-editor">
             <div class="editor-heading"><h3 id="stopTitle">編輯這一站</h3><button type="button" class="modal-close" aria-label="關閉站點編輯" onclick="closeModal('stopModal')">×</button></div><p id="stop_position" class="field-hint"></p>
             <form id="stopForm"><label for="stop_title">活動名稱</label><input id="stop_title" required maxlength="200">
@@ -302,9 +384,10 @@
     }
     function resetContext() {
         editing = null;
+        editingNote = null;
         currentModifyIndex = null;
         invalidateRetry();
-        for (const id of ['stopModal', 'modifyModal']) if ($(id)?.style.display === 'block') closeModal(id);
+        for (const id of ['stopModal', 'modifyModal', 'noteModal']) if ($(id)?.style.display === 'block') closeModal(id);
     }
     function jumpToDay(index) {
         window.TripBook?.select(index, false);
@@ -315,5 +398,5 @@
         day.scrollIntoView({ block: 'start' });
         day.querySelector('summary').focus({ preventScroll: true });
     }
-    window.PlannerUI = Object.freeze({ init, switchView, signal, networkSignal, throwIfCancelled, begin, cancel, complete, failed, bookProgress, end, retry, afterRender, timingHtml, edit, move, remove, replaceStop, resetContext, jumpToDay });
+    window.PlannerUI = Object.freeze({ init, switchView, signal, networkSignal, throwIfCancelled, begin, stage, cancel, complete, failed, bookProgress, end, retry, afterRender, timingHtml, edit, editNote, deleteNote: () => saveNote(true), move, remove, replaceStop, resetContext, jumpToDay });
 })();

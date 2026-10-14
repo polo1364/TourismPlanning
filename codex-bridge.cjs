@@ -8,6 +8,7 @@ const crypto = require('node:crypto');
 const { spawn, execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 const execFileAsync = promisify(execFile);
+const { tokenUsage, readLimits, createUsageReader, stopChild } = require('./codex-usage.cjs');
 const PORT = 8081;
 const MAX_BODY = 128 * 1024;
 const MAX_OUTPUT = 2 * 1024 * 1024;
@@ -43,12 +44,23 @@ async function checkLogin() {
     }
 }
 
-function cliArgs(cwd) {
+function cliArgs(cwd, model = '') {
     const args = ['exec', '--ignore-user-config', '--ephemeral', '--skip-git-repo-check', '--sandbox', 'read-only', '--json', '--color', 'never', '--cd', cwd];
     for (const config of ['model_provider="openai"', 'forced_login_method="chatgpt"', 'approval_policy="never"', 'project_doc_max_bytes=0', 'web_search="disabled"']) args.push('-c', config);
     // No shell, plugins, connected apps, browser or subagents are needed for JSON planning.
     for (const feature of ['shell_tool', 'apps', 'plugins', 'hooks', 'memories', 'multi_agent', 'multi_agent_v2', 'browser_use', 'browser_use_external', 'computer_use', 'image_generation', 'view_image', 'code_mode', 'code_mode_host', 'skill_search', 'workspace_dependencies', 'goals', 'sleep_tool']) args.push('--disable', feature);
+    if (model) args.push('--model', model);
     return [...args, '-'];
+}
+
+const readUsage = createUsageReader(() => readLimits(cliCommand(), childEnv()));
+async function validateModel(model, usage) {
+    if (model === undefined || model === '') return '';
+    if (typeof model !== 'string' || model.length > 150) throw fail('模型選擇無效。', 'MODEL', 400);
+    const info = await usage();
+    if (!info.models?.length) throw fail('暫時無法取得模型清單，請更新後再試，或選擇官方預設。', 'MODEL', 503);
+    if (!info.models.some(item => item.id === model)) throw fail('此模型目前不在可用清單，請重新選擇。', 'MODEL', 400);
+    return model;
 }
 
 function parseEvents(output) {
@@ -70,20 +82,18 @@ function parseEvents(output) {
     return data;
 }
 
-async function runCodex(prompt, signal) {
+async function runCodex(prompt, signal, { model = '', onUsage = () => {} } = {}) {
     if (signal.aborted) throw fail('已取消 Codex 生成。', 'CANCELLED', 499);
     const cli = cliCommand();
     const cwd = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'roam-codex-'));
     try {
         return await new Promise((resolve, reject) => {
-            const child = spawn(cli.command, [...cli.prefix, ...cliArgs(cwd)], { env: childEnv(), windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+            const child = spawn(cli.command, [...cli.prefix, ...cliArgs(cwd, model)], { env: childEnv(), windowsHide: true, detached: process.platform !== 'win32', stdio: ['pipe', 'pipe', 'pipe'] });
             let output = '', failure = null;
             const stop = error => {
                 if (failure) return;
                 failure = error;
-                if (process.platform === 'win32' && child.pid) {
-                    execFile('taskkill', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true }, () => {});
-                } else child.kill('SIGKILL');
+                stopChild(child);
             };
             const abort = () => stop(fail('已取消 Codex 生成。', 'CANCELLED', 499));
             const timer = setTimeout(() => stop(fail('Codex 回應逾時，已保留完成內容；請稍後手動接續。', 'TIMEOUT', 504)), TIMEOUT);
@@ -100,6 +110,7 @@ async function runCodex(prompt, signal) {
             child.once('close', code => {
                 clearTimeout(timer);
                 signal.removeEventListener('abort', abort);
+                onUsage(tokenUsage(output));
                 if (failure) return reject(failure);
                 if (code !== 0) return reject(fail('Codex 執行失敗；請檢查登入、額度或 CLI 版本。', 'PROVIDER'));
                 try { resolve(parseEvents(output)); } catch (error) { reject(error); }
@@ -112,7 +123,7 @@ async function runCodex(prompt, signal) {
     }
 }
 
-function createBridge({ login = checkLogin, generate = runCodex } = {}) {
+function createBridge({ login = checkLogin, generate = runCodex, usage = readUsage } = {}) {
     const token = crypto.randomBytes(32).toString('hex');
     let busy = false;
     return http.createServer(async (req, res) => {
@@ -128,10 +139,16 @@ function createBridge({ login = checkLogin, generate = runCodex } = {}) {
             res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Roam-Token');
             res.writeHead(204); return res.end();
         }
+        let measuredUsage;
         try {
             if (req.method === 'GET' && req.url === '/status') {
                 const state = await login();
                 return json(200, { service: 'roam-codex', ready: state.ready, auth: state.auth, token });
+            }
+            if (req.method === 'GET' && req.url === '/usage') {
+                if (req.headers['x-roam-token'] !== token) return json(403, { error: '請重新檢查連線。', code: 'TOKEN' });
+                await login();
+                return json(200, await usage());
             }
             if (req.method !== 'POST' || req.url !== '/generate') return json(404, { error: '找不到此功能。' });
             if (req.headers['x-roam-token'] !== token) return json(403, { error: '本機連線已更新，請重新檢查連線。', code: 'TOKEN' });
@@ -153,16 +170,17 @@ function createBridge({ login = checkLogin, generate = runCodex } = {}) {
                 try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw fail('JSON 格式錯誤。', 'BODY', 400); }
                 if (typeof body?.prompt !== 'string' || !body.prompt.trim() || body.prompt.length > 60000) throw fail('請提供有效旅行需求。', 'PROMPT', 400);
                 await login(); // Require ChatGPT auth for every request; never fall back to API billing.
+                const model = await validateModel(body.model, usage);
                 if (controller.signal.aborted) throw fail('已取消。', 'CANCELLED', 499);
-                const data = await generate(body.prompt, controller.signal);
-                if (!controller.signal.aborted) json(200, { data });
+                const data = await generate(body.prompt, controller.signal, { model, onUsage: value => { measuredUsage = value; } });
+                if (!controller.signal.aborted) json(200, { data, usage: measuredUsage });
             } finally {
                 busy = false;
                 req.removeListener('aborted', abort);
                 res.removeListener('close', abort);
             }
         } catch (error) {
-            json(error.status || 500, { error: error.status ? error.message : '本機 Codex 連線失敗，請重新檢查。', code: error.status ? error.code : 'BRIDGE' });
+            json(error.status || 500, { error: error.status ? error.message : '本機 Codex 連線失敗，請重新檢查。', code: error.status ? error.code : 'BRIDGE', usage: measuredUsage });
         }
     });
 }
@@ -172,4 +190,4 @@ if (require.main === module) {
     server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? 'Codex bridge port 8081 is already in use.' : 'Codex bridge could not start.'); process.exitCode = 1; });
     server.listen(PORT, '127.0.0.1', () => console.log('Codex bridge ready at http://127.0.0.1:8081 (personal local use only).'));
 }
-module.exports = { createBridge, parseEvents, cliArgs, childEnv, checkLogin, runCodex };
+module.exports = { createBridge, parseEvents, cliArgs, childEnv, checkLogin, runCodex, readUsage, validateModel };

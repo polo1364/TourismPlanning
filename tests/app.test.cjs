@@ -85,6 +85,21 @@ test('unknown destinations do not silently become JPY and Taiwan districts keep 
     assert.equal(a.run("getCurrencyInfo('未知目的地').unknown"), true);
     assert.equal(a.run("getCurrencyInfo('臺北松山').code"), 'TWD');
 });
+
+test('shared vehicle and room costs are not mixed into individual subtotals', () => {
+    const result = app().run("calculateTotalCost({itinerary:[{cost:'油資 NT$1,000-1,500／車'},{cost:'每車200元'},{cost:'住宿3000元／房'},{cost:'午餐150元／人'}]}, {code:'TWD'})");
+    assert.equal(result.amount, 150);
+    assert.equal(result.unpriced, 3);
+});
+
+test('daily travel summary uses structured durations once and marks missing legs', () => {
+    const a = app();
+    const result = a.run("summarizeDayTravel({itinerary:[{travelMinutes:0},{travelMinutes:180,transit:[{time:'180分鐘'},{time:'240分鐘'}]},{travelMinutes:140},{}]})");
+    assert.equal(result.minutes, 320);
+    assert.equal(result.missing, 1);
+    assert.equal(a.run('summarizeDayTravel({itinerary:[{},{}]}).minutes'), null);
+    assert.equal(a.run('summarizeDayTravel({itinerary:[{},{travelMinutes:0}]}).minutes'), 0);
+});
 test('clear removes continuation state with the itinerary', () => {
     const a = app();
     a.data.set('generationState_v27', '{}');
@@ -171,4 +186,74 @@ test('route links honor transport and encode waypoint separators', () => {
     const url = a.run("generateDayRouteUrl({itinerary:[{title:'甲',type:'SPOT'},{title:'乙',type:'FOOD'},{title:'丙',type:'SPOT'},{title:'丁',type:'SPOT'}]}, '')");
     assert.ok(url.includes('%7C'));
     assert.equal(new URL(url).searchParams.get('travelmode'), 'transit');
+});
+
+
+test('personal notes survive normalization and invalid notes cannot erase saved data', () => {
+    const a = app();
+    const day = { date: '2026-11-10', day_title: '旅程', itinerary: [{ title: '公正包子', userNote: '  提早到\n只收現金  ', tips: 'AI 提醒' }] };
+    a.context.noteDay = day;
+    const result = JSON.parse(a.run('JSON.stringify(validateTrip([noteDay]))'));
+    assert.equal(result[0].itinerary[0].userNote, '提早到\n只收現金');
+    assert.equal(result[0].itinerary[0].tips, 'AI 提醒');
+    for (const invalid of [42, {}, null, '字'.repeat(1001)]) {
+        day.itinerary[0].userNote = invalid;
+        assert.throws(() => a.run('validateTrip([noteDay])'), /便利貼/);
+    }
+    day.itinerary[0].userNote = '  ';
+    assert.equal(a.run('Object.hasOwn(normalizeDay(noteDay).itinerary[0], "userNote")'), false);
+});
+
+test('note rendering escapes HTML and retains line breaks', () => {
+    const a = app();
+    a.context.noteItem = { title: '店名', userNote: '<img src=x onerror=alert(1)>\n帶現金' };
+    const html = a.run('stopNoteHtml(noteItem, 0, 0)');
+    assert.ok(html.includes('&lt;img'));
+    assert.ok(!html.includes('<img'));
+    assert.ok(html.includes('\n帶現金'));
+});
+
+test('AI day edits retain exact personal notes after reordering and reject orphaned notes', () => {
+    const a = app();
+    a.context.originalDay = { itinerary: [{ title: '甲', address: '一', userNote: '我的原文' }, { title: '乙' }] };
+    a.context.updatedDay = { itinerary: [{ title: '乙' }, { title: '甲', address: '一', userNote: 'AI 修改' }] };
+    assert.equal(a.run('preserveDayNotes(originalDay, updatedDay).itinerary[1].userNote'), '我的原文');
+    a.context.updatedDay = { itinerary: [{ title: '丙' }] };
+    assert.throws(() => a.run('preserveDayNotes(originalDay, updatedDay)'), /便利貼/);
+});
+
+test('inline labels mark place names inside sentences without hiding cancellation context', () => {
+    const a = app();
+    const input = '取消瑞穗牧場、北回歸線標誌公園與公正包子，下午僅安排雲山水夢幻湖。';
+    a.context.placeSentence = input;
+    const html = a.run('highlightPlaceNames(placeSentence, {itinerary:[]})');
+    for (const name of ['瑞穗牧場', '北回歸線標誌公園', '公正包子', '雲山水夢幻湖']) assert.ok(html.includes('>' + name + '</span>'), name);
+    assert.ok(html.startsWith('取消<span'));
+    assert.equal(html.replace(/<[^>]+>/g, ''), input);
+    a.context.placeSentence = '<img src=x onerror=alert(1)>公正包子';
+    assert.ok(!a.run('highlightPlaceNames(placeSentence, {itinerary:[]})').includes('<img'));
+});
+
+test('known itinerary names containing regex punctuation remain safe inline labels', () => {
+    const a = app();
+    const result = a.run('highlightPlaceNames("到 A+B Cafe 用餐", {itinerary:[{type:"FOOD",title:"午餐：A+B Cafe"}]})');
+    assert.ok(result.includes('>A+B Cafe</span>'));
+    assert.equal(a.run('highlightPlaceNames("漫步老街，當地餐廳用餐", {itinerary:[]})'), '漫步老街，當地餐廳用餐');
+});
+
+test('inline labels reject narrative phrases and generic destinations', () => {
+    const a = app();
+    for (const sentence of ['晚間步行前往夜市', '直接在夜市享用晚餐', '不另安排餐廳', '可以到附近公園休息', '建議在特色餐廳用餐']) {
+        a.context.sentence = sentence;
+        assert.equal(a.run('highlightPlaceNames(sentence, {itinerary:[]})'), sentence);
+        a.context.genericDay = { itinerary: [{type:'FOOD', title:sentence}] };
+        assert.equal(a.run('highlightPlaceNames(sentence, genericDay)'), sentence);
+    }
+});
+
+test('activity titles supply only the named place while surrounding prose stays plain', () => {
+    const a = app();
+    a.context.sentence = '晚間步行前往東大門夜市，直接在夜市享用晚餐，不另安排餐廳。';
+    const result = a.run('highlightPlaceNames(sentence, {itinerary:[{type:"FOOD", title:"東大門夜市晚餐與散步"}]})');
+    assert.equal(result, '晚間步行前往<span class="inline-place food">東大門夜市</span>，直接在夜市享用晚餐，不另安排餐廳。');
 });

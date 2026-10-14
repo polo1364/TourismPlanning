@@ -1,0 +1,37 @@
+[Unit]
+Description=ROAM personal travel book
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/roam/current
+EnvironmentFile=/etc/roam/cloud.env
+Environment=HOME=/home/ubuntu
+Environment=ROAM_SHARE_DIR=/var/lib/roam/shares
+StateDirectory=roam
+StateDirectoryMode=0700
+Environment=PATH=/home/ubuntu/.local/lib/node-v24.18.0-linux-x64/bin:/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/ubuntu/.local/lib/node-v24.18.0-linux-x64/bin/node /opt/roam/current/cloud-server.cjs
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/ubuntu/.codex
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+InaccessiblePaths=/home/ubuntu/.ssh /home/ubuntu/roam-cloud.env
+TasksMax=128
+MemoryMax=750M
+
+[Install]
+WantedBy=multi-user.target

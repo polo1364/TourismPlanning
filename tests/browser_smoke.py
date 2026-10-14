@@ -89,7 +89,7 @@ class Network:
                 return
             return route.fulfill(status=200, content_type="application/json", body=json.dumps(payload))
         if host == "geocoding-api.open-meteo.com":
-            return route.fulfill(status=200, content_type="application/json", body='{"results":[{"latitude":25.03,"longitude":121.56}]}')
+            return route.fulfill(status=200, content_type="application/json", body='{"results":[{"name":"Taipei","country_code":"TW","latitude":25.03,"longitude":121.56}]}')
         if host == "api.open-meteo.com":
             payload = {"daily": {"time": [START, END], "weather_code": [1, 2], "temperature_2m_max": [24, 23], "temperature_2m_min": [19, 18]}}
             return route.fulfill(status=200, content_type="application/json", body=json.dumps(payload))
@@ -196,7 +196,7 @@ def smoke(browser, base_url):
 
             # Exercise a single-day checkpoint; whole_book_smoke covers the full UI workflow.
             page.evaluate("() => { void planTrip(); }")
-            page.wait_for_function("tripData.length === 1 && document.querySelectorAll('#tripContainer details').length === 1 && !document.getElementById('planBtn').disabled")
+            page.wait_for_function("tripData.length === 1 && document.querySelectorAll('#tripContainer > details').length === 1 && !document.getElementById('planBtn').disabled")
             check(prefix + "first day and continuation", page.locator("#generateNextDayBtn").is_visible())
             first_request = network.ai_requests[-1]
             check(prefix + "DeepSeek wire format", "messages" in first_request and first_request.get("response_format") == {"type": "json_object"})
@@ -217,7 +217,7 @@ def smoke(browser, base_url):
             workspace_view(page, 'itinerary')
 
             page.locator("#generateNextDayBtn").click()
-            page.wait_for_function("tripData.length === 2 && document.querySelectorAll('#tripContainer details').length === 2")
+            page.wait_for_function("tripData.length === 2 && document.querySelectorAll('#tripContainer > details').length === 2")
             check(prefix + "second day date preserved", page.evaluate("tripData.map(day => day.date)") == [START, END])
             page.locator("#tripContainer .btn-modify").first.click()
             page.locator("#modifyInstruction").fill("微調：改成輕鬆路線")
@@ -226,7 +226,7 @@ def smoke(browser, base_url):
             check(prefix + "modification immediately rerenders", page.locator("#tripContainer").get_by_text("微調後景點", exact=True).count() == 1)
 
             page.reload(wait_until="networkidle")
-            page.wait_for_function("document.querySelectorAll('#tripContainer details').length === 2")
+            page.wait_for_function("document.querySelectorAll('#tripContainer > details').length === 2")
             check(prefix + "reload restores edited trip", "微調後景點" in page.locator("#tripContainer").inner_text())
             report["viewports"][name] = overflow(page)
             check(prefix + "no horizontal page overflow", not report["viewports"][name]["overflow"], report["viewports"][name])
@@ -253,11 +253,11 @@ def smoke(browser, base_url):
             # Test application export cleanup with a deterministic canvas. This is not
             # a visual test of the external html2canvas implementation.
             page.evaluate("""() => { window.html2canvas = async () => { const canvas=document.createElement('canvas'); canvas.width=32; canvas.height=32; return canvas; }; }""")
-            before_export = page.evaluate("Array.from(document.querySelectorAll('#tripContainer details'), day => day.open)")
+            before_export = page.evaluate("Array.from(document.querySelectorAll('#tripContainer > details'), day => day.open)")
             await_export = "async functionName => { await window[functionName](); }"
             page.evaluate(await_export, "exportToA4Image")
             page.evaluate(await_export, "exportToMobileImages")
-            check(prefix + "exports restore expanded state", page.evaluate("Array.from(document.querySelectorAll('#tripContainer details'), day => day.open)") == before_export)
+            check(prefix + "exports restore expanded state", page.evaluate("Array.from(document.querySelectorAll('#tripContainer > details'), day => day.open)") == before_export)
             check(prefix + "exports restore controls and CSS", page.locator("#tripContainer .btn-modify").first.is_visible() and page.locator(".paper-mode, .snapshot-mode, .print-mode, .export-host").count() == 0)
             page.evaluate("() => { window.html2canvas = async () => { throw new Error('Mocked rendering failure'); }; }")
             page.evaluate(await_export, "exportToA4Image")
@@ -273,7 +273,7 @@ def smoke(browser, base_url):
             page.wait_for_function("tripData.length === 1 && !!document.getElementById('generateNextDayBtn')")
             check(prefix + "import restores continuation", page.locator("#generateNextDayBtn").is_visible())
             page.locator("#generateNextDayBtn").click()
-            page.wait_for_function("tripData.length === 2 && document.querySelectorAll('#tripContainer details').length === 2")
+            page.wait_for_function("tripData.length === 2 && document.querySelectorAll('#tripContainer > details').length === 2")
             check(prefix + "imported trip can generate next day", page.evaluate("tripData[1].date") == END)
 
             # Legacy backups deliberately omit continuation state; rendering must
@@ -312,7 +312,7 @@ def targeted_checks(browser, base_url, report, check):
             memory: JSON.stringify({tripData, generationState}),
             disk: JSON.stringify({trip: localStorage.getItem('myTrip_v27'), state: localStorage.getItem('generationState_v27')}),
             // Compare the committed itinerary, excluding transient progress labels.
-            html: JSON.stringify({days: Array.from(document.querySelectorAll('#tripContainer details'), day => day.outerHTML), cost: document.querySelector('#tripContainer .total-cost-summary')?.textContent})
+            html: JSON.stringify({days: Array.from(document.querySelectorAll('#tripContainer > details'), day => day.outerHTML), cost: document.querySelector('#tripContainer .total-cost-summary')?.textContent})
         })""")
 
     def assert_unchanged(label, previous):
@@ -334,7 +334,7 @@ def targeted_checks(browser, base_url, report, check):
         page.wait_for_function("tripData.length === 1 && !isBusy && !!document.getElementById('generateNextDayBtn')")
         check(prefix + "JPY amount before reload", "¥1,700" in page.locator("#tripContainer .day-cost-badge").first.inner_text())
         page.reload(wait_until="networkidle")
-        page.wait_for_function("document.querySelectorAll('#tripContainer details').length === 1")
+        page.wait_for_function("document.querySelectorAll('#tripContainer > details').length === 1")
         check(prefix + "JPY amount survives reload", "¥1,700" in page.locator("#tripContainer .day-cost-badge").first.inner_text())
 
         workspace_view(page, 'settings')

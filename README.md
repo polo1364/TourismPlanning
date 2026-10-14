@@ -4,13 +4,13 @@
 
 ## 啟動
 
-線上版：[開啟 ROAM 旅遊書](https://polo1364.github.io/TourismPlanning/)。線上生成需填入自己的 DeepSeek API Key；Codex 額度請使用下方本機版。線上頁面不會連接本機 Codex，也不會自動切換生成服務。本機與線上行程不共用儲存空間，請先匯出 JSON 再匯入。
+公開版：[開啟 ROAM 旅遊書](https://polo1364.github.io/TourismPlanning/)。GitHub Pages 生成需填入自己的 DeepSeek API Key；Codex 額度可使用下方本機版，或自行部署受登入保護的個人 Oracle 版（見 [雲端部署說明](deploy/README.md)）。公開頁面不會連接本機 Codex，也不會自動切換生成服務。不同網址與裝置的行程不共用儲存空間，請先匯出 JSON 再匯入。
 
 ## GitHub Pages 部署
 
 `main` 更新後，`.github/workflows/pages.yml` 會執行 Node 測試，透過 `npm run build:pages` 打包，再發布到 GitHub Pages。儲存庫 Settings → Pages 的 Source 使用 **GitHub Actions**。
 
-建置以明確清單輸出 19 個靜態檔案至 `dist/`，包含前端、插畫與 Motion 授權；不發布本機服務、測試報告、備份或憑證。為避免混入舊檔，`dist/` 已存在時建置會停止；重跑前請先將舊 `dist/` 移至備份位置。GitHub Actions 每次使用新的工作目錄。
+建置以明確清單輸出 20 個前端檔案及 `.nojekyll`，共 21 個檔案至 `dist/`，包含前端、插畫與 Motion 授權；不發布本機服務、測試報告、備份或憑證。為避免混入舊檔，`dist/` 已存在時建置會停止；重跑前請先將舊 `dist/` 移至備份位置。GitHub Actions 每次使用新的工作目錄。
 
 來源儲存庫保留本機啟動程式及測試，方便下載使用。更新與部署狀態可在儲存庫 Actions 查看；部署方式參考 [GitHub Pages 官方文件](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)。
 
@@ -37,7 +37,7 @@ python -m http.server 8080 --bind 127.0.0.1
 
 若已開啟網頁服務，只需另開終端執行 `npm run codex:bridge`，以 `Ctrl+C` 結束前景連接服務。連接綁定 `127.0.0.1:8081`，只接受來自 `http://127.0.0.1:8080` 或 `http://localhost:8080` 的網頁，並驗證每次啟動的請求權杖；`file://`、其他連接埠與實體手機不能直接使用這個本機模式。權杖只留在頁面記憶體，不是 Codex 登入憑證。
 
-`codex-bridge.cjs` 透過 stdin 呼叫官方 `codex exec`，不把需求拼入 shell 指令，不讀取或傳出 Codex 憑證檔。生成使用 CLI 預設模型，忽略使用者自訂模型／工具設定，以暫存空目錄、唯讀沙箱及關閉 shell、外掛、連接應用、瀏覽器與多代理工具執行；不提供即時網路查證。每次呼叫上限 180 秒，不自動重送；取消或逾時會終止該次本機程序，但不保證服務端已消耗的額度返還。整本生成仍逐日儲存、顯示進度並可接續。
+`codex-bridge.cjs` 透過 stdin 呼叫官方 `codex exec`，不把需求拼入 shell 指令，不讀取或傳出 Codex 憑證檔。生成預設使用 CLI 預設模型，也可在服務設定選擇目前 Codex 提供的模型；後端驗證模型白名單。執行時忽略使用者自訂工具設定，以暫存空目錄、唯讀沙箱及關閉 shell、外掛、連接應用、瀏覽器與多代理工具執行；不提供即時網路查證。每次呼叫上限 180 秒，不自動重送；取消或逾時會終止該次本機程序，但不保證服務端已消耗的額度返還。整本生成仍逐日儲存、顯示進度並可接續。
 
 此連接供個人本機使用，不可直接暴露成公開或商業託管服務；公開服務應另整合官方 [Sign in with ChatGPT](https://developers.openai.com/siwc)，確認註冊與授權資格，不能共享你的本機登入憑證。參見 [Codex 整合的驗證範圍](https://learn.chatgpt.com/docs/app-server#auth-endpoints)。
 

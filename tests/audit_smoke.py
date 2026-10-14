@@ -51,7 +51,7 @@ def main():
             page.locator('#modifyInstruction').fill('第一天改成室內')
             page.locator('#modifyModal .btn-primary').click()
             page.wait_for_function('!isBusy')
-            page.locator('#tripContainer > details').nth(1).locator('summary').click()
+            page.locator('#tripContainer > details').nth(1).locator(':scope > summary').click()
             page.locator('.btn-modify').nth(1).click()
             page.locator('#modifyInstruction').fill('第二天尚未送出')
             page.locator('#modifyModal button').last.click()

@@ -4,9 +4,9 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 // An explicit list keeps local services, test reports and credentials out of Pages.
 const files = [
-    'index.html', 'styles.css', 'editorial.css', 'scenes.css', 'book.css',
+    'index.html', 'favicon.ico', 'styles.css', 'editorial.css', 'scenes.css', 'book.css',
     'deepseek.js', 'codex-local.js', 'motion-ui.js', 'planner-checks.js',
-    'planner-ui.js', 'trip-store.js', 'trip-library.js', 'scene-ui.js', 'book-ui.js',
+    'planner-ui.js', 'trip-store.js', 'trip-library.js', 'scene-ui.js', 'book-ui.js', 'book-export.js',
     'vendor/motion.js', 'vendor/motion.LICENSE.md',
     'assets/roam-coast.png', 'assets/roam-town.png'
 ];

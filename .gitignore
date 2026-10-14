@@ -10,3 +10,4 @@ dist/
 *.key
 credentials*.json
 auth.json
+.roam-shares/

@@ -27,6 +27,8 @@ class LocalNetwork(Network):
         headers={'Access-Control-Allow-Origin':route.request.headers.get('origin','*'), 'Access-Control-Allow-Headers':'Content-Type, X-Roam-Token'}
         if route.request.method=='OPTIONS':
             return route.fulfill(status=204,headers=headers)
+        if url.path=='/usage':
+            return route.fulfill(status=200,content_type='application/json',headers=headers,body=json.dumps({'available':False,'limits':[],'models':[]}))
         if url.path=='/status':
             payload={'ready':True,'auth':'chatgpt','token':'mock-local-token'} if self.ready else {'error':'請登入 ChatGPT','code':'LOGIN'}
             if self.hold_status:
@@ -91,7 +93,7 @@ def main():
             page.locator('#flightDeparture').fill(END+'T20:00')
             page.locator('#lodgingSection > summary').click();page.locator('#hasHotel').uncheck()
             page.locator('#planBtn').click();page.wait_for_function('!isBusy && tripData.length===2')
-            check(label+' whole book generates through Codex only',len(net.calls)==2 and not net.ai_requests and all(list(body)==['prompt'] for body in net.calls))
+            check(label+' whole book generates through Codex only',len(net.calls)==2 and not net.ai_requests and all(set(body)=={'prompt','model'} and body['model']=='' for body in net.calls))
             check(label+' book opens first page and completes progress',page.locator('#tripContainer > details:visible').get_attribute('data-date')==START and '100%' in page.locator('#operationText').inner_text())
             check(label+' API credentials never stored for Codex',page.evaluate("!localStorage.deepseekApiKey && !sessionStorage.deepseekApiKey && localStorage.aiProvider==='codex'"))
             page.locator('#undoTrip').click();page.wait_for_function('!isBusy && tripData.length===0')

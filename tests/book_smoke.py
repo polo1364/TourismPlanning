@@ -59,7 +59,7 @@ def main():
             page.keyboard.press('ArrowLeft')
             check(label+' keyboard page navigation works', page.locator('#tripContainer > details:visible').get_attribute('data-date')==START)
             page.locator('#dayIndex button').last.click()
-            check(label+' date index selects the correct chapter and focus', page.locator('#tripContainer > details:visible').get_attribute('data-date')==END and page.locator('#tripContainer > details').last.locator('summary').evaluate('e=>e===document.activeElement'))
+            check(label+' date index selects the correct chapter and focus', page.locator('#tripContainer > details:visible').get_attribute('data-date')==END and page.locator('#tripContainer > details').last.locator(':scope > summary').evaluate('e=>e===document.activeElement'))
             page.locator('#tripContainer > details:visible .stop-edit').first.click()
             page.locator('#stop_title').fill('第二天的新景點')
             page.locator('#stopForm button[type="submit"]').click()

@@ -1,0 +1,9 @@
+roam-161-33-192-81.sslip.io {
+    encode gzip
+    reverse_proxy 127.0.0.1:8090 {
+        header_up X-Forwarded-Proto https
+        transport http {
+            response_header_timeout 200s
+        }
+    }
+}

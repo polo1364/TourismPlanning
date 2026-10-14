@@ -10,7 +10,7 @@ test('Pages artifact contains only the allowlisted frontend and all relative HTM
     const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'roam-pages-test-'));
     const output = path.join(temp, 'dist');
     try {
-        assert.equal(build(output), 19);
+        assert.equal(build(output), 21);
         const actual = fs.readdirSync(output, { recursive: true }).filter(file => fs.statSync(path.join(output, file)).isFile());
         assert.deepEqual(actual.map(file => file.replaceAll('\\', '/')).sort(), [...files, '.nojekyll'].sort());
         const html = fs.readFileSync(path.join(output, 'index.html'), 'utf8');
