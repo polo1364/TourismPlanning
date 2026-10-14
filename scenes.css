@@ -1,0 +1,127 @@
+/* Illustrated travel scenes, layered over the existing editorial layout. */
+body { background: #f0eee7; }
+.app-header { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; grid-template-rows: 1fr auto; gap: 18px 24px; position: relative; isolation: isolate; min-height: 330px; padding: 30px 34px 22px; border: 0; overflow: hidden; border-radius: 10px 10px 0 0; background: #123d48; box-shadow: 0 18px 40px -30px #0c354c; }
+.hero-scenery, .hero-grain, .overview-scenery { position: absolute; inset: 0; pointer-events: none; }
+.hero-scenery { inset: -10px; z-index: -3; transition: transform 180ms var(--ease-out); }
+.scene-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 48%; transition: opacity 240ms var(--ease-out); }
+.scene-town { opacity: 0; }
+body[data-scene='town'] .scene-coast { opacity: 0; }
+body[data-scene='town'] .scene-town { opacity: 1; }
+.hero-grain { z-index: -2; background: linear-gradient(90deg, #082b3ae8 0%, #082b3aba 35%, #082b3a20 72%), linear-gradient(0deg, #082b3aba, transparent 60%); }
+.app-header .brand-mark { grid-column: 1; grid-row: 1; align-self: start; width: 62px; height: 75px; background: #faf8f211; color: #fff6e6; border: 1px solid #f8e4be80; border-radius: 2px; }
+.app-header .header-copy { grid-column: 2; grid-row: 1; align-self: center; padding-top: 12px; max-width: 620px; }
+.app-header .header-copy .eyebrow { color: #f1c892; }
+.app-header .header-copy h1 { color: #fff6e6; font-size: clamp(1.8rem, 3.3vw, 3.1rem); text-shadow: 0 2px 22px #09263788; margin: 14px 0; }
+.app-header .header-copy > p { color: #f1eadb; font-size: .85rem; }
+.app-header .header-status { grid-column: 3; grid-row: 1; align-self: start; color: #fff6e6; background: #0b2b3bbd; border: 1px solid #e6dcc570; font-size: .72rem; }
+.header-status::before { background: #f4bb78; }
+.scene-controls { grid-column: 1 / -1; grid-row: 2; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; border-top: 1px solid #f4e9d341; padding-top: 16px; }
+.scene-switch { display: flex; gap: 5px; padding: 4px; background: #092b38d6; border: 1px solid #d9e1d745; border-radius: 5px; }
+.scene-controls button { width: auto; min-height: 36px; padding: 8px 12px; background: transparent; border: 0; border-radius: 2px; color: #eee9da; font-size: .7rem; box-shadow: none; white-space: nowrap; }
+.scene-controls button[aria-pressed='true'][data-scene-choice] { background: #fff5e3; color: #213f4c; }
+.scene-controls button:focus-visible, .app-header a:focus-visible, .app-header > button:focus-visible { outline-color: #ffd9a1; }
+.scene-swatch { width: 10px; height: 10px; display: inline-block; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.coast-swatch { background: #438e9c; }
+.town-swatch { background: #c47441; }
+#sceneEffects { background: #092b38b8; border: 1px solid #d9e1d745; }
+.scene-caption { margin-left: auto; font-size: .64rem; color: #f1eadb; letter-spacing: .08em; }
+.flight-trail { position: absolute; right: 40px; bottom: 96px; width: 260px; height: 80px; color: #fff3d4a6; pointer-events: none; z-index: -1; }
+.flight-trail svg { width: 100%; height: 100%; }
+.flight-plane { position: absolute; left: 0; top: 43px; color: #fff3d4; font-size: 24px; transform: translate(230px, -33px) rotate(8deg); }
+body[data-scene-effects='true'] .flight-plane { animation: fly-to-somewhere 3s var(--ease-out) 1 both; }
+@keyframes fly-to-somewhere {
+    0% { opacity: 0; transform: translate(0, 6px) rotate(-30deg); }
+    12% { opacity: 1; }
+    48% { transform: translate(110px, -39px) rotate(-4deg); }
+    100% { opacity: 1; transform: translate(230px, -33px) rotate(8deg); }
+}
+.trip-library { padding: 20px 24px 14px; background: #fffaf1; border: 1px solid #ddd4c3; border-top: 0; margin-bottom: 32px; box-shadow: 0 10px 25px -25px #243b67; }
+.library-picker select { background: #fffefa; }
+.container { gap: 32px; }
+.card { box-shadow: 6px 6px 0 #e6dfd0; border-color: #d7cdbb; border-top-color: #285d68; background: #fffaf2; }
+.card .form-section-title { color: #285d68; }
+.card .btn-primary { background: #245563; }
+.card .btn-primary:hover { background: #163f4b; }
+.trip-overview { isolation: isolate; background: #123d48; border-radius: 6px 6px 0 0; padding-top: 32px; min-height: 285px; }
+.overview-scenery { z-index: -2; }
+.overview-scenery .scene-image { object-position: center 55%; }
+.overview-scenery::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg,#092c3bef 0%,#092c3bba 48%,#092c3b35 100%); }
+.overview-main .eyebrow { color: #f1d4ad; }
+.overview-main h2 { text-shadow: 0 2px 16px #102735; }
+.overview-main p, .overview-facts { color: #f1eadb; }
+.overview-stamp { color: #ffdfac; border: 2px double #ffdfaca6; background: #13334278; box-shadow: 0 0 0 4px #102e3b42; }
+#dayIndex { background: #102f3ee6; border-top-color: #d8c9a96b; }
+#dayIndex button { border-right-color: #d8c9a94d; }
+#dayIndex button:hover { background: #31596a; }
+#placeholderMsg { overflow: hidden; padding-top: 22px; background: #fffaf2; border-color: #d7cdbb; box-shadow: 6px 6px 0 #e6dfd0; }
+#placeholderMsg .empty-illustration.postcard { width: min(100%, 580px); height: auto; max-width: none; margin: 8px auto 32px; display: block; transform: rotate(-2deg); background: #fffdf6; padding: 10px 10px 36px; border: 1px solid #ded4c2; box-shadow: 0 12px 24px -12px #26363c55; }
+#placeholderMsg .postcard .postcard-photo { position: relative; width: 100%; height: 210px; margin: 0; overflow: hidden; background: #143946; animation: none; }
+.postcard-photo .scene-image { object-position: center 52%; }
+.postcard-note { position: absolute; bottom: 9px; left: 20px; font-family: var(--serif); font-size: .85rem; color: #605744; }
+.postcard-stamp { position: absolute; right: 16px; bottom: 12px; font: 9px/1.7 monospace; color: #b24d32; border: 1px solid #b24d3277; border-radius: 50%; padding: 12px 9px; transform: rotate(12deg); background: #fff9e9dd; }
+.empty-kicker { color: #a75b35; }
+#tripContainer > details { border-radius: 6px; border-color: #d8cdbb; box-shadow: 0 8px 20px -18px #344f5d; overflow: hidden; }
+#tripContainer > details > summary { background: #fff8e9; }
+.day-number { background: #ecdfc5; color: #ac4a30; border-right-color: #c2ad8d; }
+.day-content { background: #fffdf8; }
+#tripContainer .time-cell::after { box-shadow: 0 0 0 3px #edd9bf; }
+.journey-stop { position: relative; overflow: hidden; }
+.journey-stop:first-child { background: #214b59; border-color: #214b59; }
+.journey-stop:first-child::after { content: '↗'; position: absolute; right: 16px; top: 0; font: 110px/1.2 var(--serif); color: #eec68b22; pointer-events: none; }
+/* Once travelling, the current stop takes priority over the decorative cover. */
+body:has(.container[data-travelling='true']) .app-header { min-height: 210px; }
+body:has(.container[data-travelling='true']) .flight-trail { display: none; }
+@media (hover: hover) and (pointer: fine) {
+    body[data-scene-effects='true'] #placeholderMsg .postcard { transition: transform 240ms var(--ease-out); }
+    body[data-scene-effects='true'] #placeholderMsg .postcard:hover { transform: rotate(0) translateY(-3px); }
+}
+@media (max-width: 1100px) {
+    .app-header { grid-template-columns: 60px minmax(0, 1fr) auto; gap: 16px; padding: 26px 24px 20px; }
+    .app-header .header-copy { grid-column: 1 / 3; grid-row: 1; align-self: end; padding-top: 90px; }
+    .app-header .brand-mark { z-index: 1; }
+    .app-header .header-status { grid-column: 3; }
+    .flight-trail { right: 20px; bottom: 105px; opacity: .65; }
+    .trip-library { padding: 18px; }
+}
+@media (max-width: 760px) {
+    body { padding: 12px 12px 35px; }
+    .app-header { min-height: 310px; grid-template-columns: 1fr auto; grid-template-rows: auto 1fr auto; padding: 20px 18px 16px; gap: 18px 10px; border-radius: 8px 8px 0 0; }
+    .app-header .brand-mark { grid-column: 1; grid-row: 1; width: 43px; height: 53px; font-size: 25px; }
+    .app-header .header-status { grid-column: 2; grid-row: 1; justify-self: end; font-size: .64rem; padding: 8px; }
+    .app-header .header-copy { grid-column: 1 / -1; grid-row: 2; padding: 0; align-self: end; }
+    .app-header .header-copy h1 { font-size: clamp(1.4rem, 6.1vw, 2.2rem); margin: 10px 0; }
+    .app-header .header-copy > p { font-size: .71rem; }
+    .hero-grain { background: linear-gradient(90deg,#082b3ac9,#082b3a30),linear-gradient(0deg,#082b3aeb,transparent 85%); }
+    .hero-scenery .scene-image { object-position: 62% center; }
+    .scene-controls { grid-row: 3; gap: 8px; padding-top: 12px; }
+    .scene-controls button { font-size: .65rem; padding: 7px 9px; min-height: 36px; }
+    #sceneEffects { margin-left: auto; font-size: .61rem; }
+    .scene-caption { font-size: .57rem; margin-left: 0; flex-basis: 100%; }
+    .scene-swatch { width: 7px; height: 7px; margin-right: 4px; }
+    .flight-trail { display: none; }
+    .trip-library { padding: 14px 12px; margin-bottom: 10px; }
+    .trip-library[data-travelling='true'] { padding: 12px; }
+    .workspace-tabs { background: #f0eee7; }
+    .trip-overview { min-height: 260px; padding-top: 24px; }
+    .overview-scenery .scene-image { object-position: 65% center; }
+    .overview-scenery::after { background: linear-gradient(90deg,#092c3be8,#092c3b78); }
+    #placeholderMsg { padding: 20px; }
+    #placeholderMsg .empty-illustration.postcard { padding: 7px 7px 34px; margin: 4px auto 28px; }
+    #placeholderMsg .postcard .postcard-photo { height: 170px; }
+    .postcard-note { left: 12px; font-size: .7rem; }
+    .postcard-stamp { font-size: 7px; right: 10px; padding: 9px 7px; }
+    body:has(.container[data-travelling='true']) .app-header { min-height: 165px; grid-template-rows: auto auto; gap: 12px; }
+    body:has(.container[data-travelling='true']) .app-header .header-copy { display: none; }
+    body:has(.container[data-travelling='true']) .scene-controls { grid-row: 2; }
+}
+body[data-scene-effects='false'] .hero-scenery,
+body[data-scene-effects='false'] .scene-image,
+body[data-scene-keyboard='true'] .hero-scenery,
+body[data-scene-keyboard='true'] .scene-image { transition: none; }
+body[data-scene-effects='false'] .flight-plane { animation: none; }
+body[data-scene-keyboard='true'] #placeholderMsg .postcard { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+    .hero-scenery, .scene-image, #placeholderMsg .postcard { transition: none !important; }
+    .flight-plane { animation: none !important; }
+    #placeholderMsg .postcard:hover { transform: rotate(-2deg) !important; }
+}

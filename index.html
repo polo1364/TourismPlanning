@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🇯🇵 AI極速旅遊規劃師 (A4手冊修復版)</title>
+    <title>漫遊 Roam · AI 旅程規劃</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -543,31 +543,6 @@
         } 
         .btn-pdf:hover { 
             background: linear-gradient(135deg, #475569 0%, #334155 100%); 
-        }
-        .btn-pdf-full {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-            flex-basis: 100%;
-            font-size: 1.05rem !important;
-            padding: 16px 20px !important;
-            letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-pdf-full:hover {
-            background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
-        }
-        .btn-pdf-full::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-            transition: left 0.6s;
-        }
-        .btn-pdf-full:hover::after {
-            left: 100%;
         }
 
         /* 行程列表容器 - 垂直排列 */
@@ -1599,56 +1574,103 @@
             outline-offset: 2px;
         }
     </style>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="editorial.css">
+    <link rel="stylesheet" href="scenes.css">
+    <link rel="stylesheet" href="book.css">
+    <script src="deepseek.js" defer></script>
+    <script src="codex-local.js" defer></script>
+    <script src="vendor/motion.js" defer></script>
+    <script src="motion-ui.js" defer></script>
+    <script src="planner-checks.js" defer></script>
+    <script src="planner-ui.js" defer></script>
+    <script src="trip-store.js" defer></script>
+    <script src="trip-library.js" defer></script>
+    <script src="scene-ui.js" defer></script>
+    <script src="book-ui.js" defer></script>
 </head>
 <body>
 
-    <div id="saveStatus">✅ 資料已暫存</div>
+    <div id="saveStatus" role="status" aria-live="polite">資料已儲存於此瀏覽器</div>
 
-    <div id="apiModal" class="modal">
+    <div id="apiModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
         <div class="modal-content">
             <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <h3 style="margin:0;">⚙️ 系統設定</h3><span onclick="closeModal('apiModal')" style="cursor:pointer; font-size:1.5rem; opacity:0.5;">×</span>
+                <h3 id="settingsTitle" style="margin:0;">服務與資料設定</h3><button type="button" onclick="closeModal('apiModal')" class="modal-close" aria-label="關閉設定">×</button>
             </div>
-            <label>Gemini API Key</label><input type="password" id="apiKey" placeholder="AIzaSy...">
-            <label>AI 模型</label>
+            <label for="aiProvider">行程生成服務</label>
+            <select id="aiProvider" onchange="CodexLocal.update(true)"><option value="deepseek">DeepSeek API</option><option value="codex">本機 Codex · 使用現有額度</option></select>
+            <p id="hostedNotice" class="field-hint" hidden>線上版可使用自己的 DeepSeek API Key。使用 Codex 額度需<a href="https://github.com/polo1364/TourismPlanning#使用-codex-額度本機個人版" target="_blank" rel="noopener noreferrer">下載並啟動本機版 ↗</a>。本機行程請先匯出 JSON，再到此處匯入。</p>
+            <div id="codexSettings" hidden>
+                <p class="field-hint">使用這台電腦已登入的 Codex，不需要 API Key。生成會使用你的 Codex 額度，不會自動切換付費 API。</p>
+                <p id="codexStatus" class="field-hint" role="status">尚未檢查連線。</p>
+                <button type="button" class="btn-outline" onclick="CodexLocal.check()">檢查本機 Codex 連線</button>
+                <p class="field-hint">請用「啟動Codex旅遊書.vbs」開啟本機服務。若尚未登入，先在 PowerShell 執行 <code>codex login</code>。此模式供本機個人使用。</p>
+            </div>
+            <div id="deepseekSettings">
+            <label for="apiKey">DeepSeek API Key</label><input type="password" id="apiKey" placeholder="輸入你的 DeepSeek API Key" autocomplete="off" spellcheck="false">
+            <label for="rememberKey" class="remember-key"><input type="checkbox" id="rememberKey"> 在這台裝置記住金鑰</label>
+            <p class="field-hint">預設僅在此分頁使用。勾選後會儲存於此瀏覽器；請勿在共用裝置勾選。金鑰不會包含在行程備份中。</p>
+            <label for="modelSelect">AI 模型</label>
             <select id="modelSelect">
-                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                <option value="deepseek-flash">DeepSeek V4.1 Flash · 日常規劃</option>
+                <option value="deepseek-v4-pro">DeepSeek V4 Pro · 細緻規劃</option>
             </select>
-            <p style="font-size:0.8rem; color:#64748b; margin-top:-10px;">* 使用 Gemini 2.5 Flash</p>
+            <p class="field-hint">旅程需求會直接傳送至 DeepSeek。<a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer">取得 API Key ↗</a></p>
+            </div>
             <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
             <div style="display:flex; gap:10px;">
-                <button onclick="exportData()" class="btn-outline">📤 備份資料</button>
-                <input type="file" id="importFile" style="display:none" onchange="importData(this)">
+                <button onclick="exportData()" class="btn-outline">📤 備份目前旅程</button>
+                <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(this)">
                 <button onclick="document.getElementById('importFile').click()" class="btn-outline">📥 匯入資料</button>
             </div>
             <button onclick="saveAndCloseModal()" class="btn-primary" style="margin-top:25px;">儲存並關閉</button>
         </div>
     </div>
 
-    <div id="modifyModal" class="modal">
+    <div id="modifyModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modifyTitle">
         <div class="modal-content">
-            <h3 style="margin:0 0 15px 0;">🤖 微調此日行程</h3>
+            <h3 id="modifyTitle" style="margin:0 0 15px 0;">微調此日行程</h3>
             <p id="modifyDateDisplay" style="color:var(--primary); font-weight:bold; margin-bottom:15px;"></p>
-            <textarea id="modifyInstruction" rows="4" placeholder="例如：我想晚點出門、晚餐想改吃壽司..."></textarea>
+            <textarea aria-label="行程微調需求" id="modifyInstruction" rows="4" placeholder="例如：我想晚點出門、晚餐想改吃壽司..."></textarea>
             <button onclick="submitModification()" class="btn-primary">✨ 施展魔法 (微調)</button>
             <button onclick="closeModal('modifyModal')" class="btn-outline" style="margin-top:10px;">取消</button>
         </div>
     </div>
 
-    <h1>✈️ AI 極速旅遊規劃師</h1>
+    <header class="app-header">
+        <div class="hero-scenery" aria-hidden="true"><img class="scene-image scene-coast" src="assets/roam-coast.png" alt="" width="1536" height="1024" decoding="async" fetchpriority="high"><img class="scene-image scene-town" src="assets/roam-town.png" alt="" width="1536" height="1024" decoding="async"></div>
+        <div class="hero-grain" aria-hidden="true"></div>
+        <div class="flight-trail" aria-hidden="true"><svg viewBox="0 0 260 80" fill="none"><path d="M10 66Q120 -10 242 26" stroke="currentColor" stroke-dasharray="3 6"/><circle cx="10" cy="66" r="4" fill="currentColor"/></svg><span class="flight-plane">✈</span></div>
+        <a class="brand-mark" href="#" aria-label="漫遊首頁">漫<span>ROAM</span></a>
+        <div class="header-copy"><div class="eyebrow">ROAM / DIGITAL TRAVEL ATLAS</div><h1>漫遊 · 電子旅遊書</h1><p>把你的旅行想法，編成逐頁展開的世界。</p></div>
+        <div class="header-actions"><button type="button" class="library-jump" onclick="TripBook.openLibrary()">旅程收藏 ↓</button><button class="header-status" onclick="openModal('apiModal')"><span id="apiStatus">設定 DeepSeek</span> ↗</button></div>
+        <div class="scene-controls" id="sceneControls" hidden><div class="scene-switch" role="group" aria-label="封面風格"><button type="button" data-scene-choice="coast" aria-pressed="true"><span class="scene-swatch coast-swatch" aria-hidden="true"></span>海岸日光</button><button type="button" data-scene-choice="town" aria-pressed="false"><span class="scene-swatch town-swatch" aria-hidden="true"></span>街巷夜色</button></div><button type="button" id="sceneEffects" aria-pressed="true">封面動態：開</button><span class="scene-caption">原創旅行意象插畫</span></div>
+    </header>
 
-    <div class="container">
-        <div class="column">
+    <section id="tripLibrary" class="trip-library" aria-label="多份旅程管理"></section>
+    <nav class="workspace-tabs" aria-label="旅程工作區">
+        <button type="button" id="settingsTab" aria-controls="settingsPanel" aria-pressed="true" onclick="PlannerUI.switchView('settings')">01 輸入旅行需求</button>
+        <button type="button" id="itineraryTab" aria-controls="itineraryPanel" aria-pressed="false" onclick="PlannerUI.switchView('itinerary')">02 閱讀旅遊書 <span id="tripCount"></span></button>
+    </nav>
+    <div class="container" data-view="settings">
+        <div class="column" id="settingsPanel">
+            <section class="brief-intro" aria-label="開始規劃"><div class="brief-orbit" aria-hidden="true"><span>R</span><i></i><b>YOUR WORLD, IN PAGES</b></div><div><span class="eyebrow">YOUR NEXT CHAPTER / 你的下一章</span><h2>先說說，<br>你想怎麼旅行<span>？</span></h2><p>從一個想法出發。讓城市、時間與喜好，<br>成為一本可以編輯、收藏、帶著走的旅遊書。</p><div class="brief-steps"><span>01 輸入想法</span><span>02 逐日生成</span><span>03 翻閱旅程</span></div></div></section>
             <div class="card">
-                <h2>📝 行程設定 <button onclick="openModal('apiModal')" class="btn-setting">⚙️</button></h2>
+                <div class="section-kicker">TRAVEL BRIEF / 旅行提案</div>
+                <h2>這次的旅行想法 <button onclick="openModal('apiModal')" class="btn-setting" aria-label="開啟服務與資料設定">⚙</button></h2>
+                <label for="customPrefs">你想體驗什麼？有什麼需要留意？</label>
+                <textarea id="customPrefs" rows="4" placeholder="例如：想和家人慢慢逛京都，喜歡老街、咖啡與自然風景。每天不要太趕，長輩不適合走太多階梯。"></textarea>
+                <div class="brief-suggestions" aria-label="加入旅行偏好"><button type="button" data-brief="步調放慢，保留休息時間">慢旅行 ＋</button><button type="button" data-brief="多安排在地美食與特色咖啡店">在地美食 ＋</button><button type="button" data-brief="適合家庭，減少長距離步行">親子同行 ＋</button></div>
+                <h3 class="form-section-title">目的地</h3>
                 
                 <div class="input-group" style="display: grid; grid-template-columns: 1fr 1fr; gap:15px;">
                     <div>
-                        <label>🏠 出發地 (選填)</label>
+                        <label for="origin">🏠 出發地 (選填)</label>
                         <input type="text" id="origin" placeholder="例如：台北 / 高雄">
                     </div>
                     <div>
-                        <label style="color:var(--primary);">📍 旅遊城市 (必填)</label>
+                        <label for="city">📍 旅遊城市 (必填)</label>
                         <div style="position: relative;">
                             <input type="text" id="city" placeholder="搜尋城市名稱..." style="border: 2px solid #e0e7ff;" autocomplete="off">
                             <div id="citySuggestions" class="city-suggestions" style="display: none;"></div>
@@ -1895,46 +1917,60 @@
                     </div>
                 </div>
 
-                <label>🏨 住宿飯店 / 地址</label>
-                <input type="text" id="hotel" placeholder="完整地址、車站名稱或 Airbnb 標題">
-                <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd; border-radius: 12px; padding: 14px; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.7;">
-                    <div style="font-weight: 700; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                        💡 三種輸入方式（任選一種）
-                    </div>
-                    <div style="color: #475569;">
-                        <div style="margin-bottom: 6px;">
-                            ⭐ <strong style="color: #1e293b;">方法1：完整地址</strong>（最精準 ⭐）<br>
-                            <span style="color: #64748b; font-size: 0.9em; margin-left: 20px;">例如：東京都新宿區西新宿2-8-1</span>
-                        </div>
-                        <div style="margin-bottom: 6px;">
-                            🚇 <strong style="color: #1e293b;">方法2：最近車站/地標</strong><br>
-                            <span style="color: #64748b; font-size: 0.9em; margin-left: 20px;">例如：新宿站 或 靠近淺草雷門的民宿</span>
-                        </div>
-                        <div>
-                            🏠 <strong style="color: #1e293b;">方法3：Airbnb 房源標題</strong><br>
-                            <span style="color: #64748b; font-size: 0.9em; margin-left: 20px;">例如：Cozy Apartment near Shibuya Crossing</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <label>🚦 往返交通方式</label>
+                <h3 class="form-section-title">日期與移動方式</h3>
+                <label for="entryType">🚦 往返交通方式</label>
                 <select id="entryType">
                     <option value="flight">✈️ 飛機 (國際/國內線)</option>
                     <option value="ferry">🚢 渡輪 (前往離島)</option>
                     <option value="hsr">🚄 高鐵 (High Speed Rail)</option>
                     <option value="train">🚂 火車 (台鐵/JR/國鐵)</option>
                     <option value="car">🚗 自行開車</option>
+                    <option value="motorcycle">🏍️ 機車</option>
                     <option value="bus">🚌 客運/巴士</option>
                 </select>
 
-                <div class="input-group"><label>🛫 去程：出發時間</label><input type="datetime-local" id="flightArrival"></div>
-                <div class="input-group"><label>🛫 回程：返程出發時間</label><input type="datetime-local" id="flightDeparture"></div>
+                <div class="input-group"><label for="flightArrival">🛫 去程：出發時間</label><input type="datetime-local" id="flightArrival"></div>
+                <div class="input-group"><label for="flightDeparture">🛫 回程：返程出發時間</label><input type="datetime-local" id="flightDeparture"></div>
 
                 <div class="input-group" style="display: grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                    <div><label>⚡ 緊湊度</label><select id="pace"><option value="標準觀光">📷 標準</option><option value="悠閒慢活">☕ 悠閒</option><option value="特種兵極限">🔥 極限</option></select></div>
-                    <div><label>📅 天數</label><input type="text" id="durationDisplay" placeholder="-" readonly style="background:#f1f5f9; color:#64748b; text-align:center;"></div>
+                    <div><label for="pace">⚡ 緊湊度</label><select id="pace"><option value="標準觀光">📷 標準</option><option value="悠閒慢活">☕ 悠閒</option><option value="特種兵極限">🔥 極限</option></select></div>
+                    <div><label for="durationDisplay">📅 天數</label><input type="text" id="durationDisplay" placeholder="-" readonly style="text-align:center;"></div>
                 </div>
 
+                <div class="input-group"><label for="budget">旅程總預算（目的地幣別，選填）</label><input id="budget" type="number" min="0" step="0.01" placeholder="例如：5000"><p class="field-hint" id="budgetCurrency">依目的地幣別比較已列費用，不含未列項目。</p></div>
+                <details class="form-disclosure" id="lodgingSection"><summary>住宿安排 <span>飯店與地址</span></summary>                <div class="input-group" style="margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="hasHotel" checked style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>🏨 有住宿（一日遊請取消勾選）</span>
+                    </label>
+                </div>
+
+                <div id="hotelContainer">
+                    <label for="hotel">🏨 住宿飯店 / 地址</label>
+                    <input type="text" id="hotel" placeholder="完整地址、車站名稱或 Airbnb 標題">
+<details class="field-help"><summary>住宿地址怎麼填？</summary>                    <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #bae6fd; border-radius: 12px; padding: 14px; margin-top: -10px; margin-bottom: 20px; font-size: 0.85rem; line-height: 1.7;">
+                        <div style="font-weight: 700; color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            💡 三種輸入方式（任選一種）
+                        </div>
+                        <div style="color: #475569;">
+                            <div style="margin-bottom: 6px;">
+                                ⭐ <strong style="color: #1e293b;">方法1：完整地址</strong>（最精準 ⭐）<br>
+                                <span style="color: #64748b; font-size: 0.9em; margin-left: 20px;">例如：東京都新宿區西新宿2-8-1</span>
+                            </div>
+                            <div style="margin-bottom: 6px;">
+                                🚇 <strong style="color: #1e293b;">方法2：最近車站/地標</strong><br>
+                                <span style="color: #64748b; font-size: 0.9em; margin-left: 20px;">例如：新宿站 或 靠近淺草雷門的民宿</span>
+                            </div>
+                            <div>
+                                🏠 <strong style="color: #1e293b;">方法3：Airbnb 房源標題</strong><br>
+                                <span style="color: #64748b; font-size: 0.9em; margin-left: 20px;">例如：Cozy Apartment near Shibuya Crossing</span>
+                            </div>
+                        </div>
+                    </div></details>
+                </div>
+                
+</details>
+                <details class="form-disclosure" id="preferencesSection"><summary>旅行偏好 <span>景點、美食與交通</span></summary>
                 <button onclick="autoGenerateIdeas()" class="btn-magic">🪄 AI 幫我補全景點 & 美食</button>
                 
                 <label>❤️ 旅遊元素 (多選)</label>
@@ -1949,15 +1985,22 @@
                     <div class="checkbox-item"><input type="checkbox" id="tag_family" name="tripTag" value="親子友善"><label for="tag_family">👶 親子</label></div>
                 </div>
 
-                <label>📍 必去景點</label><textarea id="spots" rows="3"></textarea>
+                <label for="spots">📍 必去景點</label><textarea id="spots" rows="3"></textarea>
                 
-                <label style="color:var(--tag-food);">🍜 必吃美食清單 (AI 推薦或自行輸入)</label>
+                <label for="foodList" style="color:var(--tag-food);">🍜 必吃美食清單 (AI 推薦或自行輸入)</label>
                 <textarea id="foodList" rows="3" placeholder="例如：一蘭拉麵、當地特色烏龍麵... (可讓AI推薦後自行篩選)"></textarea>
 
-                <div class="input-group"><label>🚗 當地交通</label><select id="transport"><option>大眾運輸</option><option>自駕</option><option>全程包車</option></select></div>
+                <div class="input-group"><label for="transport">🚗 當地交通</label>
+                    <select id="transport">
+                        <option>大眾運輸</option>
+                        <option>自駕</option>
+                        <option>機車</option>
+                        <option>全程包車</option>
+                    </select>
+                </div>
                 
                 <div class="input-group">
-                    <label>🎭 導遊風格</label>
+                    <label for="guideStyle">🎭 導遊風格</label>
                     <select id="guideStyle">
                         <option value="專業導遊">👔 專業導遊 (預設)</option>
                         <option value="歷史老師">🎓 歷史老師 (多講古蹟背景，少講購物)</option>
@@ -1966,17 +2009,31 @@
                     </select>
                 </div>
                 
-                <label>✨ 特殊需求 (自行填寫)</label>
-                <input type="text" id="customPrefs" placeholder="例如：行動不便、不吃牛、想體驗和服...">
-
-                <button onclick="planTrip()" id="planBtn" class="btn-primary">✨ 開始生成夢幻行程</button>
+                </details>
+                <button onclick="planTrip(true)" id="planBtn" class="btn-primary">產生整本旅遊書 ↗</button>
+                <p class="field-hint">依旅行日期自動安排每一天，逐日儲存並顯示進度。可隨時取消，之後從未完成處繼續。</p>
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 2px dashed #e2e8f0;">
                     <button onclick="clearAll()" class="btn-danger" style="width:100%;">🗑️ 清空重來</button>
                 </div>
             </div>
         </div>
 
-        <div class="column">
+        <div class="column" id="itineraryPanel">
+            <section id="journeyPanel" hidden aria-label="旅途中模式"></section>
+            <div class="workspace-heading"><div><div class="eyebrow">YOUR PERSONAL ATLAS</div><h2>你的電子旅遊書</h2><p>一天一個章節，把沿途的風景讀進生活。</p></div><span class="workspace-label">EXPLORE / EDIT / KEEP</span></div>
+            <section id="tripOverview" class="trip-overview" hidden aria-label="旅程總覽">
+                <div class="overview-scenery" aria-hidden="true"><img class="scene-image scene-coast" src="assets/roam-coast.png" alt="" width="1536" height="1024" decoding="async" loading="lazy"><img class="scene-image scene-town" src="assets/roam-town.png" alt="" width="1536" height="1024" decoding="async" loading="lazy"></div>
+                <div class="overview-main"><span class="eyebrow">THE DESTINATION</span><h2 id="overviewCity"></h2><p id="overviewDates"></p></div>
+                <div class="overview-stamp" aria-hidden="true">旅途記錄<span>FIELD JOURNAL</span></div>
+                <div class="overview-facts"><span><b id="overviewDays"></b> 天已規劃</span><span><b id="overviewStops"></b> 個停靠點</span><span id="overviewTransport"></span></div>
+                <nav id="dayIndex" aria-label="跳至行程日期"></nav>
+            </section>
+            <section id="operationStatus" class="operation-status" hidden aria-label="規劃進度">
+                <p id="operationText" role="status" aria-live="polite"></p>
+                <progress id="dayProgress" max="1" value="0" aria-label="已完成天數"></progress>
+                <div class="operation-actions"><button id="cancelOperation" type="button" onclick="PlannerUI.cancel()">取消本次生成</button><button id="retryOperation" type="button" onclick="PlannerUI.retry()" hidden>重試這一步</button></div>
+            </section>
+            <section id="tripReview" class="trip-review" hidden aria-label="行程合理性檢查"></section>
             <div id="loading">
                 <span class="loader"></span>
                 <p id="loadingText" style="font-weight:bold; color:#fff; margin-top:20px; font-size:1.1rem; text-shadow:0 2px 4px rgba(0,0,0,0.2); min-height: 1.5rem;">AI 正在啟動...</p>
@@ -1991,14 +2048,16 @@
                 <button onclick="exportToA4Image()" class="btn-export btn-img">📸 下載 A4 手冊圖</button>
                 <button onclick="exportToMobileImages()" class="btn-export btn-img">📱 下載手機版行程圖</button>
                 <button onclick="exportToText()" class="btn-export btn-txt">📋 複製 LINE 筆記格式</button>
-                <button onclick="exportToFullPDF()" class="btn-export btn-pdf-full">📄 一鍵下載全行程 PDF</button>
             </div>
             
             <div id="tripContainer">
-                <div id="pdfHeader"><h2>🇯🇵 日本旅遊行程表</h2><p id="pdfSubTitle"></p><hr style="border:0; border-top:1px solid #333; margin:20px 0;"></div>
+                <div id="pdfHeader"><h2>漫遊 · 旅遊行程表</h2><p id="pdfSubTitle"></p><hr style="border:0; border-top:1px solid #333; margin:20px 0;"></div>
                 <div id="placeholderMsg">
-                    <div>🌏</div>
-                    <p>準備好出發了嗎？<br>請在左側輸入資料</p>
+                    <div class="empty-illustration postcard" aria-hidden="true"><div class="postcard-photo"><img class="scene-image scene-coast" src="assets/roam-town.png" alt="" width="1536" height="1024" decoding="async" loading="lazy"><img class="scene-image scene-town" src="assets/roam-coast.png" alt="" width="1536" height="1024" decoding="async" loading="lazy"></div><span class="postcard-note">收集風景，也收集故事。</span><span class="postcard-stamp">ROAM<br>WITH LOVE</span></div>
+                    <div class="empty-kicker">YOUR NEXT CHAPTER / 尚未出發</div>
+                    <h3 class="empty-title">世界很大，<br>這次從哪裡開始？</h3>
+                    <p class="empty-copy">填寫城市、日期與你的旅行喜好。<br>讓 AI 把靈感排成一段值得期待的旅程。</p>
+                    <div class="empty-steps"><span>01 選個目的地</span><span>02 加入你的喜好</span><span>03 展開第一天</span></div>
                 </div>
             </div>
         </div>
@@ -2007,7 +2066,136 @@
     <script>
         let tripData = [];
         let currentModifyIndex = null;
-        const inputIds = ['origin', 'city', 'hotel', 'entryType', 'flightArrival', 'flightDeparture', 'spots', 'foodList', 'transport', 'pace', 'guideStyle', 'customPrefs'];
+        const inputIds = ['origin', 'city', 'hotel', 'entryType', 'flightArrival', 'flightDeparture', 'spots', 'foodList', 'transport', 'pace', 'guideStyle', 'customPrefs', 'budget'];
+        let isBusy = false;
+        let busyControls = [];
+        let renderVersion = 0;
+
+        function setBusy(busy) {
+            isBusy = busy;
+            if (busy) {
+                busyControls = Array.from(document.querySelectorAll('input, select, textarea, button')).filter(el => !el.closest('#sceneControls, #bookNavigation')).map(el => [el, el.disabled]);
+                busyControls.forEach(([el]) => { if (!el.matches('#cancelOperation, .workspace-tabs button')) el.disabled = true; });
+            } else {
+                busyControls.forEach(([el, disabled]) => { el.disabled = disabled; });
+                busyControls = [];
+            }
+        }
+
+        function getTripDayCount(start, end) {
+            if (typeof start !== 'string' || typeof end !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(end) || !Number.isFinite(Date.parse(start)) || !Number.isFinite(Date.parse(end)) || new Date(end) <= new Date(start)) return 0;
+            if ([start, end].some(value => new Date(value.slice(0, 10)).toISOString().slice(0, 10) !== value.slice(0, 10))) return 0;
+            return Math.round((Date.parse(end.slice(0, 10) + 'T00:00:00Z') - Date.parse(start.slice(0, 10) + 'T00:00:00Z')) / 86400000) + 1;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        }
+
+        function encodeQuery(value) {
+            return encodeURIComponent(String(value).toWellFormed());
+        }
+
+        function formatAIOutput(value) {
+            if (typeof value === 'string') return value.trim();
+            if (Array.isArray(value)) return value.map(formatAIOutput).filter(Boolean).join('\n');
+            if (value && typeof value === 'object') return Object.values(value).map(formatAIOutput).filter(Boolean).join(' — ');
+            return '';
+        }
+
+        function normalizeDay(value, expectedDate) {
+            const day = Array.isArray(value) ? value[0] : value;
+            if (!day || typeof day !== 'object' || !Array.isArray(day.itinerary) || !day.itinerary.length || typeof day.day_title !== 'string') throw new Error('行程格式不完整，請重試；原行程已保留。');
+            const date = expectedDate || day.date;
+            if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date) throw new Error('行程日期無效。');
+            const itinerary = day.itinerary.map(item => {
+                if (!item || typeof item !== 'object' || typeof item.title !== 'string' || !item.title.trim()) throw new Error('行程缺少有效的活動名稱。');
+                const clean = {};
+                for (const key of ['time', 'endTime', 'title', 'desc', 'address', 'cost', 'tips']) clean[key] = typeof item[key] === 'string' || typeof item[key] === 'number' ? String(item[key]) : '';
+                for (const key of ['durationMinutes', 'travelMinutes']) {
+                    if (Number.isFinite(item[key]) && item[key] >= 0 && item[key] <= 1440) clean[key] = item[key];
+                }
+                clean.type = ['SPOT', 'FOOD', 'TRANSPORT'].includes(item.type) ? item.type : 'SPOT';
+                clean.booking = item.booking === true;
+                clean.transit = Array.isArray(item.transit) ? item.transit.filter(t => t && typeof t === 'object').map(t => Object.fromEntries(['mode', 'time', 'desc'].map(key => [key, typeof t[key] === 'string' ? t[key] : '']))) : [];
+                return clean;
+            });
+            const result = { date, day_title: day.day_title, summary: typeof day.summary === 'string' ? day.summary : '', itinerary };
+            if (day.weather && ['code', 'max', 'min'].every(key => Number.isFinite(day.weather[key]))) result.weather = { code: day.weather.code, max: day.weather.max, min: day.weather.min, isSimulated: day.weather.isSimulated === true };
+            return result;
+        }
+
+        function validateTrip(value) {
+            if (!Array.isArray(value) || value.length > 15) throw new Error('備份行程必須是 15 天以內的陣列。');
+            const days = value.map(day => normalizeDay(day));
+            if (new Set(days.map(day => day.date)).size !== days.length) throw new Error('備份中有重複日期。');
+            return days;
+        }
+
+        function restoreGenerationState(value, days) {
+            if (!value) return null;
+            const count = getTripDayCount(value.flightArr, value.flightDep);
+            if (!count || count > 15 || days.length > count || typeof value.city !== 'string' || !value.city.trim()) throw new Error('備份的續生設定無效。');
+            const start = new Date(value.flightArr);
+            days.forEach((day, index) => {
+                const date = new Date(start);
+                date.setDate(start.getDate() + index);
+                if (day.date !== formatLocalDate(date)) throw new Error('行程與續生日期不一致，請檢查備份。');
+            });
+            const state = { city: value.city, flightArr: value.flightArr, flightDep: value.flightDep, totalDays: count, startDate: start, endDate: new Date(value.flightDep) };
+            for (const key of ['origin', 'entryType', 'hotel', 'transport', 'pace', 'spots', 'foodList', 'combinedPrefs', 'guideRole', 'entryName', 'transportInstruction', 'dailySpotCount', 'foodInstruction', 'previousLocation']) {
+                if (value[key] != null && typeof value[key] !== 'string') throw new Error('續生設定欄位格式無效：' + key);
+                state[key] = value[key] ?? '';
+            }
+            if (value.tags !== undefined && (!Array.isArray(value.tags) || value.tags.some(tag => typeof tag !== 'string'))) throw new Error('續生設定的旅遊元素格式無效。');
+            state.tags = value.tags || [];
+            if (value.budget !== undefined && (!Number.isFinite(value.budget) || value.budget < 0)) throw new Error('旅程預算必須是有效的非負數字。');
+            state.budget = value.budget ?? 0;
+            state.weatherInfo = normalizeWeatherInfo(value.weatherInfo);
+            state.allVisitedSpots = days.flatMap(day => day.itinerary.filter(item => item.type === 'SPOT' || item.type === 'FOOD').map(item => item.title));
+            const last = days.at(-1)?.itinerary.at(-1);
+            if (last) state.previousLocation = last.title;
+            return state;
+        }
+
+        function normalizeWeatherInfo(value) {
+            const daily = value?.daily;
+            if (!daily || !Array.isArray(daily.time) || !daily.time.length) return null;
+            const fields = ['weather_code', 'temperature_2m_max', 'temperature_2m_min'];
+            if (!fields.every(key => Array.isArray(daily[key]) && daily[key].length === daily.time.length && daily[key].every(Number.isFinite))) return null;
+            if (!daily.time.every(date => typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date))) return null;
+            return { isSimulated: value.isSimulated === true, daily: Object.fromEntries(['time', ...fields].map(key => [key, daily[key]])) };
+        }
+
+        // Save related records together and roll back on quota or storage errors.
+        function writeStoredValues(values, options = {}) {
+            if (window.TripLibrary) return window.TripLibrary.write(values, options);
+            const previous = Object.fromEntries(Object.keys(values).map(key => [key, localStorage.getItem(key)]));
+            try {
+                for (const [key, value] of Object.entries(values)) {
+                    if (value === null) localStorage.removeItem(key);
+                    else localStorage.setItem(key, value);
+                }
+            } catch (error) {
+                for (const [key, value] of Object.entries(previous)) {
+                    try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); } catch (_) { /* Keep in-memory data available for export. */ }
+                }
+                throw new Error('無法儲存資料，請確認瀏覽器儲存空間與權限，或先備份行程。');
+            }
+        }
+
+        function persistTrip(label = '行程修改', options = {}) {
+            const { openBook = false, ...storageOptions } = options;
+            const values = { myTrip_v27: JSON.stringify(tripData), generationState_v27: generationState ? JSON.stringify(generationState) : null };
+            // Save the final chapter and return to reading as one transaction.
+            if (openBook && window.TripLibrary) values.journeyProgress_v1 = JSON.stringify({ ...TripLibrary.progress(), enabled: false });
+            writeStoredValues(values, { ...storageOptions, label });
+        }
+
+        function readStoredJson(key, fallback) {
+            try { const text = localStorage.getItem(key); return text ? JSON.parse(text) : fallback; }
+            catch (_) { showSaveStatus('儲存資料無法讀取，請於設定匯入備份。'); return fallback; }
+        }
         
         // ✨ 用於按天生成的狀態變數
         let generationState = {
@@ -2164,52 +2352,70 @@
         }
 
         window.onload = function() {
-            const savedKey = localStorage.getItem('geminiApiKey');
-            if(savedKey) document.getElementById('apiKey').value = savedKey;
-            else setTimeout(() => openModal('apiModal'), 500);
-
-            const storedTrip = localStorage.getItem('myTrip_v27');
-            if(storedTrip) { try { tripData = JSON.parse(storedTrip); if(tripData.length) renderTrip(); } catch(e){} }
-
-            // ✨ 恢復生成狀態
-            const storedGenerationState = localStorage.getItem('generationState_v27');
-            if(storedGenerationState) {
-                try {
-                    const restoredState = JSON.parse(storedGenerationState);
-                    // 恢復 generationState，但需要處理日期對象
-                    generationState = {
-                        ...restoredState,
-                        startDate: restoredState.startDate ? new Date(restoredState.startDate) : null,
-                        endDate: restoredState.endDate ? new Date(restoredState.endDate) : null
-                    };
-                    // 如果恢復了狀態且有未完成的天數，重新渲染以顯示按鈕
-                    if(tripData.length > 0 && generationState.totalDays > 0 && tripData.length < generationState.totalDays) {
-                        renderTrip();
-                    }
-                } catch(e) {
-                    console.error('Failed to restore generationState:', e);
-                }
-            }
-
-            loadInputs(); updateDuration();
+            try {
+                const savedKey = localStorage.getItem('deepseekApiKey');
+                document.getElementById('apiKey').value = savedKey || sessionStorage.getItem('deepseekApiKey') || '';
+                document.getElementById('rememberKey').checked = Boolean(savedKey);
+                const model = localStorage.getItem('deepseekModel');
+                if (['deepseek-flash', 'deepseek-v4-pro'].includes(model)) document.getElementById('modelSelect').value = model;
+            } catch (_) { showSaveStatus('此瀏覽器無法儲存設定，金鑰僅限本次使用。'); }
+            updateApiStatus();
+            window.CodexLocal?.init();
+            loadInputs();
+            updateDuration();
+            try { tripData = validateTrip(readStoredJson('myTrip_v27', [])); }
+            catch (_) { tripData = []; showSaveStatus('已存行程格式無效，請於設定匯入備份。'); }
+            try { generationState = restoreGenerationState(readStoredJson('generationState_v27', null), tripData); }
+            catch (_) { generationState = null; showSaveStatus('續生設定不一致，已保留現有行程。'); }
+            window.TripLibrary?.init();
+            renderTrip();
             initCitySearch(); // 初始化城市搜索
             
             document.querySelectorAll('input, select, textarea').forEach(el => {
                 el.addEventListener('input', handleInput);
                 el.addEventListener('change', handleInput);
             });
+
+            // 控制住宿開關
+            const hasHotelCheckbox = document.getElementById('hasHotel');
+            const hotelContainer = document.getElementById('hotelContainer');
+            if(hasHotelCheckbox && hotelContainer) {
+                // 初始狀態
+                const updateHotelVisibility = () => {
+                    if(hasHotelCheckbox.checked) {
+                        hotelContainer.style.display = 'block';
+                    } else {
+                        hotelContainer.style.display = 'none';
+                        // Keep the address when temporarily switching to a day trip.
+                    }
+                };
+                hasHotelCheckbox.addEventListener('change', updateHotelVisibility);
+                updateHotelVisibility(); // 初始化
+            }
+            window.TripMotion?.init();
+            window.PlannerUI?.init();
         };
 
-        function handleInput() { saveInputs(); updateDuration(); showSaveStatus(); }
-        function showSaveStatus() { const s=document.getElementById('saveStatus'); s.classList.add('show'); setTimeout(()=>s.classList.remove('show'),1500); }
+        function handleInput(event) {
+            if (!inputIds.includes(event.target.id) && event.target.name !== 'tripTag' && event.target.id !== 'hasHotel') return;
+            try { saveInputs(); updateDuration(); showSaveStatus(); }
+            catch (error) { showSaveStatus(error.message); }
+        }
+        let saveStatusTimer;
+        function showSaveStatus(message = '資料已儲存於此瀏覽器') {
+            const status = document.getElementById('saveStatus');
+            status.textContent = message;
+            status.classList.add('show');
+            clearTimeout(saveStatusTimer);
+            saveStatusTimer = setTimeout(() => status.classList.remove('show'), 3500);
+        }
         
         function updateDuration() {
             const arr = document.getElementById('flightArrival').value;
             const dep = document.getElementById('flightDeparture').value;
             const display = document.getElementById('durationDisplay');
             if(arr && dep) {
-                const start = new Date(arr); const end = new Date(dep);
-                const count = Math.floor((end.setHours(0,0,0,0) - start.setHours(0,0,0,0)) / (1000 * 60 * 60 * 24)) + 1;
+                const count = getTripDayCount(arr, dep);
                 display.value = count > 0 ? `${count} 天` : "日期錯誤";
             } else display.value = "-";
         }
@@ -2217,8 +2423,8 @@
         // --- Weather & Geo Functions (Open-Meteo & Climate Mock) ---
         async function getCoordinates(city) {
             try {
-                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=zh&format=json`;
-                const res = await fetch(url);
+                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeQuery(city)}&count=1&language=zh&format=json`;
+                const res = await fetch(url, { signal: window.PlannerUI?.networkSignal() || AbortSignal.timeout(10000) });
                 const data = await res.json();
                 if(data.results && data.results.length > 0) {
                     return { lat: data.results[0].latitude, lon: data.results[0].longitude };
@@ -2238,50 +2444,21 @@
 
             try {
                 const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&start_date=${startStr}&end_date=${endStr}`;
-                const res = await fetch(url);
+                const res = await fetch(url, { signal: window.PlannerUI?.networkSignal() || AbortSignal.timeout(10000) });
                 if(!res.ok) {
                     return getSimulatedClimate(startDate, new Date(endStr));
                 }
                 const data = await res.json();
                 data.isSimulated = false; 
-                return data;
+                return normalizeWeatherInfo(data);
             } catch(e) { 
                 return getSimulatedClimate(startDate, new Date(endStr)); 
             }
         }
 
-        function getSimulatedClimate(start, end) {
-            const month = start.getMonth() + 1; 
-            let baseMax = 25, baseMin = 18, code = 1;
-            
-            if (month >= 3 && month <= 5) { baseMax = 20; baseMin = 12; code = 2; }
-            else if (month >= 6 && month <= 9) { baseMax = 32; baseMin = 25; code = 0; }
-            else if (month >= 10 && month <= 11) { baseMax = 24; baseMin = 16; code = 1; }
-            else { baseMax = 12; baseMin = 5; code = 3; }
-
-            const days = [];
-            const weatherCodes = [];
-            const maxTemps = [];
-            const minTemps = [];
-            
-            let currentDate = new Date(start);
-            while (currentDate <= end) {
-                days.push(formatLocalDate(currentDate));
-                weatherCodes.push(code); 
-                maxTemps.push(baseMax + Math.floor(Math.random() * 4 - 2));
-                minTemps.push(baseMin + Math.floor(Math.random() * 4 - 2));
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
-
-            return {
-                isSimulated: true, 
-                daily: {
-                    time: days,
-                    weather_code: weatherCodes,
-                    temperature_2m_max: maxTemps,
-                    temperature_2m_min: minTemps
-                }
-            };
+        function getSimulatedClimate() {
+            // No verified forecast is available; never invent weather or historical averages.
+            return null;
         }
 
         function getWeatherIcon(code) {
@@ -2299,23 +2476,33 @@
 
         // --- Auto Generate Logic ---
         async function autoGenerateIdeas() {
+            if (isBusy) return;
             const apiKey = getApiKey(); if(!apiKey) return;
-            const city = document.getElementById('city').value;
+            const city = document.getElementById('city').value.trim();
             if(!city) { alert("請輸入城市！"); return; }
+            window.PlannerUI?.begin(autoGenerateIdeas, '正在產生景點與美食建議', false);
+            setBusy(true);
             const btn = document.querySelector('.btn-magic'); btn.disabled = true; btn.innerHTML = "🔮...";
             
             const prompt = `推薦【${city}】的必去景點與必吃美食。請回傳 JSON:{ "spots": "列出3-5個熱門景點", "food": "列出3-5個必吃美食或餐廳" }。Output strictly in Traditional Chinese (Taiwan).`;
             
             try {
-                const res = await callGemini(apiKey, prompt);
-                document.getElementById('spots').value = formatAIOutput(res.spots);
-                document.getElementById('foodList').value = formatAIOutput(res.food);
+                const res = await callDeepSeek(apiKey, prompt);
+                const spots = formatAIOutput(res?.spots);
+                const food = formatAIOutput(res?.food);
+                if (!spots || !food) throw new Error('AI 推薦格式不完整，請重試。');
+                document.getElementById('spots').value = spots;
+                document.getElementById('foodList').value = food;
                 saveInputs();
+                window.PlannerUI?.complete();
             } catch(e) {
-                console.error(e);
-            } finally { 
+                window.PlannerUI?.failed(e);
+                if (e.code !== 'CANCELLED') alert('推薦失敗：' + e.message);
+            } finally {
+                setBusy(false);
                 btn.disabled = false; 
-                btn.innerHTML = "🪄 AI 幫我補全景點 & 美食"; 
+                btn.innerHTML = "🪄 AI 幫我補全景點 & 美食";
+                window.PlannerUI?.end(); 
             }
         }
 
@@ -2349,7 +2536,7 @@
                     spots, foodList, combinedPrefs, guideRole, entryName, transportInstruction,
                     dailySpotCount, foodInstruction, 
                     weatherDesc, weekDay, isWeekend, 
-                    visitedSpots } = params;
+                    visitedSpots, origin, entryType, budget, spent = 0 } = params;
 
             let weatherInstruction = "";
             if (weatherDesc && (weatherDesc.includes("雨") || weatherDesc.includes("雷"))) {
@@ -2375,21 +2562,36 @@ ${guideRole}
 - 天氣：${weatherDesc || "未知"}。${weatherInstruction}
 - 日期：${weekDay}。${weekendInstruction}
 - 今日起點：${previousLocation}
-- 住宿：${hotel}
+${hotel ? `- 住宿：${hotel}` : `- 住宿：無（一日遊）`}
 - 交通：${transport}
 - 風格：${pace}
 - 每日景點數：約 ${dailySpotCount}
+${Number.isFinite(budget) && budget > 0 ? `- 全旅程預算：${budget}（目的地幣別）；已完成天數的已列費用約 ${spent}，剩餘預算約 ${Math.max(0, budget - spent)}，請為後續天數保留額度。費用皆為估計，不能保證實際價格。` : ''}
+
+【旅人需求：務必納入，若無法安排請說明】
+- 旅遊元素：${tags || '未指定'}
+- 必去景點：${spots || '由你推薦'}
+- 必吃美食：${foodList || '由你推薦'}
+- 特殊需求與限制：${combinedPrefs || '無'}
+- 餐飲安排：${foodInstruction || '依旅人飲食需求安排'}
+- 完整旅程共 ${totalDays} 天，請將必去與必吃合理分配，避免全部擠入同一天。
 
 【⛔ 避開名單】
 - 已安排過：${visitedStr} (禁止重複)
 
 【今日特殊條件】
-${isFirstDay ? `- 第一天，${entryName} ${flightArr} **出發**（這是從出發地的出發時間，實際抵達目的地時間會晚於此時間）。行程請從抵達目的地後開始安排，請考慮出關交通。${transportInstruction}` : ''}
-${isLastDay ? `- 最後一天，${entryName} ${flightDep} **出發**（這是從目的地的回程出發時間）。請務必安排提前抵達機場/車站/碼頭。${transportInstruction}` : ''}
+${isFirstDay ? (entryType === 'car' || entryType === 'motorcycle') && origin && origin.trim() && origin !== "出發地" ? 
+    `- 第一天，從「${origin}」出發，使用${entryName}前往「${city}」。行程請從「${origin}」開始規劃，包含從出發地到目的地的路線。${transportInstruction}` : 
+    `- 第一天，${entryName} ${flightArr} **出發**（這是從出發地的出發時間，實際抵達目的地時間會晚於此時間）。行程請從抵達目的地後開始安排，請考慮出關交通。${transportInstruction}` : ''}
+${isLastDay ? (entryType === 'car' || entryType === 'motorcycle') && origin && origin.trim() && origin !== "出發地" ? 
+    `- 最後一天，從「${city}」返回「${origin}」。請務必安排提前出發，確保能順利返回出發地。${transportInstruction}` : 
+    `- 最後一天，${entryName} ${flightDep} **出發**（這是從目的地的回程出發時間）。請務必安排提前抵達機場/車站/碼頭。${transportInstruction}` : ''}
 ${!isFirstDay && !isLastDay ? `- 完整的一天，請安排順路行程。` : ''}
+${transport === '機車' ? `- ⚠️ **機車路線限制**：交通方式為機車，請務必只規劃機車可通行的路線。禁止規劃高速公路、快速道路或任何禁止機車通行的路段。所有景點之間的移動路線必須是機車可合法行駛的道路。` : ''}
+${(entryType === 'car' || entryType === 'motorcycle') && origin && origin.trim() && origin !== "出發地" && isFirstDay ? `- ⚠️ **重要**：請從「${origin}」開始規劃完整路線，包含從出發地到目的地的所有路段。` : ''}
 
 【嚴格規劃規則】
-1. **時間邏輯**：行程需從早到晚閉環。
+1. **時間邏輯**：行程需從早到晚閉環。每站填入 time 與 endTime（24 小時格式）；travelMinutes 是從上一站抵達本站的預估分鐘數，第一站為 0；transit 也描述抵達本站的路線。預留移動時間，不得重疊。營業時間未經查證，不要宣稱已確認。
 2. **飲食細節**：午晚餐必須有「具體餐廳名稱」。
 3. **格式與引號規定 (非常重要)**：
    - JSON 的 Key 和 Value 必須用雙引號。
@@ -2398,7 +2600,7 @@ ${!isFirstDay && !isLastDay ? `- 完整的一天，請安排順路行程。` : '
    - 禁止： "desc": "這裡被稱為 "小京都"，非常美麗" (X) -> 這會導致解析錯誤！
 
 【JSON 輸出格式】
-請回傳一個 JSON 物件:
+請回傳一個 JSON 物件（type 限 SPOT、FOOD 或 TRANSPORT）:
 {
   "date": "${dateStr}",
   "day_title": "今日主題",
@@ -2406,7 +2608,9 @@ ${!isFirstDay && !isLastDay ? `- 完整的一天，請安排順路行程。` : '
   "itinerary": [
     {
       "time": "HH:MM",
-      "type": "SPOT" | "FOOD" | "TRANSPORT",
+      "endTime": "HH:MM",
+      "travelMinutes": 20,
+      "type": "SPOT",
       "title": "地點名稱",
       "desc": "介紹 (內容請用單引號，勿用雙引號)",
       "address": "地址",
@@ -2422,20 +2626,28 @@ Output strictly in Traditional Chinese (Taiwan).
         }
 
         // ✨ 生成下一天（按鈕觸發）
-        async function generateNextDay() {
+        async function generateNextDay({ managed = false, keepUndo = false } = {}) {
+            if (isBusy && !managed) return;
             const apiKey = getApiKey();
             if(!apiKey) {
+                if (managed) throw new Error('API Key 未設定，已保留完成的行程。');
                 alert("請先設定 API Key！");
                 return;
             }
             
             // 檢查狀態是否有效
-            if(!generationState.totalDays || tripData.length >= generationState.totalDays) {
+            if(!generationState?.totalDays || tripData.length >= generationState.totalDays) {
                 alert("所有天數已生成完成！");
                 return;
             }
             
-            // ✨ 不隱藏容器，只顯示進度提示（保持已生成的天數可見）
+            const previousTrip = [...tripData];
+            const previousState = structuredClone(generationState);
+            if (!managed) {
+                window.PlannerUI?.begin(generateNextDay, `正在規劃第 ${tripData.length + 1} / ${generationState.totalDays} 天`);
+                setBusy(true);
+            }
+            // Keep the generated days visible while the next day is being planned.
             const containerEl = document.getElementById('tripContainer');
             
             // 確保容器保持顯示
@@ -2465,7 +2677,7 @@ Output strictly in Traditional Chinese (Taiwan).
                 const dateStr = formatLocalDate(currentDate);
                 
                 // ✨ 更新生成按鈕區域的進度條
-                const percent = Math.round(((i + 1) / generationState.totalDays) * 100);
+                const percent = Math.round((i / generationState.totalDays) * 100);
                 
                 if(progressBar) progressBar.style.width = percent + '%';
                 if(progressText) progressText.textContent = `正在規劃第 ${i + 1} 天 (${dateStr})...`;
@@ -2510,6 +2722,8 @@ Output strictly in Traditional Chinese (Taiwan).
                 // 3. 動態生成 Prompt
                 const dayPrompt = generateSingleDayPrompt({
                     city: generationState.city,
+                    budget: generationState.budget,
+                    spent: tripData.reduce((sum, day) => sum + calculateTotalCost(day, getCurrencyInfo(generationState.city)).amount, 0),
                     hotel: generationState.hotel,
                     dateStr: dateStr,
                     dayIndex: i + 1,
@@ -2533,14 +2747,16 @@ Output strictly in Traditional Chinese (Taiwan).
                     weatherDesc: weatherDesc,
                     weekDay: weekDay,
                     isWeekend: isWeekend,
-                    visitedSpots: generationState.allVisitedSpots
+                    visitedSpots: generationState.allVisitedSpots,
+                    origin: generationState.origin,
+                    entryType: generationState.entryType
                 });
                 
                 // 4. 呼叫 AI
-                const dayResult = await callGemini(apiKey, dayPrompt);
+                const dayResult = await callDeepSeek(apiKey, dayPrompt);
                 
                 // 5. 格式校正
-                let finalDayData = Array.isArray(dayResult) ? dayResult[0] : dayResult;
+                let finalDayData = normalizeDay(dayResult, dateStr);
                 
                 // 強制寫入正確日期 (防止 AI 寫錯)
                 finalDayData.date = dateStr;
@@ -2571,13 +2787,10 @@ Output strictly in Traditional Chinese (Taiwan).
                 // 更新上一地點
                 if(finalDayData.itinerary && finalDayData.itinerary.length > 0) {
                     const lastItem = finalDayData.itinerary[finalDayData.itinerary.length - 1];
-                    generationState.previousLocation = lastItem.title || generationState.hotel;
+                    generationState.previousLocation = lastItem.title || generationState.hotel || `${generationState.city}市區`;
                 }
                 
                 // 8. 保存到 localStorage
-                localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
-                // ✨ 同時保存生成狀態
-                localStorage.setItem('generationState_v27', JSON.stringify(generationState));
                 
                 // 9. 更新進度條到100%
                 if(progressBar) progressBar.style.width = '100%';
@@ -2586,31 +2799,66 @@ Output strictly in Traditional Chinese (Taiwan).
                 
                 // ✨ 只在生成完成後統一渲染所有天數
                 // 這樣第一天的內容不會消失，會和第二天一起顯示
-                await new Promise(r => setTimeout(r, 500));
-                renderTrip();
-                
+                if (!managed) await new Promise(r => setTimeout(r, 500));
+                await renderTrip();
+                window.PlannerUI?.throwIfCancelled();
+                persistTrip(managed ? '完成旅遊書' : '行程修改', { undo: !keepUndo, openBook: managed && tripData.length === generationState.totalDays });
+                if (!managed) window.PlannerUI?.complete();
             } catch (e) {
-                console.error(e);
-                alert(`生成第 ${tripData.length + 1} 天時發生錯誤：${e.message}`);
+                tripData = previousTrip;
+                generationState = previousState;
+                await renderTrip();
+                if (managed) throw e;
+                window.PlannerUI?.failed(e);
+                if (e.code !== 'CANCELLED') alert(`生成第 ${tripData.length + 1} 天時發生錯誤：${e.message}`);
             } finally {
-                // ✨ 恢復生成按鈕顯示，隱藏進度條
+                if (!managed) setBusy(false);
+                // Restore the continuation controls after success or failure.
                 const generateBtn = document.getElementById('generateNextDayBtn');
                 const progressContainer = document.getElementById('generateProgressContainer');
                 
                 if(generateBtn) generateBtn.style.display = 'inline-block';
                 if(progressContainer) progressContainer.style.display = 'none';
+                if (!managed) window.PlannerUI?.end();
+            }
+        }
+
+        // One operation owns the lock and cancellation signal across all daily requests.
+        async function completeRemainingDays(keepUndo = false) {
+            while (tripData.length < generationState.totalDays) {
+                window.PlannerUI?.throwIfCancelled();
+                window.PlannerUI?.bookProgress();
+                await generateNextDay({ managed: true, keepUndo });
+                keepUndo = true;
+            }
+        }
+
+        async function finishBook() {
+            if (isBusy || !generationState || tripData.length >= generationState.totalDays || !getApiKey()) return;
+            window.PlannerUI?.begin(finishBook, '正在繼續完成旅遊書');
+            setBusy(true);
+            try {
+                await completeRemainingDays();
+                window.PlannerUI?.complete();
+                window.TripBook?.select(0);
+            } catch (error) {
+                window.PlannerUI?.failed(error);
+            } finally {
+                setBusy(false);
+                window.PlannerUI?.end();
             }
         }
         
-        // --- Plan Trip (序列化生成版本 - 只生成第一天) ---
-        async function planTrip() {
+        // --- Plan Trip (逐日儲存，可接續完成整本旅遊書) ---
+        async function planTrip(autoContinue = false) {
+            if (isBusy) return;
             const apiKey = getApiKey(); if(!apiKey) return;
-            saveInputs();
+            try { saveInputs(); } catch (error) { alert(error.message); return; }
 
             // 1. 取得基本資訊
             const origin = document.getElementById('origin').value || "出發地";
-            const city = document.getElementById('city').value;
-            const hotel = document.getElementById('hotel').value;
+            const city = document.getElementById('city').value.trim();
+            const hotel = document.getElementById('hotel').value.trim();
             const flightArr = document.getElementById('flightArrival').value;
             const flightDep = document.getElementById('flightDeparture').value;
             const spots = document.getElementById('spots').value;
@@ -2657,6 +2905,9 @@ Output strictly in Traditional Chinese (Taiwan).
             } else if(entryType === 'bus') {
                 entryName = "客運/巴士";
                 transportInstruction = "交通方式：客運/巴士。請估算「車程+緩衝」總耗時。回程請安排提早 30 分鐘抵達轉運站。";
+            } else if(entryType === 'motorcycle') {
+                entryName = "機車";
+                transportInstruction = "交通方式：機車。請估算「車程+休息緩衝」總耗時。請務必只規劃機車可通行的路線，禁止規劃高速公路、快速道路或任何禁止機車通行的路段。回程請安排提早 30 分鐘抵達出發點。";
             } else {
                 entryName = "自行開車";
                 transportInstruction = "交通方式：自行開車。請估算「車程+塞車緩衝」總耗時。請注意景點停車便利性。";
@@ -2675,13 +2926,22 @@ Output strictly in Traditional Chinese (Taiwan).
                 `;
             }
 
-            if(!city || !hotel) { alert("請輸入城市與飯店！"); return; }
+            const hasHotel = document.getElementById('hasHotel').checked;
+            if(!city) { alert("請輸入城市！"); return; }
+            if(hasHotel && !hotel) {
+                document.getElementById('lodgingSection').open = true;
+                window.PlannerUI?.switchView('settings');
+                document.getElementById('hotel').focus();
+                alert("請填寫住宿地址，或取消勾選「有住宿」。"); return;
+            }
             if(!flightArr || !flightDep) { alert("請輸入班機時間！"); return; }
 
             // 2. 計算日期範圍
             const startDate = new Date(flightArr);
             const endDate = new Date(flightDep);
-            const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            const totalDays = getTripDayCount(flightArr, flightDep);
+            const budget = Number(document.getElementById('budget').value);
+            if (!Number.isFinite(budget) || budget < 0) { alert('旅程預算必須是有效的非負數字。'); return; }
             
             if(totalDays <= 0) { alert("回程日期必須晚於去程！"); return; }
             if(totalDays > 15) { alert("為了確保品質，目前僅支援 15 天以內的行程。"); return; }
@@ -2697,11 +2957,22 @@ Output strictly in Traditional Chinese (Taiwan).
             }
 
             // 3. 準備 UI
+            const previousTrip = tripData;
+            const previousState = generationState;
+            let firstDaySaved = false;
+            window.PlannerUI?.begin(planTrip, `正在規劃第 1 / ${totalDays} 天`);
             setLoading(true);
-            tripData = []; // 清空舊資料
-            localStorage.removeItem('myTrip_v27');
+            tripData = []; // Keep the saved trip until the new first day succeeds.
+            generationState = null; // 清除舊的生成狀態
 
-            let previousLocation = hotel; // 第一天的起點是飯店 (或機場)
+            
+            // 第一天的起點：開車或機車時從出發地開始，否則從目的地開始
+            let previousLocation;
+            if((entryType === 'car' || entryType === 'motorcycle') && origin && origin.trim() && origin !== "出發地") {
+                previousLocation = origin.trim(); // 開車或機車時，從出發地開始
+            } else {
+                previousLocation = hasHotel ? hotel : `${city}市區`; // 其他情況：有住宿時是飯店，無住宿時是市區
+            }
             
             // ✨ 新增：用來儲存所有已安排過的景點名稱
             let allVisitedSpots = [];
@@ -2725,13 +2996,15 @@ Output strictly in Traditional Chinese (Taiwan).
             // ✨ 保存生成狀態到全局變數
             generationState = {
                 allVisitedSpots: [],
-                previousLocation: hotel,
+                previousLocation: previousLocation,
                 weatherInfo: weatherInfo,
                 totalDays: totalDays,
                 startDate: startDate,
                 endDate: endDate,
                 city: city,
-                hotel: hotel,
+                origin: origin,
+                entryType: entryType,
+                hotel: hasHotel ? hotel : null,
                 flightArr: flightArr,
                 flightDep: flightDep,
                 transport: transport,
@@ -2744,14 +3017,15 @@ Output strictly in Traditional Chinese (Taiwan).
                 entryName: entryName,
                 transportInstruction: transportInstruction,
                 dailySpotCount: dailySpotCount,
-                foodInstruction: foodInstruction
+                foodInstruction: foodInstruction,
+                budget: Number(document.getElementById('budget').value) || 0
             };
             
-            // ✨ 保存生成狀態到 localStorage
-            localStorage.setItem('generationState_v27', JSON.stringify(generationState));
+            // The new state is persisted only after a valid first day is returned.
+            if (autoContinue) window.PlannerUI?.bookProgress();
             
             try {
-                // 5. 只生成第一天（i=0）
+                // 5. 先生成第一天作為可復原、可接續的儲存點（i=0）
                 const i = 0;
                     // 計算當天日期（使用本地時間，避免時區問題）
                     let currentDate = new Date(startDate);
@@ -2800,7 +3074,8 @@ Output strictly in Traditional Chinese (Taiwan).
                     
                     // 6. 動態生成 Prompt (傳入新參數)
                     const dayPrompt = generateSingleDayPrompt({
-                        city, hotel, dateStr, dayIndex: i + 1, totalDays,
+                        city, hotel: generationState.hotel, dateStr, dayIndex: i + 1, totalDays,
+                        budget: generationState.budget,
                         isFirstDay, isLastDay,
                         flightArr, flightDep,
                         transport, pace, tags: tags.join('、'),
@@ -2809,15 +3084,17 @@ Output strictly in Traditional Chinese (Taiwan).
                         entryName, transportInstruction, dailySpotCount, foodInstruction,
                         weatherDesc, weekDay, isWeekend,
                         // 👇 關鍵：把目前為止去過的所有景點傳進去
-                        visitedSpots: allVisitedSpots
+                        visitedSpots: allVisitedSpots,
+                        origin: generationState.origin,
+                        entryType: generationState.entryType
                     });
 
                     // 7. 呼叫 AI
                     // 注意：這裡我們預期 AI 只回傳「這一天」的 JSON 物件，不是陣列
-                    const dayResult = await callGemini(apiKey, dayPrompt);
+                    const dayResult = await callDeepSeek(apiKey, dayPrompt);
                     
                     // 8. 格式校正 (如果 AI 回傳陣列，取第一個；如果是物件，直接用)
-                    let finalDayData = Array.isArray(dayResult) ? dayResult[0] : dayResult;
+                    let finalDayData = normalizeDay(dayResult, dateStr);
                     
                     // 強制寫入正確日期 (防止 AI 寫錯)
                     finalDayData.date = dateStr;
@@ -2848,189 +3125,125 @@ Output strictly in Traditional Chinese (Taiwan).
                     // 嘗試抓取當天最後一個景點作為明天的起點 (簡單邏輯)
                     if(finalDayData.itinerary && finalDayData.itinerary.length > 0) {
                         const lastItem = finalDayData.itinerary[finalDayData.itinerary.length - 1];
-                        previousLocation = lastItem.title || hotel;
+                        previousLocation = lastItem.title || generationState.hotel || `${generationState.city}市區`;
                     }
                     
                     // ✨ 更新全局狀態
                     generationState.allVisitedSpots = allVisitedSpots;
                     generationState.previousLocation = previousLocation;
 
-                    // (可選) 這裡可以做一個簡單的延遲，避免 API Rate Limit (雖然 Gemini 限制很寬鬆)
+                    // Let the completion state remain visible briefly.
                     await new Promise(r => setTimeout(r, 500));
                 
                 // 11. 第一天完成
                 updateProgress(100, "第一天生成完成");
-                localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
-                // ✨ 同時保存生成狀態
-                localStorage.setItem('generationState_v27', JSON.stringify(generationState));
                 
-                renderTrip();
-
+                await renderTrip();
+                window.PlannerUI?.throwIfCancelled();
+                persistTrip(autoContinue ? '產生整本旅遊書' : '行程修改', { checkpoint: autoContinue, openBook: autoContinue && totalDays === 1 });
+                firstDaySaved = true;
+                if (autoContinue) await completeRemainingDays(true);
+                window.PlannerUI?.complete();
+                if (autoContinue) window.TripBook?.select(0);
             } catch (e) {
-                console.error(e);
-                alert(`規劃中斷於第 ${tripData.length + 1} 天：${e.message}`);
+                if (!firstDaySaved) {
+                    tripData = previousTrip;
+                    generationState = previousState;
+                }
+                await renderTrip();
+                window.PlannerUI?.failed(e, autoContinue ? (firstDaySaved ? finishBook : () => planTrip(true)) : undefined);
+                if (!autoContinue && e.code !== 'CANCELLED') alert('規劃失敗，原行程已保留：' + e.message);
             } finally {
                 setLoading(false);
+                window.PlannerUI?.end();
             }
         }
 
-        async function submitModification() {
-            const instruction = document.getElementById('modifyInstruction').value;
-            if(!instruction) return;
-            closeModal('modifyModal'); setLoading(true);
+        async function submitModification(targetIndex = currentModifyIndex, instruction = document.getElementById('modifyInstruction').value.trim()) {
+            if (isBusy) return;
+            const targetDay = tripData[targetIndex];
+            if (!instruction || !targetDay) return;
             const apiKey = getApiKey();
-            const targetDay = tripData[currentModifyIndex];
-            const prompt = `【微調】原始JSON:${JSON.stringify(targetDay)} 指令:${instruction} 回傳修改後的當天 JSON 物件。Output strictly in Traditional Chinese (Taiwan).`;
+            if (!apiKey) return;
+            const previousTrip = [...tripData];
+            const previousState = generationState;
+            closeModal('modifyModal');
+            window.PlannerUI?.begin(() => submitModification(targetIndex, instruction), `正在微調 ${targetDay.date}`);
+            setLoading(true);
+            const prompt = `【微調】原始JSON:${JSON.stringify(targetDay)} 指令:${instruction}。保留日期 ${targetDay.date}。旅人原始需求：${generationState?.combinedPrefs || ''}。回傳修改後的當天 JSON 物件，保留 day_title、itinerary 等完整結構。Output strictly in Traditional Chinese (Taiwan).`;
             try {
-                const newDayData = await callGemini(apiKey, prompt);
-                if(tripData[currentModifyIndex].weather) {
-                    newDayData.weather = tripData[currentModifyIndex].weather;
+                const newDayData = normalizeDay(await callDeepSeek(apiKey, prompt), targetDay.date);
+                if (targetDay.weather) newDayData.weather = targetDay.weather;
+                tripData[targetIndex] = newDayData;
+                generationState = restoreGenerationState(generationState, tripData);
+                await renderTrip();
+                window.PlannerUI?.throwIfCancelled();
+                persistTrip();
+                window.PlannerUI?.complete();
+            } catch (e) {
+                tripData = previousTrip;
+                generationState = previousState;
+                await renderTrip();
+                window.PlannerUI?.failed(e);
+                if (e.code !== 'CANCELLED') alert('微調失敗：' + e.message);
+            } finally { setLoading(false); window.PlannerUI?.end(); }
+        }
+
+        // Shared export helpers preserve the interactive itinerary.
+
+        // Render an isolated copy so exporting never changes live cards or controls.
+        async function exportTripImages(format) {
+            if (isBusy || !tripData.length) return;
+            if (typeof html2canvas !== 'function') { alert('圖片工具尚未載入，請確認網路後重試。'); return; }
+            window.TripMotion?.settle();
+            setBusy(true);
+            let completed = 0;
+            const days = Array.from(document.querySelectorAll('#tripContainer > details'));
+            const city = generationState?.city || document.getElementById('city').value || 'Trip';
+            const mobile = format === 'mobile';
+            const scrollPosition = { x: window.scrollX, y: window.scrollY };
+            try {
+                for (const day of days) {
+                    const host = document.createElement('div');
+                    host.className = 'export-host';
+                    host.style.cssText = 'position:absolute;left:-12000px;top:0;background:#fff;pointer-events:none;';
+                    const copy = day.cloneNode(true);
+                    copy.open = true;
+                    copy.classList.add('paper-mode', 'snapshot-mode', mobile ? 'export-mobile' : 'export-a4');
+                    copy.style.setProperty('width', mobile ? '390px' : '800px', 'important');
+                    copy.style.setProperty('max-width', 'none', 'important');
+                    copy.querySelectorAll('button, .day-actions').forEach(el => el.remove());
+                    host.appendChild(copy);
+                    document.body.appendChild(host);
+                    try {
+                        const canvas = await html2canvas(copy, { scale: 2, backgroundColor: '#ffffff', useCORS: true, windowWidth: mobile ? 500 : 1400, height: copy.scrollHeight });
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+                        if (!blob) throw new Error('圖片編碼失敗');
+                        downloadBlob(blob, `${city}_${day.dataset.date}_${mobile ? 'mobile' : 'A4'}.jpg`);
+                        completed++;
+                    } catch (_) { /* Report successful and failed counts after restoring the UI. */ }
+                    finally { host.remove(); }
                 }
-                tripData[currentModifyIndex] = newDayData;
-                localStorage.setItem('myTrip_v27', JSON.stringify(tripData));
-                renderTrip();
-            } catch(e) { alert("微調失敗：" + e.message); } finally { setLoading(false); }
-        }
-
-        // formatAIOutput 和 callGemini 函式已移至檔案末端統一管理
-
-        // --- Helper functions for export ---
-        function prepareExport() {
-            const element = document.getElementById('tripContainer');
-            const header = document.getElementById('pdfHeader');
-            const subTitle = document.getElementById('pdfSubTitle');
-            const city = document.getElementById('city').value;
-            const start = document.getElementById('flightArrival').value.split('T')[0];
-            
-            document.getElementById('placeholderMsg').style.display = 'none'; 
-            header.style.display = 'block'; 
-            subTitle.innerText = `旅遊城市：${city} | 出發日期：${start}`;
-            
-            element.classList.add('print-mode');
-            element.querySelectorAll('details').forEach(d => d.open = true);
-            element.querySelectorAll('button').forEach(b => b.style.display = 'none');
-            return element;
-        }
-
-        function restoreExport(element) {
-            document.getElementById('pdfHeader').style.display = 'none';
-            element.classList.remove('print-mode');
-            element.querySelectorAll('button').forEach(b => b.style.display = 'inline-block');
-        }
-
-        // --- Export Functions (A4 Paper Mode Fix) ---
-        async function exportToA4Image() {
-            const container = document.getElementById('tripContainer');
-            const city = document.getElementById('city').value || 'Trip';
-            
-            prepareExport();
-            
-            const days = container.querySelectorAll('details');
-
-            for (let i = 0; i < days.length; i++) {
-                const dayEl = days[i];
-                dayEl.scrollIntoView();
-                
-                const dateEl = dayEl.querySelector('.day-date');
-                const dateText = dateEl ? dateEl.innerText : `Day${i+1}`;
-                
-                try {
-                    dayEl.classList.add('paper-mode');
-                    // 為了確保截圖時所有背景都變成白底，套用 snapshot-mode
-                    dayEl.classList.add('snapshot-mode');
-                    await new Promise(resolve => setTimeout(resolve, 300));
-
-                    const canvas = await html2canvas(dayEl, { 
-                        scale: 2, 
-                        backgroundColor: "#ffffff",
-                        useCORS: true,
-                        height: dayEl.scrollHeight,
-                        windowWidth: 1000 
-                    });
-                    
-                    // 移除暫時加入的樣式
-                    dayEl.classList.remove('snapshot-mode');
-                    dayEl.classList.remove('paper-mode');
-
-                    // 將白色背景繪製到底層，確保輸出的圖片完全不透明
-                    {
-                        const ctx = canvas.getContext('2d');
-                        ctx.globalCompositeOperation = 'destination-over';
-                        ctx.fillStyle = '#ffffff';
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    }
-                    const link = document.createElement('a');
-                    link.download = `${city}_${dateText}_A4.jpg`;
-                    link.href = canvas.toDataURL("image/jpeg", 0.9);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-
-                    await new Promise(resolve => setTimeout(resolve, 800));
-                    
-                } catch (e) { console.error("截圖失敗:", e); }
+                if (completed === days.length && completed > 0) alert(`已產生 ${completed} 張${mobile ? '手機版行程' : 'A4 手冊'}圖，請確認瀏覽器下載；多張圖片可能需要允許多檔下載。`);
+                else alert(`圖片匯出完成 ${completed} / ${days.length} 張。部分圖片產生失敗，請重試；原行程保持不變。`);
+            } finally {
+                setBusy(false);
+                window.scrollTo(scrollPosition.x, scrollPosition.y);
             }
-            restoreExport(container);
-            alert("✅ A4 手冊圖卡已下載！");
         }
 
-        // 將每日行程匯出為適合手機瀏覽的圖片
-        async function exportToMobileImages() {
-            const container = document.getElementById('tripContainer');
-            const city = document.getElementById('city').value || 'Trip';
-            // 開啟列印模式顯示標題、解開折疊
-            prepareExport();
-            const days = container.querySelectorAll('details');
-            for (let i = 0; i < days.length; i++) {
-                const dayEl = days[i];
-                dayEl.scrollIntoView();
-                const dateEl = dayEl.querySelector('.day-date');
-                const dateText = dateEl ? dateEl.innerText : `Day${i+1}`;
-                try {
-                    // 套用紙張模式與 snapshot-mode 來清除透明效果
-                    dayEl.classList.add('paper-mode');
-                    dayEl.classList.add('snapshot-mode');
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    const canvas = await html2canvas(dayEl, {
-                        scale: 2,
-                        backgroundColor: "#ffffff",
-                        useCORS: true,
-                        height: dayEl.scrollHeight,
-                        windowWidth: 500
-                    });
-                    // 移除樣式
-                    dayEl.classList.remove('snapshot-mode');
-                    dayEl.classList.remove('paper-mode');
-                    // 填充白色背景，確保沒有透明區域
-                    {
-                        const ctx = canvas.getContext('2d');
-                        ctx.globalCompositeOperation = 'destination-over';
-                        ctx.fillStyle = '#ffffff';
-                        ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    }
-                    const link = document.createElement('a');
-                    link.download = `${city}_${dateText}_mobile.jpg`;
-                    link.href = canvas.toDataURL("image/jpeg", 0.9);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    await new Promise(resolve => setTimeout(resolve, 800));
-                } catch (e) {
-                    console.error("手機版截圖失敗:", e);
-                }
-            }
-            restoreExport(container);
-            alert("✅ 手機版行程圖已下載！");
-        }
+        function exportToA4Image() { return exportTripImages('a4'); }
+        function exportToMobileImages() { return exportTripImages('mobile'); }
 
-        function exportToText() {
-            let city = document.getElementById('city').value;
-            let text = `【🇯🇵 旅遊行程：${city}】\n\n`;
+        async function exportToText() {
+            if (isBusy || !tripData.length) return;
+            let city = generationState?.city || document.getElementById('city').value;
+            let text = `【旅遊行程：${city}】\n\n`;
 
             tripData.forEach(day => {
                 text += `📅 ${day.date} ${day.day_title}\n`;
                 if (day.weather) {
-                    let label = day.weather.isSimulated ? "(歷史均溫)" : "(預報)";
+                    let label = day.weather.isSimulated ? "(模擬值，非預報)" : "(預報)";
                     let icon = getWeatherIcon(day.weather.code);
                     text += `🌡️ 天氣：${icon} ${Math.round(day.weather.max)}° / ${Math.round(day.weather.min)}° ${label}\n`;
                 }
@@ -3053,127 +3266,12 @@ Output strictly in Traditional Chinese (Taiwan).
                 text += `\n`;
             });
 
-            navigator.clipboard.writeText(text).then(() => alert("✅ 已複製 LINE 筆記格式！請直接貼上即可。"));
-        }
-
-        // --- 一鍵下載全行程 PDF ---
-        async function exportToFullPDF() {
-            if(!tripData || tripData.length === 0) {
-                alert('尚無行程資料，請先生成行程！');
-                return;
-            }
-
-            const pdfBtn = document.querySelector('.btn-pdf-full');
-            if(pdfBtn) { pdfBtn.disabled = true; pdfBtn.innerHTML = '⏳ PDF 生成中，請稍候...'; }
-
-            const city = document.getElementById('city').value || '旅遊';
-            const hotel = document.getElementById('hotel').value || '';
-            const origin = document.getElementById('origin').value || '';
-            const startDate = tripData[0]?.date || '';
-            const endDate = tripData[tripData.length - 1]?.date || '';
-            const currencyInfo = getCurrencyInfo(city);
-
-            let exchangeRate = 1;
-            if(currencyInfo.code !== 'TWD') {
-                try { exchangeRate = await getExchangeRate(currencyInfo.code, 'TWD'); } catch(e) {}
-            }
-
-            const typeIcon = { 'SPOT': '🏛️', 'FOOD': '🍽️', 'TRANSPORT': '🚃' };
-            const typeLabel = { 'SPOT': '景點', 'FOOD': '美食', 'TRANSPORT': '交通' };
-            const typeColor = { 'SPOT': '#e11d48', 'FOOD': '#ea580c', 'TRANSPORT': '#0284c7' };
-            const typeBg = { 'SPOT': '#fff1f2', 'FOOD': '#fff7ed', 'TRANSPORT': '#eff6ff' };
-
-            let totalCost = 0;
-            tripData.forEach(day => { totalCost += calculateTotalCost(day, currencyInfo).amount; });
-
-            let printHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${city} 全行程</title>
-            <style>
-                @page { size: A4; margin: 15mm; }
-                * { box-sizing: border-box; }
-                body { font-family: 'Noto Sans TC','Microsoft JhengHei',sans-serif; color:#1e293b; margin:0; padding:0; background:#fff; font-size:13px; }
-                .cover { page-break-after: always; text-align: center; padding: 80px 24px 40px; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: #fff; min-height: 100vh; }
-                .cover h1 { font-size: 28px; margin: 0 0 8px 0; }
-                .cover p { margin: 6px 0; opacity: 0.9; font-size: 15px; }
-                .day-page { page-break-before: always; padding: 20px 0; }
-                .day-page:first-of-type { page-break-before: avoid; }
-                .day-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-                .day-badge { background: #6366f1; color: #fff; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; }
-                .day-title { font-size: 18px; font-weight: 800; color: #1e293b; margin: 0; }
-                .day-meta { font-size: 13px; color: #6366f1; font-weight: 600; margin-bottom: 14px; }
-                table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
-                th { background: #6366f1; color: #fff; padding: 8px 10px; text-align: left; font-weight: 700; }
-                td { padding: 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
-                tr:nth-child(even) { background: #f8fafc; }
-                .time { font-weight: 700; color: #6366f1; white-space: nowrap; width: 52px; }
-                .type-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
-                .desc-block { color: #475569; line-height: 1.6; margin-bottom: 4px; }
-                .transit-block { background: #ecfdf5; border-left: 3px solid #10b981; padding: 6px 10px; margin: 4px 0; font-size: 11px; }
-                .tips-block { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 6px 10px; margin: 4px 0; font-size: 11px; color: #92400e; }
-                .last-page { page-break-before: always; text-align: center; padding: 120px 24px; color: #94a3b8; min-height: 100vh; }
-            </style></head><body>`;
-
-            printHtml += `<div class="cover"><div style="font-size:48px; margin-bottom:16px;">✈️</div><h1>${city} 旅遊行程手冊</h1><p>${startDate} ~ ${endDate}　|　共 ${tripData.length} 天</p>`;
-            if(origin) printHtml += `<p>出發地：${origin}</p>`;
-            if(hotel) printHtml += `<p>住宿：${hotel}</p>`;
-            if(totalCost > 0) {
-                printHtml += `<p style="margin-top:20px; font-size:14px;">預估總花費 ${currencyInfo.symbol}${currencyInfo.code === 'VND' ? (totalCost/1000).toFixed(0)+'K' : totalCost.toLocaleString()}`;
-                if(currencyInfo.code !== 'TWD' && exchangeRate !== 1) printHtml += ` ≈ NT$${Math.round(totalCost * exchangeRate).toLocaleString()}`;
-                printHtml += `</p>`;
-            }
-            printHtml += `<p style="font-size:11px; opacity:0.6; margin-top:40px;">由 AI 極速旅遊規劃師 生成</p></div>`;
-
-            tripData.forEach((day, dayIdx) => {
-                const dayCost = calculateTotalCost(day, currencyInfo).amount;
-                const weekDays = ['週日','週一','週二','週三','週四','週五','週六'];
-                const d = new Date(day.date + 'T00:00:00');
-                const weekDay = weekDays[d.getDay()];
-                let weatherStr = '';
-                if(day.weather) weatherStr = ` ${getWeatherIcon(day.weather.code)} ${Math.round(day.weather.max)}°/${Math.round(day.weather.min)}°`;
-
-                printHtml += `<div class="day-page"><div class="day-header"><span class="day-badge">DAY ${dayIdx + 1}</span><h2 class="day-title">${day.date} ${weekDay}${weatherStr}</h2></div>`;
-                printHtml += `<div class="day-meta">📌 ${day.day_title || day.summary || ''}`;
-                if(dayCost > 0) printHtml += ` &nbsp;|&nbsp; 💰 ${currencyInfo.symbol}${currencyInfo.code === 'VND' ? (dayCost/1000).toFixed(0)+'K' : dayCost.toLocaleString()}`;
-                if(currencyInfo.code !== 'TWD' && exchangeRate !== 1 && dayCost > 0) printHtml += ` (≈NT$${Math.round(dayCost*exchangeRate).toLocaleString()})`;
-                printHtml += `</div><table><thead><tr><th>時間</th><th>類型</th><th>活動/地點</th><th>說明</th></tr></thead><tbody>`;
-
-                (day.itinerary || []).forEach((item) => {
-                    const tIcon = typeIcon[item.type] || '📍';
-                    const tLabel = typeLabel[item.type] || item.type;
-                    const tColor = typeColor[item.type] || '#64748b';
-                    const tBg = typeBg[item.type] || '#f1f5f9';
-                    let desc = '';
-                    if(item.desc) desc += `<div class="desc-block">${item.desc}</div>`;
-                    if(item.transit && item.transit.length > 0) {
-                        const t = item.transit.map(x => `<b>${x.mode}</b> (${x.time}) ${x.desc}`).join('；');
-                        desc += `<div class="transit-block">${t}</div>`;
-                    }
-                    if(item.tips) desc += `<div class="tips-block">💡 ${item.tips}</div>`;
-                    const titleCell = `${item.title}${item.cost ? '<br><small style="color:#059669;">💰 '+item.cost+'</small>' : ''}${item.address ? '<br><small style="color:#94a3b8;">📍 '+item.address+'</small>' : ''}${item.booking ? '<br><small style="color:#dc2626;">🎟️ 需預約</small>' : ''}`;
-                    printHtml += `<tr><td class="time">${item.time}</td><td><span class="type-tag" style="background:${tBg};color:${tColor}">${tIcon} ${tLabel}</span></td><td>${titleCell}</td><td>${desc || '-'}</td></tr>`;
-                });
-                printHtml += `</tbody></table></div>`;
-            });
-
-            printHtml += `<div class="last-page"><div style="font-size:36px; margin-bottom:12px;">🌏</div><p style="font-size:15px; font-weight:700; color:#64748b;">祝旅途愉快！</p><p style="font-size:11px; margin-top:8px;">Generated by AI 極速旅遊規劃師</p></div></body></html>`;
-
             try {
-                const w = window.open('', '_blank', 'width=800,height=900,scrollbars=yes');
-                if(!w) { alert('請允許彈出視窗後再試一次，以便列印/儲存 PDF。'); if(pdfBtn) { pdfBtn.disabled = false; pdfBtn.innerHTML = '📄 一鍵下載全行程 PDF'; } return; }
-                w.document.write(printHtml);
-                w.document.close();
-                w.focus();
-                w.onload = function() {
-                    setTimeout(function() {
-                        w.print();
-                        w.onafterprint = function() { w.close(); };
-                    }, 400);
-                };
-                alert('✅ 請在列印視窗選擇「另存為 PDF」或「儲存為 PDF」即可下載。');
-            } catch(e) {
-                console.error('列印失敗:', e);
-                alert('❌ 開啟列印視窗失敗：' + e.message);
-            } finally {
-                if(pdfBtn) { pdfBtn.disabled = false; pdfBtn.innerHTML = '📄 一鍵下載全行程 PDF'; }
+                await navigator.clipboard.writeText(text);
+                alert('已複製 LINE 筆記格式，請直接貼上。');
+            } catch (_) {
+                downloadBlob(new Blob([text], { type: 'text/plain;charset=utf-8' }), `${city}_行程筆記.txt`);
+                alert('瀏覽器未允許剪貼簿存取，已改為下載文字筆記。');
             }
         }
 
@@ -3181,7 +3279,9 @@ Output strictly in Traditional Chinese (Taiwan).
         function getCurrencyInfo(city) {
             if(!city) return { code: 'TWD', symbol: 'NT$', name: '新台幣' };
             
-            const cityLower = city.toLowerCase();
+            const cityLower = city.toLowerCase().replace(/臺/g, '台');
+            // Explicit regional context takes precedence over a district shared with Japan.
+            if (/台灣|taiwan|台北|taipei|新北|高雄/.test(cityLower)) return { code: 'TWD', symbol: 'NT$', name: '新台幣' };
             
             // 日本
             if(cityLower.includes('東京') || cityLower.includes('大阪') || cityLower.includes('京都') || 
@@ -3311,8 +3411,8 @@ Output strictly in Traditional Chinese (Taiwan).
                 return { code: 'CHF', symbol: 'CHF', name: '瑞士法郎' };
             }
             
-            // 預設：日圓（因為原本主要針對日本）
-            return { code: 'JPY', symbol: '¥', name: '日圓' };
+            // An unmatched city has no verified currency; never invent a JPY conversion.
+            return { code: '待確認', symbol: '', name: '幣別待確認', unknown: true };
         }
         
         // --- 獲取匯率函式 ---
@@ -3332,13 +3432,13 @@ Output strictly in Traditional Chinese (Taiwan).
             
             try {
                 // 使用免費的 ExchangeRate-API
-                const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`);
+                const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`, { signal: AbortSignal.timeout(10000) });
                 if(!response.ok) throw new Error('匯率API失敗');
                 
                 const data = await response.json();
                 const rate = data.rates[toCurrency];
                 
-                if(rate) {
+                if(Number.isFinite(rate) && rate > 0) {
                     exchangeRateCache = {
                         rate: rate,
                         timestamp: now,
@@ -3347,54 +3447,46 @@ Output strictly in Traditional Chinese (Taiwan).
                     return rate;
                 }
             } catch(e) {
-                console.warn('獲取匯率失敗，使用預設值:', e);
+                console.warn('匯率暫時無法取得，僅顯示當地貨幣。');
             }
             
-            // 預設匯率（如果API失敗）
-            const defaultRates = {
-                'JPY': 0.22,  // 1日圓 = 0.22台幣
-                'USD': 32,    // 1美元 = 32台幣
-                'EUR': 35,    // 1歐元 = 35台幣
-                'GBP': 40,    // 1英鎊 = 40台幣
-                'CNY': 4.5,   // 1人民幣 = 4.5台幣
-                'THB': 0.9,   // 1泰銖 = 0.9台幣
-                'VND': 0.0013, // 1越南盾 = 0.0013台幣
-                'CAD': 24,    // 1加幣 = 24台幣
-                'CHF': 36     // 1瑞士法郎 = 36台幣
-            };
-            
-            return defaultRates[fromCurrency] || 1;
+            return null;
         }
-        
+
         // --- 計算費用函式（支援貨幣識別） ---
         function calculateTotalCost(day, currencyInfo = null) {
-            let total = 0;
-            if(day && day.itinerary) {
-                day.itinerary.forEach(item => {
-                    if(item.cost) {
-                        // 用正則表達式提取數字（支援各種格式：1500円、1500-2000円、免費等）
-                        const costStr = item.cost.toString();
-                        if(costStr.includes('免費') || costStr.toLowerCase().includes('free')) {
-                            return; // 免費項目不計算
-                        }
-                        // 提取所有數字，取第一個（如果是範圍如1500-2000，取平均值）
-                        const numbers = costStr.match(/\d+/g);
-                        if(numbers && numbers.length > 0) {
-                            if(numbers.length > 1) {
-                                // 範圍格式，取平均值
-                                const min = parseInt(numbers[0]);
-                                const max = parseInt(numbers[numbers.length - 1]);
-                                total += Math.round((min + max) / 2);
-                            } else {
-                                total += parseInt(numbers[0]) || 0;
-                            }
-                        }
-                    }
-                });
+            let total = 0, unpriced = 0;
+            const markers = [
+                ['TWD', /TWD|NTD|NT\$|新[臺台]幣/gi], ['USD', /USD|US\$|美元|美金/gi],
+                ['JPY', /JPY|日[圓元]|円/gi], ['CNY', /CNY|RMB|人民幣/gi],
+                ['HKD', /HKD|HK\$|港[幣元]/gi], ['EUR', /EUR|€|歐元/gi],
+                ['GBP', /GBP|£|英鎊/gi], ['KRW', /KRW|₩|韓[圜元]/gi],
+                ['THB', /THB|฿|泰銖/gi], ['VND', /VND|₫|越南盾/gi],
+                ['SGD', /SGD|S\$|新加坡[幣元]/gi], ['AUD', /AUD|AU\$|澳[幣元]/gi],
+                ['CAD', /CAD|CA\$|加[幣元]/gi], ['CHF', /CHF|瑞士法郎/gi], ['NZD', /NZD|NZ\$|紐[幣元]/gi],
+                ['MYR', /MYR|馬幣|令吉/gi], ['PHP', /PHP|₱|菲律賓披索/gi],
+                ['IDR', /IDR|印尼盾/gi], ['INR', /INR|₹|印度盧比/gi]
+            ];
+            for (const item of day?.itinerary || []) {
+                let text = String(item.cost ?? '').normalize('NFKC').replace(/,/g, '');
+                const numbers = text.match(/\d+(?:\.\d+)?/g) || [];
+                if (/免費|free/i.test(text) && !numbers.length) continue;
+                const currencies = new Set();
+                for (const [code, pattern] of markers) text = text.replace(pattern, () => { currencies.add(code); return ''; });
+                // Never add unlike currencies, headcounts or ambiguous options as a single price.
+                if (currencyInfo?.unknown || !numbers.length || /免費|free|\d\s*(?:人|歲|分鐘|小時)|(?:^|[^\d\s元])\s*[-−]\s*\d/i.test(text)
+                    || /(?:雙|兩|二|三|四|五|六|七|八|九|十)人|半價|另計|另付|另加|起跳|起(?:\s|$)|\d\s*折/.test(text)
+                    || /\b[A-Z]{3}\b/.test(text)
+                    || currencies.size > 1 || (currencyInfo && [...currencies].some(code => code !== currencyInfo.code))
+                    || (currencyInfo && /[¥￥]/.test(text) && !['JPY', 'CNY'].includes(currencyInfo.code))) { unpriced++; continue; }
+                const range = text.match(/(\d+(?:\.\d+)?)\s*元?\s*[-–—~～至]\s*[$¥]?\s*(\d+(?:\.\d+)?)/);
+                if (range && numbers.length === 2) total += (Number(range[1]) + Number(range[2])) / 2;
+                else if (numbers.length === 1) total += Number(numbers[0]);
+                else unpriced++;
             }
-            return { amount: total, currency: currencyInfo };
+            return { amount: Math.round(total * 100) / 100, currency: currencyInfo, unpriced };
         }
-        
+
         // --- 生成當日路線圖連結 ---
         // 支援三種飯店輸入格式：
         // 1. 完整地址（例如：東京都新宿區西新宿2-8-1）
@@ -3403,7 +3495,7 @@ Output strictly in Traditional Chinese (Taiwan).
         // Google Maps 的 dir API 可以自動識別這些格式
         function generateDayRouteUrl(day, hotel) {
             const locations = [];
-            const city = document.getElementById('city').value || '';
+            const city = generationState?.city || document.getElementById('city').value || '';
             
             // 收集所有景點和餐廳（排除交通項目）
             day.itinerary.forEach(item => {
@@ -3433,78 +3525,67 @@ Output strictly in Traditional Chinese (Taiwan).
             if(locations.length < 2) return null;
             
             // 使用標準的 Google Maps Universal Link 格式
-            const origin = encodeURIComponent(locations[0]);
-            const destination = encodeURIComponent(locations[locations.length - 1]);
+            const origin = encodeQuery(locations[0]);
+            const destination = encodeQuery(locations[locations.length - 1]);
             
             // 如果有中間點（waypoints）
             let waypoints = '';
             if(locations.length > 2) {
-                const waypointList = locations.slice(1, -1).map(l => encodeURIComponent(l)).join('|');
+                const waypointList = locations.slice(1, -1).map(l => encodeQuery(l)).join('%7C');
                 waypoints = `&waypoints=${waypointList}`;
             }
             
-            return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints}&travelmode=driving`;
+            const transport = generationState?.transport || document.getElementById('transport').value;
+            const travelMode = transport === '大眾運輸' ? 'transit' : transport === '機車' ? 'two-wheeler' : 'driving';
+            return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints}&travelmode=${travelMode}`;
         }
 
         async function renderTrip() {
+            const version = ++renderVersion;
             const container = document.getElementById('tripContainer');
+            window.TripMotion?.settle(container);
             const exportBar = document.getElementById('exportBar');
             const ph = document.getElementById('placeholderMsg');
             
-            if(!tripData.length) { 
+            if(!tripData.length) {
+                container.querySelectorAll('details, .total-cost-summary, .generate-next-day-button, .cost-coverage').forEach(el => el.remove());
                 if(ph) ph.style.display='block'; 
                 if(exportBar) exportBar.style.display = 'none'; 
+                window.PlannerUI?.afterRender();
                 return; 
             }
 
             if(ph) ph.style.display = 'none';
             if(exportBar) exportBar.style.display = 'flex';
             
-            // ✨ 智能渲染：只清除總費用和生成按鈕，保留已存在的天數卡片
-            const totalCostSummary = container.querySelector('.total-cost-summary');
-            if(totalCostSummary) totalCostSummary.remove();
-            // ✨ 清除旧的生成按钮
-            const oldGenerateButton = container.querySelector('.generate-next-day-button');
-            if(oldGenerateButton) oldGenerateButton.remove();
-            
-            // ✨ 檢查已存在的天數，只渲染新的天數
-            const existingDates = new Set();
-            const existingDetails = container.querySelectorAll('details');
-            existingDetails.forEach(detail => {
-                const dateElement = detail.querySelector('.day-date');
-                if(dateElement) {
-                    existingDates.add(dateElement.textContent.trim());
-                }
-            });
-            
+            const openDays = new Map(Array.from(container.querySelectorAll('details')).map(detail => [detail.dataset.date, detail.open]));
+
             // 識別貨幣
-            const city = document.getElementById('city').value || '';
+            const city = generationState?.city || document.getElementById('city').value || '';
             const currencyInfo = getCurrencyInfo(city);
             
             // 獲取匯率（如果是新台幣則不需要）
-            let exchangeRate = 1;
-            if(currencyInfo.code !== 'TWD') {
+            let exchangeRate = currencyInfo.unknown ? null : 1;
+            if(!currencyInfo.unknown && currencyInfo.code !== 'TWD') {
                 exchangeRate = await getExchangeRate(currencyInfo.code, 'TWD');
-                console.log('貨幣:', currencyInfo.code, '匯率:', exchangeRate);
+
             }
             
-            // 計算總行程費用
-            let totalTripCost = 0;
+            if (version !== renderVersion) return;
+            container.querySelectorAll('details, .total-cost-summary, .generate-next-day-button, .cost-coverage').forEach(el => el.remove());
+            // Rebuild the affected data while preserving each day's expanded state.
+            let totalTripCost = 0, unpricedStops = 0;
             tripData.forEach(day => {
                 const costResult = calculateTotalCost(day, currencyInfo);
                 totalTripCost += costResult.amount;
+                unpricedStops += costResult.unpriced;
             });
             
-            const hotel = document.getElementById('hotel').value || '';
+            const hotel = generationState ? (generationState.hotel || '') : (document.getElementById('hasHotel').checked ? document.getElementById('hotel').value : '');
 
             tripData.forEach((day, index) => {
-                // ✨ 如果這個天數已經存在，跳過渲染（保持顯示）
-                if(existingDates.has(day.date)) {
-                    return;
-                }
-                
-                const isOpen = index === 0 ? 'open' : '';
-                
+                const isOpen = (openDays.has(day.date) ? openDays.get(day.date) : index === 0) ? 'open' : '';
+
                 // 計算當日總費用
                 const costResult = calculateTotalCost(day, currencyInfo);
                 const dayTotalCost = costResult.amount;
@@ -3529,7 +3610,7 @@ Output strictly in Traditional Chinese (Taiwan).
                         dayCostHtml = `<div class="day-cost-badge">💰 預估花費：${currencyInfo.symbol}${localAmount}</div>`;
                     } else {
                         // 確保有有效的匯率
-                        if(exchangeRate && exchangeRate !== 1 && !isNaN(exchangeRate)) {
+                        if(Number.isFinite(exchangeRate) && exchangeRate > 0) {
                             const twdFormatted = twdAmount.toLocaleString();
                             dayCostHtml = `<div class="day-cost-badge">💰 預估花費：${currencyInfo.symbol}${localAmount} / 約 NT$${twdFormatted}</div>`;
                         } else {
@@ -3541,7 +3622,7 @@ Output strictly in Traditional Chinese (Taiwan).
                 
                 // 生成當日路線圖連結
                 const routeUrl = generateDayRouteUrl(day, hotel);
-                const routeButtonHtml = routeUrl ? `<a href="${routeUrl}" target="_blank" class="btn-route">🗺️ 查看當日路線圖</a>` : '';
+                const routeButtonHtml = routeUrl ? `<a href="${routeUrl}" target="_blank" rel="noopener noreferrer" class="btn-route">🗺️ 查看當日路線圖</a>` : '';
                 
                 // 構建微調按鈕 HTML（避免在模板字符串中嵌套）
                 const modifyButtonHtml = '<button onclick="openModifyModal(' + index + ')" class="btn-modify">AI 微調這天</button>';
@@ -3549,19 +3630,23 @@ Output strictly in Traditional Chinese (Taiwan).
                 let weatherHtml = '';
                 if(day.weather) {
                     const icon = getWeatherIcon(day.weather.code);
-                    const label = day.weather.isSimulated ? '(歷史均溫)' : '(預報)';
+                    const label = day.weather.isSimulated ? '(模擬值，非預報)' : '(預報)';
                     const styleClass = day.weather.isSimulated ? 'weather-badge simulated' : 'weather-badge';
                     weatherHtml = `<div class="${styleClass}">${icon} ${Math.round(day.weather.max)}° / ${Math.round(day.weather.min)}° <span style="font-size:0.7em; margin-left:3px; opacity:0.7;">${label}</span></div>`;
+                } else {
+                    weatherHtml = '<div class="weather-badge simulated">天氣預報尚未提供</div>';
                 }
 
                 const html = `
-                <details ${isOpen}>
+                <details ${isOpen} data-date="${escapeHtml(day.date)}">
                     <summary>
+                        <span class="day-number" aria-hidden="true"><small>DAY</small>${String(index + 1).padStart(2, '0')}</span>
                         <div class="day-header">
-                            <div class="day-date">${day.date}</div>
-                            <div class="day-summary">${day.day_title}</div>
+                            <div class="day-date">${escapeHtml(day.date)}</div>
+                            <div class="day-summary">${escapeHtml(day.day_title)}</div>
                             ${dayCostHtml}
                             ${weatherHtml}
+                            <p class="chapter-intro">${escapeHtml(day.summary)}</p><span class="chapter-stops">${day.itinerary.length} 個停靠點 · 旅行意象插畫</span>
                         </div>
                     </summary>
                     <div class="day-content">
@@ -3576,46 +3661,48 @@ Output strictly in Traditional Chinese (Taiwan).
                                 </tr>
                             </thead>
                             <tbody>
-                                ${day.itinerary.map(item => {
+                                ${day.itinerary.map((item, itemIndex) => {
                                     const typeMap = { 'SPOT': '景點', 'FOOD': '美食', 'TRANSPORT': '交通' };
                                     const typeLabel = typeMap[item.type] || item.type;
-                                    const typeClass = item.type.toLowerCase();
+                                    const typeClass = ['SPOT', 'FOOD', 'TRANSPORT'].includes(item.type) ? item.type.toLowerCase() : 'spot';
 
-                                    let tagHtml = `<span class="table-tag ${typeClass}">${typeLabel}</span>`;
-                                    let costHtml = item.cost ? `<div class="table-cost">💰 ${item.cost}</div>` : '';
+                                    let tagHtml = `<span class="table-tag ${typeClass}">${escapeHtml(typeLabel)}</span>`;
+                                    let costHtml = item.cost ? `<div class="table-cost">💰 ${escapeHtml(item.cost)}</div>` : '';
                                     let ticketHtml = item.booking ? '<span class="table-badge booking">🎟️ 需預約</span>' : '';
                                     
-                                    const addressHtml = item.address ? `<div class="table-address">📍 ${item.address}</div>` : '';
-                                    const mapQuery = item.title + " " + (item.address || document.getElementById('city').value);
-                                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+                                    const addressHtml = item.address ? `<div class="table-address">📍 ${escapeHtml(item.address)}</div>` : '';
+                                    const mapQuery = item.title + " " + (item.address || city);
+                                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeQuery(mapQuery)}`;
 
                                     let transitHtml = '';
                                     if(item.transit && item.transit.length > 0) {
                                         const transitOptions = item.transit.map((t, i) => {
                                             const badge = i === 0 ? 'A' : 'B';
-                                            return `<div><span style="font-weight:700; color:var(--primary);">${badge}</span> <b>${t.mode}</b> (${t.time}) - ${t.desc}</div>`;
+                                            return `<div><span style="font-weight:700; color:var(--primary);">${badge}</span> <b>${escapeHtml(t.mode)}</b> (${escapeHtml(t.time)}) - ${escapeHtml(t.desc)}</div>`;
                                         }).join('');
                                         transitHtml = `<div class="table-transit">🚦 ${transitOptions}</div>`;
                                     }
 
-                                    const tipsHtml = item.tips ? `<div class="table-tips">💡 ${item.tips}</div>` : '';
+                                    const tipsHtml = item.tips ? `<div class="table-tips">💡 ${escapeHtml(item.tips)}</div>` : '';
                                     
                                     return `
-                                    <tr>
-                                        <td class="time-cell">${item.time}</td>
+                                    <tr data-item="${itemIndex}">
+                                        <td class="time-cell">${escapeHtml(item.time)}${item.endTime ? `<span class="end-time">— ${escapeHtml(item.endTime)}</span>` : ''}</td>
                                         <td class="type-cell">${tagHtml}${ticketHtml}</td>
                                         <td class="title-cell">
-                                            <div style="font-weight:600; margin-bottom:4px;">${item.title}</div>
+                                            <div style="font-weight:600; margin-bottom:4px;">${escapeHtml(item.title)}</div>
+                                            ${window.PlannerUI?.timingHtml(day, itemIndex) || ''}
                                             ${costHtml}
                                             ${addressHtml}
                                         </td>
                                         <td class="desc-cell">
-                                            <div>${item.desc}</div>
+                                            <div>${escapeHtml(item.desc)}</div>
                                             ${transitHtml}
                                             ${tipsHtml}
                                         </td>
                                         <td class="action-cell">
-                                            <a href="${mapUrl}" target="_blank" class="table-map-link">📍 地圖</a>
+                                            <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="table-map-link">📍 地圖</a>
+                                            <button type="button" class="stop-edit" onclick="PlannerUI.edit(${index}, ${itemIndex})">編輯這一站</button>
                                         </td>
                                     </tr>`;
                                 }).join('')}
@@ -3657,7 +3744,7 @@ Output strictly in Traditional Chinese (Taiwan).
                     </div>`;
                 } else {
                     // 確保有有效的匯率
-                    if(exchangeRate && exchangeRate !== 1 && !isNaN(exchangeRate)) {
+                    if(Number.isFinite(exchangeRate) && exchangeRate > 0) {
                         const totalTwdAmount = Math.round(totalTripCost * exchangeRate);
                         const twdFormatted = totalTwdAmount.toLocaleString();
                         const rateDate = new Date().toLocaleDateString('zh-TW');
@@ -3689,8 +3776,10 @@ Output strictly in Traditional Chinese (Taiwan).
                 container.insertAdjacentHTML('beforeend', totalCostHtml);
             }
             
+            if (unpricedStops) container.insertAdjacentHTML('beforeend', `<p class="cost-coverage">${unpricedStops} 站費用未計入：金額未明、價格條件或幣別不一致。上方僅為可辨識費用的小計，請核對各站原文。</p>`);
+
             // ✨ 檢查是否還有未生成的天數，如果有則顯示按鈕
-            if(generationState.totalDays > 0 && tripData.length < generationState.totalDays) {
+            if(generationState?.totalDays > 0 && tripData.length < generationState.totalDays) {
                 const nextDayIndex = tripData.length + 1;
                 const nextDayDate = new Date(generationState.startDate);
                 nextDayDate.setDate(generationState.startDate.getDate() + tripData.length);
@@ -3701,11 +3790,9 @@ Output strictly in Traditional Chinese (Taiwan).
                         <p style="color: #fff; font-size: 1.1rem; margin-bottom: 15px; font-weight: 600;">
                             ${tripData.length === 1 ? '第一天已生成！' : `已生成 ${tripData.length} 天`}
                         </p>
-                        <button id="generateNextDayBtn" onclick="generateNextDay()" 
-                                style="background: #fff; color: #667eea; border: none; padding: 12px 30px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.2);"
-                                onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.3)';"
-                                onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.2)';">
-                            🚀 生成第 ${nextDayIndex} 天 (${nextDayDateStr})
+                        <button id="generateNextDayBtn" onclick="finishBook()" 
+                                style="background: #fff; color: #667eea; border: none; padding: 12px 30px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                            繼續完成旅遊書 · 從第 ${nextDayIndex} 天開始 (${nextDayDateStr})
                         </button>
                         <div id="generateProgressContainer" style="display: none; margin-top: 15px;">
                             <p id="generateProgressText" style="color: #fff; font-size: 0.95rem; margin-bottom: 10px; font-weight: 600;">正在生成...</p>
@@ -3720,229 +3807,186 @@ Output strictly in Traditional Chinese (Taiwan).
                     </div>`;
                 container.insertAdjacentHTML('beforeend', generateButtonHtml);
             }
+            window.TripMotion?.afterRender();
+            window.PlannerUI?.afterRender();
         }
 
         // --- 🛠️ 強力 JSON 清洗與修復工具 ---
-        function getApiKey() { const k=document.getElementById('apiKey').value.trim(); if(!k) openModal('apiModal'); return k; }
+        function getApiKey() { if (window.CodexLocal?.selected()) return 'local-codex'; const k=document.getElementById('apiKey').value.trim(); if(!k) openModal('apiModal'); return k; }
         
-        let loadingInterval = null;
-        const loadingMessages = [
-            "正在搜尋當地美食...",
-            "正在計算最佳路線...",
-            "正在查詢天氣預報...",
-            "正在整理隱藏景點...",
-            "正在優化行程順序...",
-            "正在生成詳細資訊..."
-        ];
-        let currentMessageIndex = 0;
-        
-        function setLoading(isLoading) { 
-            const loadingEl = document.getElementById('loading');
-            const containerEl = document.getElementById('tripContainer');
-            const loadingTextEl = document.getElementById('loadingText');
-            const planBtn = document.getElementById('planBtn');
-            
-            if(isLoading) {
-                loadingEl.style.display = 'block';
-                containerEl.style.display = 'none';
-                planBtn.disabled = true;
-                
-                // 重置訊息索引
-                currentMessageIndex = 0;
-                loadingTextEl.textContent = loadingMessages[0];
-                
-                // 開始動態切換訊息
-                loadingInterval = setInterval(() => {
-                    currentMessageIndex = (currentMessageIndex + 1) % loadingMessages.length;
-                    loadingTextEl.style.opacity = '0';
-                    setTimeout(() => {
-                        loadingTextEl.textContent = loadingMessages[currentMessageIndex];
-                        loadingTextEl.style.opacity = '1';
-                    }, 200);
-                }, 2000);
-            } else {
-                loadingEl.style.display = 'none';
-                containerEl.style.display = 'flex';
-                planBtn.disabled = false;
-                
-                // 清除定時器
-                if(loadingInterval) {
-                    clearInterval(loadingInterval);
-                    loadingInterval = null;
-                }
-                
-                // 重置為預設訊息
-                loadingTextEl.textContent = "AI 正在為您規劃完美旅程...";
-                loadingTextEl.style.opacity = '1';
-            }
+        function setLoading(isLoading) {
+            setBusy(isLoading);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('tripContainer').style.display = 'flex';
+            if (!isLoading) window.TripMotion?.afterRender();
         }
-        
-        function saveInputs() { 
+
+        function saveInputs(options = {}) { 
             const i={}; 
             inputIds.forEach(id=>{const e=document.getElementById(id); if(e)i[id]=e.value}); 
             const tags = [];
             document.querySelectorAll('input[name="tripTag"]:checked').forEach(cb => tags.push(cb.value)); 
             i['tripTags'] = tags;
-            localStorage.setItem('tripDraft_v27',JSON.stringify(i)); 
+            // 保存住宿開關狀態
+            const hasHotelCheckbox = document.getElementById('hasHotel');
+            if(hasHotelCheckbox) i['hasHotel'] = hasHotelCheckbox.checked;
+            writeStoredValues({ tripDraft_v27: JSON.stringify(i) }, options);
         }
 
         function loadInputs() { 
-            const s=localStorage.getItem('tripDraft_v27'); 
+            const s=readStoredJson('tripDraft_v27', null);
             if(s) { 
-                const i=JSON.parse(s); 
-                inputIds.forEach(id=>{if(i[id])document.getElementById(id).value=i[id]}); 
-                if(i['tripTags']) {
+                const i=s;
+                inputIds.forEach(id=>{if(typeof i[id] === 'string')document.getElementById(id).value=i[id]});
+                if(Array.isArray(i['tripTags'])) {
                     document.querySelectorAll('input[name="tripTag"]').forEach(cb => {
-                        if(i['tripTags'].includes(cb.value)) cb.checked = true;
+                        cb.checked = i['tripTags'].includes(cb.value);
                     });
+                }
+                // 恢復住宿開關狀態
+                const hasHotelCheckbox = document.getElementById('hasHotel');
+                const hotelContainer = document.getElementById('hotelContainer');
+                if(hasHotelCheckbox && hotelContainer) {
+                    if(typeof i['hasHotel'] === 'boolean') {
+                        hasHotelCheckbox.checked = i['hasHotel'];
+                        hotelContainer.style.display = i['hasHotel'] ? 'block' : 'none';
+                    }
                 }
             } 
         }
 
-        function clearAll() { if(confirm("清空？")) { localStorage.removeItem('tripDraft_v27'); localStorage.removeItem('myTrip_v27'); location.reload(); } }
-        function exportData() { const d={i:JSON.parse(localStorage.getItem('tripDraft_v27')),t:tripData}; const b=new Blob([JSON.stringify(d)],{type:"application/json"}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='trip_backup.json'; a.click(); }
-        function importData(inp) { const f=inp.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ const d=JSON.parse(e.target.result); if(d.i)localStorage.setItem('tripDraft_v27',JSON.stringify(d.i)); if(d.t)localStorage.setItem('myTrip_v27',JSON.stringify(d.t)); location.reload(); }; r.readAsText(f); }
-        function openModal(id) { document.getElementById(id).style.display="block"; }
-        function closeModal(id) { document.getElementById(id).style.display="none"; }
-        function saveAndCloseModal() { localStorage.setItem('geminiApiKey', document.getElementById('apiKey').value.trim()); closeModal('apiModal'); }
-        window.onclick = e => { if(e.target.classList.contains('modal')) e.target.style.display="none"; }
-        function openModifyModal(idx) { currentModifyIndex=idx; document.getElementById('modifyDateDisplay').innerText=`${tripData[idx].date}`; openModal('modifyModal'); }
-
-        // ==========================================
-        // 🚀 核彈級 JSON 修復與 API 呼叫函式
-        // (請將此段程式碼貼到 <script> 的最後方以覆蓋舊邏輯)
-        // ==========================================
-
-        // 1. 智慧 JSON 修復引擎
-        // 1. 智慧 JSON 修復引擎 (增強版 v2)
-        function smartJsonRepair(jsonStr) {
-            if (!jsonStr) return null;
-            
-            // 步驟 A: 移除 Markdown 與頭尾雜訊
-            let fixed = jsonStr
-                .replace(/```json/gi, '')
-                .replace(/```/g, '')
-                .trim();
-
-            // 嘗試抓取最外層的 [ ] 或 { }
-            const firstBracket = fixed.indexOf('[');
-            const firstBrace = fixed.indexOf('{');
-            const lastBracket = fixed.lastIndexOf(']');
-            const lastBrace = fixed.lastIndexOf('}');
-            
-            let start = 0;
-            let end = fixed.length;
-
-            if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
-                start = firstBracket;
-                end = lastBracket !== -1 ? lastBracket + 1 : fixed.length;
-            } else if (firstBrace !== -1) {
-                start = firstBrace;
-                end = lastBrace !== -1 ? lastBrace + 1 : fixed.length;
-            }
-            
-            fixed = fixed.substring(start, end);
-
-            // 步驟 B: 暴力修復常見語法錯誤
-            
-            // 1. 移除控制字符 (如 Tab, 換行等，除了空格)
-            // 這裡我們把所有換行符號變成空格，避免字串斷行錯誤
-            fixed = fixed.replace(/[\n\r\t]/g, ' ');
-            
-            // 2. 移除除了普通字符以外的奇怪控制符號 (ASCII 0-31)
-            // 這是為了防止 AI 輸出不可見的控制碼導致 JSON 壞掉
-            fixed = fixed.replace(/[\x00-\x1F]/g, "");
-
-            // 3. 處理尾隨逗號 (例如: "a":1, })
-            fixed = fixed.replace(/,\s*([}\]])/g, '$1');
-
-            // 4. 嘗試解析
+        function clearAll() {
+            if (isBusy || !confirm('清空目前旅程的設定、行程與完成標記？其他旅程及 API 設定會保留，可復原上一步。')) return;
             try {
-                return JSON.parse(fixed);
-            } catch (e) {
-                console.warn("第一次解析失敗，嘗試補全括號...", e);
-                
-                // 步驟 C: 處理被截斷的 JSON (補齊括號)
-                try {
-                    // 簡單判斷缺多少括號
-                    let openBraces = (fixed.match(/{/g) || []).length;
-                    let closeBraces = (fixed.match(/}/g) || []).length;
-                    let openBrackets = (fixed.match(/\[/g) || []).length;
-                    let closeBrackets = (fixed.match(/]/g) || []).length;
-
-                    // 補齊順序很重要
-                    // 檢查是否字串沒閉合 (奇數個引號)
-                    const quoteCount = (fixed.match(/"/g) || []).length;
-                    if (quoteCount % 2 !== 0) {
-                        fixed += '"';
-                    }
-
-                    while (openBraces > closeBraces) { fixed += '}'; closeBraces++; }
-                    while (openBrackets > closeBrackets) { fixed += ']'; closeBrackets++; }
-                    
-                    return JSON.parse(fixed);
-                } catch (e2) {
-                    console.error("修復失敗。原始字串片段:", fixed.substring(0, 100) + "...");
-                    return null;
-                }
-            }
+                writeStoredValues({ tripDraft_v27: null, myTrip_v27: null, generationState_v27: null, journeyProgress_v1: null }, { label: '清空目前旅程', inputs: true });
+                location.reload();
+            } catch (error) { alert(error.message); }
         }
 
-        // 2. 強化版 API 呼叫
-        async function callGemini(key, prompt) {
-            const model = document.getElementById('modelSelect').value;
-            
-            // 設定較高的 Token 限制
-            const requestBody = {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    // ⚠️ 暫時移除 application/json 強制模式，改用純文字模式解析
-                    // 因為有些模型在 json mode 下會因為內容過長而直接報錯
-                    // responseMimeType: "application/json", 
-                    maxOutputTokens: 8192,
-                    temperature: 0.7
-                }
-            };
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
 
-            try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
+        function exportData() {
+            if (isBusy) return;
+            const inputs = Object.fromEntries(inputIds.map(id => [id, document.getElementById(id).value]));
+            inputs.tripTags = Array.from(document.querySelectorAll('input[name="tripTag"]:checked')).map(el => el.value);
+            inputs.hasHotel = document.getElementById('hasHotel').checked;
+            const backup = { version: 3, i: inputs, t: tripData, g: generationState, p: window.TripLibrary?.progress() };
+            downloadBlob(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }), 'trip_backup.json');
+        }
+
+        function validateBackup(data) {
+            if (!data || typeof data !== 'object' || Array.isArray(data) || (!('i' in data) && !('t' in data))) throw new Error('這不是有效的行程備份。');
+            const inputs = {};
+            if (data.i != null) {
+                if (typeof data.i !== 'object' || Array.isArray(data.i)) throw new Error('備份設定格式不正確。');
+                inputIds.forEach(id => {
+                    if (data.i[id] !== undefined && typeof data.i[id] !== 'string') throw new Error('備份欄位格式不正確：' + id);
+                    if (typeof data.i[id] === 'string') inputs[id] = data.i[id];
                 });
-
-                const data = await res.json();
-
-                // 錯誤處理：檢查 API 是否回傳錯誤
-                if (data.error) {
-                    throw new Error(`API Error: ${data.error.message}`);
-                }
-
-                if (!data.candidates || !data.candidates[0].content) {
-                    throw new Error("API 回傳結構異常 (可能是被安全性阻擋)");
-                }
-
-                const rawText = data.candidates[0].content.parts[0].text;
-                
-                // 使用上面的修復引擎
-                const parsedData = smartJsonRepair(rawText);
-
-                if (!parsedData) {
-                    // 如果真的解析失敗，拋出詳細錯誤讓使用者知道
-                    console.log("Raw Response:", rawText); // 在 Console 印出原始回應以便除錯
-                    throw new Error("JSON 解析失敗。請按 F12 開啟 Console 查看 'Raw Response'，或嘗試縮短行程天數。");
-                }
-
-                return parsedData;
-
-            } catch (e) {
-                console.error("Gemini Critical Error:", e);
-                
-                // 顯示錯誤給使用者
-                alert(`❌ 生成失敗：${e.message}\n\n建議：\n1. 檢查 API Key 是否正確\n2. 嘗試減少「必去景點」或「天數」\n3. 換一個 AI 模型試試`);
-                
-                throw e; // 終止後續動作
+                if (data.i.tripTags !== undefined && (!Array.isArray(data.i.tripTags) || data.i.tripTags.some(tag => typeof tag !== 'string'))) throw new Error('旅遊元素格式不正確。');
+                if (data.i.hasHotel !== undefined && typeof data.i.hasHotel !== 'boolean') throw new Error('住宿設定格式不正確。');
+                inputs.tripTags = data.i.tripTags || [];
+                inputs.hasHotel = data.i.hasHotel ?? true;
             }
+            const days = validateTrip(data.t ?? []);
+            const state = restoreGenerationState(data.g ?? null, days);
+            return { i: inputs, t: days, g: state, p: window.TripStore?.cleanProgress(data.p, days) };
+        }
+
+        async function importData(input) {
+            const file = input.files[0];
+            if (!file || isBusy) return;
+            setBusy(true);
+            try {
+                if (file.size > 5 * 1024 * 1024) throw new Error('備份檔案上限為 5 MB。');
+                const parsed = JSON.parse(await file.text());
+                if (parsed?.format === 'tourism-library') {
+                    if (window.TripLibrary?.importCollection(parsed)) location.reload();
+                    return;
+                }
+                const data = validateBackup(parsed);
+                if (!confirm('匯入將取代目前的旅程設定與行程，是否繼續？')) return;
+                writeStoredValues({ tripDraft_v27: JSON.stringify(data.i), myTrip_v27: JSON.stringify(data.t), generationState_v27: data.g ? JSON.stringify(data.g) : null, journeyProgress_v1: data.p ? JSON.stringify(data.p) : null }, { label: '匯入目前旅程', inputs: true });
+                location.reload();
+            } catch (error) { alert('匯入失敗，原資料已保留：' + error.message); }
+            finally { input.value = ''; setBusy(false); }
+        }
+
+        let modalReturnFocus = null;
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            modalReturnFocus = document.activeElement;
+            modal.style.display = 'block';
+            document.body.classList.add('modal-open');
+            window.TripMotion?.openModal(modal);
+            modal.querySelector('input:not([type="file"]), textarea, button')?.focus();
+        }
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            const returnFocus = modalReturnFocus;
+            const finish = () => {
+                modal.style.display = 'none';
+                if (!Array.from(document.querySelectorAll('.modal')).some(el => el.style.display === 'block')) document.body.classList.remove('modal-open');
+                returnFocus?.focus();
+            };
+            if (window.TripMotion) window.TripMotion.closeModal(modal, finish);
+            else finish();
+        }
+        function updateApiStatus() {
+            if (window.CodexLocal?.selected()) { document.getElementById('apiStatus').textContent = '本機 Codex · 額度模式'; return; }
+            document.getElementById('apiStatus').textContent = document.getElementById('apiKey').value.trim() ? 'DeepSeek 已設定' : '設定 DeepSeek';
+        }
+        function saveAndCloseModal() {
+            window.CodexLocal?.update(true);
+            const key = document.getElementById('apiKey').value.trim();
+            try {
+                localStorage.setItem('aiProvider', document.getElementById('aiProvider').value);
+                if (document.getElementById('rememberKey').checked && key) {
+                    localStorage.setItem('deepseekApiKey', key);
+                    sessionStorage.removeItem('deepseekApiKey');
+                } else {
+                    localStorage.removeItem('deepseekApiKey');
+                    if (key) sessionStorage.setItem('deepseekApiKey', key);
+                    else sessionStorage.removeItem('deepseekApiKey');
+                }
+                localStorage.setItem('deepseekModel', document.getElementById('modelSelect').value);
+            } catch (_) { alert('瀏覽器無法儲存 API 設定；金鑰仍可在本次頁面使用。'); }
+            updateApiStatus();
+            closeModal('apiModal');
+        }
+        window.onclick = event => { if (event.target.classList.contains('modal')) closeModal(event.target.id); };
+        document.addEventListener('keydown', event => {
+            const modal = Array.from(document.querySelectorAll('.modal')).find(el => el.style.display === 'block');
+            if (!modal) return;
+            if (event.key === 'Escape') closeModal(modal.id);
+            if (event.key === 'Tab') {
+                const focusable = Array.from(modal.querySelectorAll('button, input, select, textarea, a[href]')).filter(el => !el.disabled && el.offsetParent !== null);
+                const first = focusable[0], last = focusable.at(-1);
+                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+            }
+        });
+        function openModifyModal(index) {
+            if (isBusy || !tripData[index]) return;
+            currentModifyIndex = index;
+            document.getElementById('modifyDateDisplay').textContent = tripData[index].date;
+            document.getElementById('modifyInstruction').value = '';
+            openModal('modifyModal');
+        }
+
+        function callDeepSeek(key, prompt) {
+            window.PlannerUI?.throwIfCancelled();
+            if (window.CodexLocal?.selected()) return CodexLocal.generate(prompt, window.PlannerUI?.signal());
+            return DeepSeekClient.generate({ key, model: document.getElementById('modelSelect').value, prompt, signal: window.PlannerUI?.signal() });
         }
 
     </script>
