@@ -1,6 +1,6 @@
 /* Postcard reading view: the in-app book matches the downloaded booklet (book-export.js postcardCss). Screen only. */
 @media screen {
-:root { --card: #fbf6ea; --card-ink: #3a2f25; --card-blue: #2c4a7a; --card-muted: #8b775e; --card-rule: #d9cbb0; --card-dash: #c9b896; --walnut: #3b2a1c; --kraft: #f3e6d0; --seal: radial-gradient(circle at 35% 30%, #d9534a, #9b1d16 70%);
+:root { --card: #fbf6ea; --card-ink: #2a2018; --card-blue: #24406e; --card-muted: #5a4532; --card-rule: #d9cbb0; --card-dash: #c9b896; --walnut: #3b2a1c; --kraft: #f3e6d0; --seal: radial-gradient(circle at 35% 30%, #d9534a, #9b1d16 70%);
   --kai: 'LXGW WenKai TC', 'Kaiti TC', STKaiti, BiauKai, DFKai-SB, 'Noto Serif TC', serif;
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .4 0 0 0 0 .3 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
 
@@ -61,7 +61,7 @@ body[data-book-view='itinerary'] #bookProgress::-webkit-progress-value { backgro
 body[data-scene='town'] #itineraryPanel #tripContainer > details > summary::before { background-image: url('assets/roam-town.png'); }
 #itineraryPanel .day-number { flex: 0 0 84px; height: 100px; padding: 7px; display: grid; place-content: center; text-align: center; font-family: var(--kai); font-size: 2.6rem; line-height: 1; color: #fff7ea; background: linear-gradient(160deg, #e2572b, #a8261d) content-box, #fff; -webkit-mask: linear-gradient(#000 0 0) content-box, radial-gradient(circle 4px, #0000 97%, #000) -6px -6px/12px 12px round; mask: linear-gradient(#000 0 0) content-box, radial-gradient(circle 4px, #0000 97%, #000) -6px -6px/12px 12px round; transform: rotate(-3deg); }
 #itineraryPanel .day-number small { color: #ffe2d0; font-size: 9px; letter-spacing: .2em; }
-#itineraryPanel .day-date { display: inline-block; padding: 3px 14px; border: 2px solid #3c466e8c; border-radius: 999px; color: #3c466ec2; font-family: Consolas, ui-monospace, monospace; font-size: .8125rem; letter-spacing: .08em; transform: rotate(-3deg); }
+#itineraryPanel .day-date { display: inline-block; padding: 3px 14px; border: 2px solid #34406a; border-radius: 999px; color: #34406a; font-family: Consolas, ui-monospace, monospace; font-size: .8125rem; letter-spacing: .08em; transform: rotate(-3deg); }
 #itineraryPanel .day-summary { font-family: var(--kai); font-weight: 700; color: var(--card-ink); }
 #itineraryPanel .chapter-facts { color: var(--card-muted); }
 #itineraryPanel .chapter-facts > span, #itineraryPanel .day-cost-badge, #itineraryPanel .weather-badge, #itineraryPanel .weather-badge.simulated { background: transparent; border: 1px dashed var(--card-dash); color: var(--card-muted); }

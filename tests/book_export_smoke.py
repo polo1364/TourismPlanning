@@ -318,6 +318,28 @@ def main():
         check('landscape book fills the height', drag.evaluate("document.querySelector('main').getBoundingClientRect().height > innerHeight - 30"))
         drag.screenshot(path=str(ARTIFACTS / 'travel-manual-landscape-844.png'))
         drag_context.close()
+        # No near-empty trailing pages: each day's last leaf is reasonably full, and an empty right-hand page becomes a notes page.
+        TAIL = """() => [...document.querySelectorAll('.book-page:not(.cover)')].map(flow => {
+            const sheet = flow.closest('.sheet-window'); const hidden = sheet.hidden; sheet.hidden = false;
+            const offset = flow.style.getPropertyValue('--leaf-offset'); flow.style.setProperty('--leaf-offset', '0px');
+            const box = flow.getBoundingClientRect(), stride = box.width + parseFloat(getComputedStyle(flow).columnGap);
+            const total = Number(flow.dataset.leaves); let used = 0;
+            for (const node of flow.querySelectorAll('p,li,h2,h3,a,.stop-name,.stop-note,.table-tips,.journal-move,.day-end:not([hidden])'))
+                for (const r of node.getClientRects())
+                    if (r.width && Math.floor((r.left - box.left + 1) / stride) === total - 1) used = Math.max(used, (r.bottom - box.top) / box.height);
+            flow.style.setProperty('--leaf-offset', offset); sheet.hidden = hidden;
+            return {total, used};
+        })"""
+        tails_page = browser.new_page(viewport={'width':1440,'height':1000}, reduced_motion='reduce')
+        for book in [output, demo_path]:
+            tails_page.goto(book.as_uri())
+            tails_page.wait_for_function("document.body.dataset.readerReady === 'true'")
+            tails = tails_page.evaluate(TAIL)
+            check(f'{book.name} no near-empty last page', all(t['total'] == 1 or t['used'] >= .25 for t in tails) or print(tails))
+        tails_page.keyboard.press('End')
+        odd = tails_page.evaluate("() => Number(document.querySelector('.sheet-window:not([hidden]) .book-page').dataset.leaves) % 2 === 1")
+        check('empty right-hand page shows the notes page', tails_page.evaluate("() => document.querySelector('.sheet-window:not([hidden])').hasAttribute('data-notes')") == odd)
+        tails_page.close()
         check('no animation runtime errors', not errors)
         browser.close()
         # WebKit engine checks are not a substitute for iPhone Files/Quick Look.

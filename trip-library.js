@@ -110,10 +110,15 @@
             downloadBlob(new Blob([JSON.stringify(store.exportAll(), null, 2)], { type: 'application/json' }), 'all_trips_backup.json');
         } catch (err) { error(err.message); }
     }
-    function importCollection(value) {
+    function validateCollection(value) {
         if (!ready) throw new Error('旅程收藏尚未就緒。');
         const records = store.validateCollection(value);
-        if (!confirm(`將新增 ${records.length} 份旅程，現有旅程會保留。是否繼續？`)) return false;
+        if (store.list().length + records.length > TripStore.MAX_TRIPS) throw new Error(`匯入後超過 ${TripStore.MAX_TRIPS} 份旅程，請先備份並整理收藏。`);
+        return records.length;
+    }
+    function importCollection(value, confirmed = false) {
+        const count = validateCollection(value);
+        if (!confirmed && !confirm(`將新增 ${count} 份旅程，現有旅程會保留。是否繼續？`)) return false;
         store.importCollection(value);
         return true;
     }
@@ -203,5 +208,5 @@
         lastDay = today();
         setInterval(() => { const date = today(); if (date !== lastDay) { lastDay = date; renderJourney(); } }, 30000);
     }
-    window.TripLibrary = Object.freeze({ init, write, refresh, progress, select, openName, saveName, remove, undo, exportAll, importCollection, toggleMode, chooseDate, toggleDone });
+    window.TripLibrary = Object.freeze({ init, write, refresh, progress, select, openName, saveName, remove, undo, exportAll, importCollection, validateCollection, toggleMode, chooseDate, toggleDone, active: () => ready ? store.active() : null, collection: () => store.exportAll() });
 })();

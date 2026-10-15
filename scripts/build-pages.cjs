@@ -7,6 +7,7 @@ const files = [
     'index.html', 'favicon.ico', 'styles.css', 'editorial.css', 'scenes.css', 'book.css', 'boarding.css', 'postcard.css',
     'deepseek.js', 'codex-local.js', 'motion-ui.js', 'planner-checks.js',
     'planner-ui.js', 'trip-store.js', 'trip-library.js', 'scene-ui.js', 'book-ui.js', 'book-export.js', 'boarding-ui.js',
+    'artwork-core.js', 'artwork-store.js', 'artwork-ui.js', 'artwork.css',
     'vendor/motion.js', 'vendor/motion.LICENSE.md',
     'assets/roam-coast.png', 'assets/roam-town.png'
 ];

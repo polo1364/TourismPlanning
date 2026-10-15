@@ -1600,11 +1600,15 @@
     <script src="motion-ui.js" defer></script>
     <script src="planner-checks.js" defer></script>
     <script src="planner-ui.js" defer></script>
+    <link rel="stylesheet" href="artwork.css">
+    <script src="artwork-core.js" defer></script>
     <script src="trip-store.js" defer></script>
     <script src="trip-library.js" defer></script>
     <script src="scene-ui.js" defer></script>
     <script src="book-ui.js" defer></script>
     <script src="book-export.js" defer></script>
+    <script src="artwork-store.js" defer></script>
+    <script src="artwork-ui.js" defer></script>
 </head>
 <body>
     <script>if (document.body && document.documentElement) document.body.dataset.bookView = document.documentElement.dataset.bootView;</script>
@@ -2084,6 +2088,13 @@
                 <button onclick="exportToText()" class="btn-export btn-txt">📋 複製 LINE 筆記格式</button>
             </div>
             <p id="bookExportStatus" role="status" hidden></p>
+            <details id="artworkPanel" class="artwork-panel">
+                <summary>行程插圖與圖片備份</summary>
+                <p id="artworkHelp">手動生成一次，之後下載與分享直接重用。</p>
+                <p id="artworkCount"></p>
+                <div class="artwork-actions"><button type="button" id="generateArtwork">生成行程插圖／補齊缺圖</button><button type="button" id="stopArtwork" disabled>停止生成</button><button type="button" id="backupArtwork">備份目前旅程（含插圖）</button><button type="button" id="backupAllArtwork">備份全部（含插圖）</button></div>
+                <p id="artworkStatus" role="status" aria-live="polite"></p><div id="artworkList" class="artwork-list"></div>
+            </details>
             <details id="bookShares" class="book-shares">
                 <summary>分享小冊管理</summary>
                 <p id="bookShareHelp">分享當下的行程與便利貼，旅伴免登入即可翻閱。任何取得網址的人都能閱讀；修改行程後需建立新分享。</p>
@@ -4068,15 +4079,20 @@ Output strictly in Traditional Chinese (Taiwan).
             if (!file || isBusy) return;
             setBusy(true);
             try {
-                if (file.size > 5 * 1024 * 1024) throw new Error('備份檔案上限為 5 MB。');
+                if (file.size > 100 * 1024 * 1024) throw new Error('含插圖備份上限為 100 MiB。');
                 const parsed = JSON.parse(await file.text());
+                if (parsed?.format === 'tourism-artwork') {
+                    if (await window.TripArtwork.importBackup(parsed)) location.reload();
+                    return;
+                }
+                if (file.size > 5 * 1024 * 1024) throw new Error('純文字備份檔案上限為 5 MB。');
                 if (parsed?.format === 'tourism-library') {
                     if (window.TripLibrary?.importCollection(parsed)) location.reload();
                     return;
                 }
                 const data = validateBackup(parsed);
                 if (!confirm('匯入將取代目前的旅程設定與行程，是否繼續？')) return;
-                writeStoredValues({ tripDraft_v27: JSON.stringify(data.i), myTrip_v27: JSON.stringify(data.t), generationState_v27: data.g ? JSON.stringify(data.g) : null, journeyProgress_v1: data.p ? JSON.stringify(data.p) : null }, { label: '匯入目前旅程', inputs: true });
+                writeStoredValues({ tripDraft_v27: JSON.stringify(data.i), myTrip_v27: JSON.stringify(data.t), generationState_v27: data.g ? JSON.stringify(data.g) : null, journeyProgress_v1: data.p ? JSON.stringify(data.p) : null, artworkRefs_v1: null }, { label: '匯入目前旅程', inputs: true });
                 location.reload();
             } catch (error) { alert('匯入失敗，原資料已保留：' + error.message); }
             finally { input.value = ''; setBusy(false); }

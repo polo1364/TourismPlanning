@@ -11,6 +11,7 @@ WorkingDirectory=/opt/roam/current
 EnvironmentFile=/etc/roam/cloud.env
 Environment=HOME=/home/ubuntu
 Environment=ROAM_SHARE_DIR=/var/lib/roam/shares
+Environment=ROAM_IMAGE_DIR=/var/lib/roam/images
 StateDirectory=roam
 StateDirectoryMode=0700
 Environment=PATH=/home/ubuntu/.local/lib/node-v24.18.0-linux-x64/bin:/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin

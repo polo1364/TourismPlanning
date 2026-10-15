@@ -1,7 +1,8 @@
 (function (root) {
     'use strict';
     const KEY = 'tourismTrips_v1';
-    const CACHE = { i: 'tripDraft_v27', t: 'myTrip_v27', g: 'generationState_v27', p: 'journeyProgress_v1' };
+    const CACHE = { i: 'tripDraft_v27', t: 'myTrip_v27', g: 'generationState_v27', p: 'journeyProgress_v1', a: 'artworkRefs_v1' };
+    const artwork = root.TripArtworkCore || (typeof require === 'function' ? require('./artwork-core.js') : null);
     const MAX_TRIPS = 20;
     const clone = value => JSON.parse(JSON.stringify(value));
     function stopKeys(day) {
@@ -28,14 +29,15 @@
             [CACHE.i]: Object.keys(data.i).length ? JSON.stringify(data.i) : null,
             [CACHE.t]: data.t.length ? JSON.stringify(data.t) : null,
             [CACHE.g]: data.g ? JSON.stringify(data.g) : null,
-            [CACHE.p]: JSON.stringify(data.p)
+            [CACHE.p]: JSON.stringify(data.p),
+            [CACHE.a]: JSON.stringify(data.a)
         };
     }
     function create(storage, validateBackup, makeId = () => root.crypto.randomUUID()) {
         let book = null, raw = null;
         const normalize = data => {
             const value = validateBackup(data);
-            return { i: value.i, t: value.t, g: value.g, p: cleanProgress(data.p, value.t) };
+            return { i: value.i, t: value.t, g: value.g, p: cleanProgress(data.p, value.t), a: artwork.refs(data.a) };
         };
         function checkFresh() {
             if (!book) throw new Error('旅程資料尚未就緒，請備份後重新載入。');
@@ -97,7 +99,7 @@
             const old = record.data;
             const candidate = clone(old);
             for (const [field, key] of Object.entries(CACHE)) {
-                if (Object.hasOwn(values, key)) candidate[field] = values[key] === null ? ({ i: {}, t: [], g: null, p: null })[field] : JSON.parse(values[key]);
+                if (Object.hasOwn(values, key)) candidate[field] = values[key] === null ? ({ i: {}, t: [], g: null, p: null, a: [] })[field] : JSON.parse(values[key]);
             }
             record.data = normalize(candidate);
             const itineraryChanged = JSON.stringify([old.t, old.g]) !== JSON.stringify([record.data.t, record.data.g]);
@@ -151,7 +153,8 @@
             const previous = record.undo;
             const restoredInputs = previous.inputs ? previous.data.i : previous.budget ? { ...record.data.i, budget: previous.data.i.budget ?? '' } : record.data.i;
             record.data = normalize({ ...previous.data, i: restoredInputs,
-                p: previous.inputs ? previous.data.p : { ...record.data.p, done: previous.data.p.done } });
+                p: previous.inputs ? previous.data.p : { ...record.data.p, done: previous.data.p.done },
+                a: previous.inputs ? previous.data.a : record.data.a });
             record.undo = null;
             commit(next, cacheFor(record.data));
             return active();

@@ -17,7 +17,7 @@ GitHub Pages、本機版仍維持原本的服務與儲存行為。
 
 先將 `scripts/deploy-oracle.sh` 上傳至 `/home/ubuntu/deploy-oracle.sh`。它需要 SSH 使用者另外上傳下列兩個檔案：
 
-1. `/home/ubuntu/roam-release-YYYYMMDD-HHMMSS.tgz`：封裝 `scripts/build-pages.cjs` 的明確前端清單，加上 `cloud-server.cjs`、`book-shares.cjs`、`codex-bridge.cjs`、`codex-usage.cjs`、`scripts/build-pages.cjs`、`deploy/Caddyfile`、`deploy/roam-cloud.service`。不得打包整個工作目錄或憑證。
+1. `/home/ubuntu/roam-release-YYYYMMDD-HHMMSS.tgz`：封裝 `scripts/build-pages.cjs` 的明確前端清單，加上 `cloud-server.cjs`、`book-shares.cjs`、`codex-bridge.cjs`、`codex-usage.cjs`、`codex-images.cjs`、`image-jobs.cjs`、`scripts/build-pages.cjs`、`deploy/Caddyfile`、`deploy/roam-cloud.service`。不得打包整個工作目錄或憑證。
 2. `/home/ubuntu/roam-cloud.env`：上述環境設定。此檔目前會保留，systemd 的 `InaccessiblePaths` 明確遮蔽它；若要刪除它，須先調整該路徑設定。
 
 先確認原始碼測試通過、Caddy 網域與 ROAM_ORIGIN 一致，再執行：
@@ -31,6 +31,14 @@ sudo bash /home/ubuntu/deploy-oracle.sh YYYYMMDD-HHMMSS
 Oracle 公用子網路安全清單需允許 Stateful TCP 80 與 443；腳本另外在 OS 防火牆新增同樣兩個埠並儲存規則，必須確認 `netfilter-persistent` 已啟用。不要清空 Oracle 原有防火牆或開放全部連接埠。
 
 ## 使用與限制
+
+### 行程插圖
+
+新版服務單元設定 `ROAM_IMAGE_DIR=/var/lib/roam/images`，將工作紀錄與圖片放在既有 `StateDirectory=roam` 中，更新 release 後仍保留。部署時必須一併更新服務單元設定；不設定時會使用專案目錄下的 `.roam-images`，在唯讀 release 環境可能無法保存。備份圖片目錄時與分享目錄一樣視為私人資料，不放入靜態清單或版本控制。
+
+`POST /codex/images` 建立具識別碼的單張工作；`GET /codex/images/<id>` 讀狀態，`GET /codex/images/<id>/image` 讀成品，`POST /codex/images/<id>/cancel` 停止工作。全部需要私人網站登入與 token，寫入另驗證 Origin；生圖與文字規劃共用單一工作鎖及每小時 60 次生成上限。相同識別碼不重送，重啟後未完成工作標記中斷。
+
+需要支援 `image_generation` 與 `code_mode_host` 的官方 Codex CLI，仍使用主機原有 ChatGPT 登入。本機生圖已驗證；Oracle 主機已部署插圖功能並確認 CLI 支援上述功能旗標，但尚未進行雲端真實生圖驗收。模擬測試不代表雲端生圖實測。圖片可透過含圖 JSON 備份換裝置；本功能不提供旅程同步。
 
 ### 小冊分享
 

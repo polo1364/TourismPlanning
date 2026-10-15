@@ -11,3 +11,4 @@ dist/
 credentials*.json
 auth.json
 .roam-shares/
+.roam-images/

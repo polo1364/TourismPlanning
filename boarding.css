@@ -1,5 +1,5 @@
 /* Boarding pass: the travel brief presented as one ticket. Loaded after book.css; boarding-ui.js adds the decorative parts. */
-:root { --pass-paper: #fffdf8; --pass-ink: #16233a; --pass-accent: #e2572b; --pass-line: #ece5d6; --pass-dash: #cfc6b4; --pass-muted: #6f7789; --pass-tag: #f4ead3; --pass-mono: 'Cascadia Mono', Consolas, 'SFMono-Regular', ui-monospace, monospace; --pass-serif: 'Noto Serif TC', 'Songti TC', PMingLiU, serif; }
+:root { --pass-paper: #fffdf8; --pass-ink: #16233a; --pass-accent: #e2572b; --pass-line: #ece5d6; --pass-dash: #cfc6b4; --pass-muted: #4a5266; --pass-tag: #f4ead3; --pass-mono: 'Cascadia Mono', Consolas, 'SFMono-Regular', ui-monospace, monospace; --pass-serif: 'Noto Serif TC', 'Songti TC', PMingLiU, serif; }
 
 #settingsPanel { display: block; max-width: 1240px; margin: 0 auto; }
 .brief-intro { position: static; padding: 18px 4px 30px; }

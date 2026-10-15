@@ -64,7 +64,7 @@ body.bound{height:100vh;height:100dvh;overflow:hidden;display:grid;grid-template
     // Postcard theme: a wooden desk, cream card stock, stamps, washi tape and wax seals. Screen only; print stays plain.
     const postcardCss = `
 @media screen{
-:root{--card:#fbf6ea;--card-ink:#3a2f25;--card-blue:#2c4a7a;--card-muted:#8b775e;--card-rule:#d9cbb0;--card-dash:#c9b896;--seal:#a8261d;--kai:'LXGW WenKai TC','Kaiti TC',STKaiti,BiauKai,DFKai-SB,'Noto Serif TC',serif;--paper-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .4 0 0 0 0 .3 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+:root{--card:#fbf6ea;--card-ink:#2a2018;--card-blue:#24406e;--card-muted:#5a4532;--card-rule:#d9cbb0;--card-dash:#c9b896;--seal:#a8261d;--kai:'LXGW WenKai TC','Kaiti TC',STKaiti,BiauKai,DFKai-SB,'Noto Serif TC',serif;--paper-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .4 0 0 0 0 .3 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
 body,body.bound{color:var(--card-ink);background:radial-gradient(ellipse at 30% 20%,#ffffff40,transparent 60%),repeating-linear-gradient(92deg,#5a371e0f 0 3px,transparent 3px 11px),repeating-linear-gradient(88deg,#3c230f0d 0 1px,transparent 1px 7px),#b98a5e}
 a{color:var(--card-blue)}:focus-visible{outline-color:var(--seal)}
 .reader-nav,.bound .reader-nav{background:#3b2a1cf2;color:#f3e6d0;border-bottom:1px solid #6b4f36}.reader-nav select,.reader-nav button{background:#5a412c;color:#fbf1df;border-color:#8b6a4a}
@@ -80,7 +80,7 @@ a{color:var(--card-blue)}:focus-visible{outline-color:var(--seal)}
 .chapter-heading{background:linear-gradient(90deg,#3a2414f0,#3a2414b8),var(--cover-art,none) center/cover,#3a2414}
 .bound .chapter-heading{color:var(--card-ink)}
 .bound .day-number{display:grid;place-items:center;width:84px;height:100px;padding:7px;margin:0 22px 12px 0;border:0;font-family:var(--kai);font-size:44px;letter-spacing:0;color:#fff7ea;background:linear-gradient(160deg,#e2572b,#a8261d) content-box,#fff;-webkit-mask:linear-gradient(#000 0 0) content-box,radial-gradient(circle 4px,#0000 97%,#000) -6px -6px/12px 12px round;mask:linear-gradient(#000 0 0) content-box,radial-gradient(circle 4px,#0000 97%,#000) -6px -6px/12px 12px round;transform:rotate(-3deg)}
-.bound .day-date{display:inline-block;padding:4px 14px;border:2px solid #3c466e8c;border-radius:999px;color:#3c466ebf;font-family:Consolas,ui-monospace,monospace;font-size:13px;letter-spacing:.08em;transform:rotate(-4deg)}
+.bound .day-date{display:inline-block;padding:4px 14px;border:2px solid #34406a;border-radius:999px;color:#34406a;font-family:Consolas,ui-monospace,monospace;font-size:13px;letter-spacing:.08em;transform:rotate(-4deg)}
 .bound .day-summary{font-family:var(--kai);font-weight:700;color:var(--card-ink)}
 .bound .travel-caution{color:#9b4a1b}.bound .day-cost-badge,.bound .weather-badge{color:var(--card-muted)}
 .manual-kicker{color:var(--card-muted);border-bottom:1px dashed var(--card-dash);font-family:var(--kai);letter-spacing:.2em}
@@ -102,7 +102,6 @@ a{color:var(--card-blue)}:focus-visible{outline-color:var(--seal)}
 .reader-controls button{border:0;background:radial-gradient(circle at 35% 30%,#d9534a,#9b1d16 70%);color:#fbe3d3;box-shadow:inset 0 -3px 6px #0000004d,0 6px 12px #3c0a0559}
 .reader-controls output{color:#fff7ea;font-family:var(--kai);font-size:16px}
 /* Content layout: details follow the overview without a forced blank column, stops read as a timeline. */
-body{counter-reset:day}.book-page:not(.cover){counter-increment:day}
 .bound .manual-details{break-before:auto;margin-top:30px}
 .bound .manual-overview .chapter-budget{margin-top:16px;padding:12px 14px;border:1px dashed var(--card-dash);background:#fffaf0}
 .manual-overview .chapter-intro{font-size:16px;line-height:1.95}
@@ -139,7 +138,68 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
 @keyframes postmark{0%{opacity:0;transform:rotate(-4deg) scale(1.25)}60%{opacity:1}100%{opacity:1;transform:rotate(-4deg)}}
 @keyframes dot-in{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.arriving .day-number,.arriving .day-date,.arriving .stop-entry::after{animation:none}.reader-nav,.reader-footer{transition:none}}
-.manual-details::after{content:'— 第 ' counter(day) ' 天 · 完 —';display:block;margin:26px 0 6px;text-align:center;font-family:var(--kai);font-size:14px;letter-spacing:.3em;color:var(--card-muted);break-before:avoid}
+/* Journal layout */
+.bound .journal-head{display:block;padding:0;margin:0 0 8px;background:none;border:0}
+.journal-hero{position:relative;height:clamp(140px,calc(var(--leaf-height,620px) * .34),250px);margin-bottom:44px;background:linear-gradient(180deg,#1a0e0400 35%,#1a0e04d0),var(--cover-art,linear-gradient(135deg,#7a5638,#3a2414)) center 48%/cover;break-inside:avoid}
+.bound .journal-hero{margin:-28px -32px 44px}
+.bound[data-spread='2'] .journal-hero{margin-right:-24px}
+.hero-art{position:absolute;inset:0}
+.hero-cap{position:absolute;right:36px;top:34px;padding:1px 8px;background:#1a0e04aa;color:#fff;font-size:11px;line-height:1.7}
+.bound .journal-hero .day-number{position:absolute;left:30px;bottom:-42px;z-index:2;float:none;margin:0}
+.bound .journal-hero .day-summary{position:absolute;left:134px;right:36px;bottom:12px;margin:0;color:#fff7ea;font-size:28px;line-height:1.3;text-shadow:0 2px 10px #0009}
+.journal-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;min-height:48px;padding-left:124px}
+.bound .journal-meta .chapter-facts{display:contents}
+.bound .journal-meta .day-cost-badge,.bound .journal-meta .weather-badge,.bound .journal-meta .chapter-facts>span{margin:0}
+.route{list-style:none;margin:4px 0 16px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));row-gap:12px;overflow:hidden;break-inside:avoid}
+.route li{position:relative;padding:0 3px;text-align:center;font-size:13px;line-height:1.45}
+.route li::before{content:'';position:absolute;top:34px;left:50%;width:100%;border-top:2px dashed var(--card-dash)}
+.route li:last-child::before{display:none}
+.route-time{display:block;font-family:var(--kai);font-size:15px;line-height:22px;color:var(--card-blue)}
+.route i{position:relative;z-index:1;display:block;width:18px;height:18px;margin:4px auto 6px;border-radius:50%;background:var(--card);box-shadow:inset 0 0 0 4px #3d6b4f}
+.route-food i{box-shadow:inset 0 0 0 4px #a0522d}.route-transport i{box-shadow:inset 0 0 0 4px var(--card-blue)}
+.route-name{display:block;color:var(--card-ink);overflow-wrap:anywhere}
+.route-kind{display:block;font-size:11px;color:var(--card-muted)}
+.bound .stop-list{padding:6px 0 2px;background:linear-gradient(90deg,transparent 82px,#d9534a59 82px 83.5px,transparent 83.5px),repeating-linear-gradient(transparent 0 31px,#d9cbb066 31px 32px);box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.stop-entry,.bound .stop-entry{margin:0 0 16px;padding:2px 0 0 98px}
+.stop-entry::before,.stop-entry::after{content:none}
+.bound .stop-entry>.time-cell{float:left;width:82px;margin-left:-98px;padding-right:12px;text-align:right;font-family:var(--kai);font-size:20px;line-height:1.4;color:var(--card-blue)}
+.bound .stop-entry>.time-cell .end-time{display:block;margin:0;font-size:12px;color:var(--card-muted)}
+.stop-head{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-bottom:4px}
+.bound .stop-head .title-cell{margin:0;min-width:0}
+.bound .stop-head .type-cell{flex-direction:row;flex-wrap:wrap;align-items:center;max-width:none;gap:6px}
+.bound .stop-head .stop-name{font-size:22px;line-height:1.4}
+.bound .stop-body .stop-description{margin:2px 0 6px}
+.bound .stop-body .table-cost,.bound .stop-body .table-address{display:inline-block;margin:0 12px 2px 0;font-size:13px;color:var(--card-muted)}
+.bound .stop-body .table-tips{margin:4px 0;padding:0;border:0;background:none;font-family:var(--kai);font-size:15.5px;color:#a8261d}
+.bound .stop-body .table-tips::before{content:'✎ '}
+.bound .stop-body .stop-note{margin:14px 0 10px}
+.bound .stop-note::before{top:0;transform:translateY(-13px) rotate(-4deg)}
+.bound .stop-body .action-cell{padding-top:2px;border:0}
+.bound .stop-body .table-map-link{min-height:40px;padding:6px 14px;font-size:13px}
+.bound .stop-list>.journal-move{position:relative;break-inside:avoid;break-after:avoid;margin:-4px 0 12px;padding:2px 0 4px 98px;border:0;background:none;font-size:13px;color:var(--card-blue)}
+.bound .stop-list>.journal-move::before{content:'↓';position:absolute;left:58px;top:2px;font-family:var(--kai)}
+.bound .stop-list>.journal-move::after{content:'';position:absolute;left:96px;top:0;bottom:0;border-left:2px dotted var(--card-blue)}
+.bound .journal-move .transit-option{padding:0 0 0 10px}
+.bound .journal-move .transit-option p{margin:0;font-size:12.5px;color:var(--card-muted)}
+@media(max-width:899px){
+.bound .journal-hero{margin:-20px -20px 40px}
+.bound .journal-hero .day-number{left:16px;bottom:-38px;width:70px;height:84px;font-size:32px}
+.bound .journal-hero .day-summary{left:100px;right:28px;font-size:22px}
+.journal-meta{padding-left:96px;min-height:44px}
+.route{grid-template-columns:repeat(auto-fit,minmax(70px,1fr))}
+.bound .stop-list{background:linear-gradient(90deg,transparent 64px,#d9534a59 64px 65.5px,transparent 65.5px),repeating-linear-gradient(transparent 0 31px,#d9cbb066 31px 32px)}
+.stop-entry,.bound .stop-entry{padding-left:78px}
+.bound .stop-entry>.time-cell{width:64px;margin-left:-78px;padding-right:8px;font-size:17px}
+.bound .stop-list>.journal-move{padding-left:78px}.bound .stop-list>.journal-move::before{left:42px}.bound .stop-list>.journal-move::after{left:76px}
+.bound .stop-head .stop-name{font-size:20px}
+}
+@media(max-height:500px){.bound .journal-hero{margin-top:-12px}}
+.bound .book-page.tight .stop-list>.journal-move{break-after:auto}.bound .book-page.tight .stop-entry{margin-bottom:10px}.bound .book-page.tight p,.bound .book-page.tight .stop-description{line-height:1.7}.bound .book-page.tight .journal-hero{height:clamp(120px,calc(var(--leaf-height,620px) * .27),210px)}.bound .book-page.tight .route{margin-bottom:10px}.bound .book-page.tight .stop-note{margin:10px 0 8px}.bound .book-page.tight .manual-details{margin-top:18px}
+.bound .book-page.tighter .journal-hero{height:clamp(100px,calc(var(--leaf-height,620px) * .2),160px);margin-bottom:40px}.bound .book-page.tighter p,.bound .book-page.tighter .stop-description{line-height:1.6}.bound .book-page.tighter .stop-entry{margin-bottom:6px}.bound .book-page.tighter .stop-note{padding:12px 14px 16px;margin:8px 0 6px}.bound .book-page.tighter .stop-list>.journal-move{margin-bottom:6px}.bound .book-page.tighter .manual-heading{margin:12px 0 8px -4px}.bound .book-page.tighter .stop-head .stop-name{font-size:20px}
+.day-end{margin:18px 0 4px;text-align:center;font-family:var(--kai);font-size:14px;letter-spacing:.3em;color:var(--card-muted);break-before:avoid}
+.bound .manual-overview .day-actions{margin:0 0 14px;padding:0;border:0}
+.bound .manual-overview .btn-route{min-height:36px;padding:4px 14px;font-size:13px}
+.sheet-window[data-notes]::before{content:'旅途筆記 · NOTES';position:absolute;left:calc(50% + 24px);right:32px;top:28px;bottom:42px;padding-bottom:8px;font-family:var(--kai);font-size:16px;font-weight:700;letter-spacing:.3em;color:var(--card-muted);border-bottom:1px dashed var(--card-dash);background:repeating-linear-gradient(transparent 0 35px,#d9cbb0aa 35px 36px) 0 48px/100% calc(100% - 48px) no-repeat;pointer-events:none}
 }
 `;
 
@@ -244,6 +304,7 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
                 const span = document.createElement('span'); span.textContent = String(number); return span;
             }));
             sheet.setAttribute('aria-label', `${picker.selectedOptions[0].textContent}，${counter.textContent}`);
+            sheet.toggleAttribute('data-notes', columns === 2 && last === first && !sheet.classList.contains('cover-sheet'));
             // Offscreen column links must not pull the book sideways when tabbed to.
             const bounds = sheet.getBoundingClientRect();
             sheet.querySelectorAll('a').forEach(link => {
@@ -277,7 +338,32 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
                 flow.style.setProperty('--leaf-height', `${height}px`);
                 flow.style.setProperty('--leaf-offset', '0px');
                 // scrollWidth includes every overflow column, not just the visible spread.
-                const count = Math.max(1, Math.round((flow.scrollWidth + gap) / stride));
+                const leaves = () => Math.max(1, Math.round((flow.scrollWidth + gap) / stride));
+                // How far down the last leaf the content reaches (0–1).
+                const tailUse = total => {
+                    const box = flow.getBoundingClientRect(); let used = 0;
+                    for (const node of flow.querySelectorAll('p,li,h2,h3,a,.stop-name,.stop-note,.table-tips,.journal-move,.day-end:not([hidden])'))
+                        for (const rect of node.getClientRects())
+                            if (rect.width && Math.floor((rect.left - box.left + 1) / stride) === total - 1) used = Math.max(used, (rect.bottom - box.top) / height);
+                    return used;
+                };
+                // A day ending with a short tail on a fresh leaf is tightened slightly, kept only if it saves the leaf.
+                flow.classList.remove('tight', 'tighter');
+                const loose = leaves();
+                if (loose > 1 && tailUse(loose) < .25) {
+                    flow.classList.add('tight');
+                    if (leaves() >= loose) flow.classList.add('tighter');
+                    if (leaves() >= loose) flow.classList.remove('tight', 'tighter');
+                }
+                const endMark = flow.querySelector('.day-end');
+                if (endMark) {
+                    endMark.hidden = false;
+                    const column = rect => Math.floor((rect.left - flow.getBoundingClientRect().left + 1) / stride);
+                    const before = [...(endMark.previousElementSibling?.getClientRects() || [])].at(-1);
+                    // A closing mark alone on a fresh page only adds an empty-looking page.
+                    if (before && column(endMark.getBoundingClientRect()) > column(before)) endMark.hidden = true;
+                }
+                const count = leaves();
                 flow.dataset.leaves = String(count);
                 const end = totalLeaves + count;
                 for (let offset = 0; offset < count; offset += columns) pages.push({chapter, offset, number: totalLeaves + offset + 1, end});
@@ -405,10 +491,16 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
         window.addEventListener('beforeprint', finishTurn);
         matchMedia('print').addEventListener('change', scheduleLayout);
         document.fonts.ready.then(scheduleLayout);
+        Promise.all([...document.images].map(img => img.decode().catch(() => {}))).then(scheduleLayout);
         layout();
     }
 
-    function chapter(source, index) {
+    function picture(art) {
+        if (!art) return '';
+        return `<figure class="itinerary-picture"><img src="${art.dataUrl}" width="${art.width}" height="${art.height}" alt="${escapeHtml(art.caption)}・AI 行程示意圖"><figcaption>${escapeHtml(art.caption)} · AI 行程示意圖</figcaption></figure>`;
+    }
+
+    function chapter(source, index, images = []) {
         const copy = source.cloneNode(true);
         copy.querySelectorAll('button,script,style,link,iframe,object,embed,img,input,textarea,select,form').forEach(node => node.remove());
         // Retain presentation/accessible markup only; never export app handlers or data.
@@ -428,32 +520,35 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
         h2.className = title.className; h2.textContent = title.textContent; title.replaceWith(h2);
         const stops = document.createElement('div');
         stops.className = 'stop-list';
-        const schedule = document.createElement('div');
-        schedule.className = 'schedule';
-        schedule.setAttribute('role', 'table'); schedule.setAttribute('aria-label', '今日行程時間表');
-        schedule.innerHTML = '<div class="schedule-row schedule-head" role="row"><span role="columnheader">時間</span><span role="columnheader">行程安排</span><span role="columnheader">類別</span></div>';
-        copy.querySelectorAll('.itinerary-table tbody tr').forEach(row => {
+        // Journal layout: a route strip for the whole day, then notebook entries with the time in the margin.
+        const route = document.createElement('ol');
+        route.className = 'route'; route.setAttribute('aria-label', '今日路線');
+        copy.querySelectorAll('.itinerary-table tbody tr').forEach((row, stopIndex) => {
             const entry = document.createElement('section');
             const kind = ['food', 'spot', 'transport'].find(name => row.querySelector('.place-sticker.' + name)) || 'spot';
             entry.className = 'stop-entry stop-' + kind;
-            const scheduleRow = document.createElement('div');
-            scheduleRow.className = 'schedule-row schedule-' + kind; scheduleRow.setAttribute('role', 'row');
+            const stop = document.createElement('li');
+            stop.className = 'route-' + kind;
             const time = row.querySelector('.time-cell').childNodes[0]?.textContent.trim() || '待確認';
             const name = row.querySelector('.stop-name').textContent;
             const type = row.querySelector('.place-sticker > span').textContent;
-            for (const [text, className] of [[time, 'schedule-time'], [name, 'schedule-name'], [type, 'schedule-kind']]) {
-                const cell = document.createElement('span'); cell.className = className;
-                cell.setAttribute('role', 'cell'); cell.textContent = text; scheduleRow.append(cell);
+            for (const [text, className] of [[time, 'route-time'], [name, 'route-name'], [type, 'route-kind']]) {
+                const cell = document.createElement('span'); cell.className = className; cell.textContent = text; stop.append(cell);
+                if (className === 'route-time') { const dot = document.createElement('i'); dot.setAttribute('aria-hidden', 'true'); stop.append(dot); }
             }
-            schedule.append(scheduleRow);
-            const top = document.createElement('div'); top.className = 'stop-topline';
-            for (const name of ['time-cell', 'type-cell', 'title-cell', 'desc-cell', 'action-cell']) {
-                const original = row.querySelector('.' + name);
-                const block = document.createElement('div');
-                block.className = name; block.innerHTML = original.innerHTML;
-                (name === 'time-cell' || name === 'type-cell' ? top : entry).append(block);
-            }
-            entry.prepend(top); stops.append(entry);
+            route.append(stop);
+            const block = name => { const original = row.querySelector('.' + name); const element = document.createElement('div'); element.className = name; element.innerHTML = original.innerHTML; return element; };
+            const when = block('time-cell'), body = document.createElement('div'), head = document.createElement('div'), desc = block('desc-cell');
+            body.className = 'stop-body'; head.className = 'stop-head';
+            head.append(block('title-cell'), block('type-cell'));
+            // The way to reach this stop is drawn between entries, in the margin of the notebook.
+            const move = desc.querySelector('.transit-details');
+            if (move) { move.classList.add('journal-move'); stops.append(move); }
+            desc.querySelectorAll('.table-tips').forEach(tip => { tip.textContent = tip.textContent.replace(/^💡\s*/u, ''); });
+            body.append(head, desc, block('action-cell'));
+            const detailArt = images.find(image => image.day === index && image.subject.role === 'detail' && image.stop === stopIndex);
+            if (detailArt) body.insertAdjacentHTML('beforeend', picture(detailArt));
+            entry.append(when, body); stops.append(entry);
         });
         copy.querySelector('.itinerary-table').replaceWith(stops);
         // Expanding a route would change column counts; print all route text into the book.
@@ -465,12 +560,14 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
         const intro = copy.querySelector('.chapter-intro').outerHTML;
         const budget = copy.querySelector('.chapter-budget').outerHTML;
         const actions = copy.querySelector('.day-actions').outerHTML;
+        const part = selector => [...heading.querySelectorAll(selector)].map(node => node.outerHTML).join('');
+        const hero = images.find(image => image.day === index && image.subject.role === 'scene');
         return `<article class="book-page" id="page-${index + 1}" tabindex="-1" aria-label="第 ${index + 1} 天">
-<section class="manual-overview"><p class="manual-kicker">行程篇 / DAY ${String(index + 1).padStart(2, '0')}</p>
-<header class="chapter-heading">${heading.innerHTML}</header>
-<figure class="chapter-scenery" role="img" aria-label="旅行意象插畫，非景點實拍"><figcaption>旅行意象插畫 · 非景點實拍</figcaption></figure>
-<h3 class="manual-heading">今日行程</h3>${schedule.outerHTML}${intro}${budget}</section>
-<section class="manual-details"><p class="manual-kicker">行程詳解 / 旅途備忘</p><h3 class="manual-heading">各站安排與重點提醒</h3>${stops.outerHTML}${actions}</section></article>`;
+<section class="manual-overview"><header class="chapter-heading journal-head">
+<div class="journal-hero${hero ? ' has-itinerary-art' : ''}">${hero ? `<img class="hero-art" src="${hero.dataUrl}" width="${hero.width}" height="${hero.height}" alt="${escapeHtml(hero.caption)}・AI 行程示意圖">` : '<span class="hero-art" role="img" aria-label="旅行意象插畫，非景點實拍"></span>'}${part('.day-number')}${part('.day-summary')}<small class="hero-cap">${hero ? 'AI 行程示意圖' : '旅行意象插畫 · 非景點實拍'}</small></div>
+<div class="journal-meta">${part('.day-date')}${part('.chapter-facts')}${part('.day-cost-badge')}${part('.weather-badge')}</div></header>
+<h3 class="manual-heading">今日路線</h3>${route.outerHTML}${actions}${intro}${budget}</section>
+<section class="manual-details"><p class="manual-kicker">行程詳解 / 旅途備忘</p><h3 class="manual-heading">各站安排</h3>${stops.outerHTML}<p class="day-end" aria-hidden="true">— 第 ${index + 1} 天 · 完 —</p></section></article>`;
     }
 
     function coverArt() {
@@ -492,28 +589,36 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
         });
     }
 
-    async function snapshot() {
+    async function snapshot({ maxBytes = 0, level = 0 } = {}) {
         window.TripMotion?.settle();
         const days = [...document.querySelectorAll('#tripContainer > details')];
         if (days.length !== tripData.length) throw new Error('行程畫面尚未準備好，請稍後重試。');
         const city = String(generationState?.city || document.getElementById('city').value || '漫遊');
         const title = `${city}・旅行手冊`;
-        const chapters = days.map(chapter).join('\n');
+        const sizes = [[1440, .82], [1100, .72], [850, .60], [640, .48]];
+        const images = await window.TripArtwork?.snapshot(...sizes[level]) || [];
+        const chapters = days.map((day, index) => chapter(day, index, images)).join('\n');
         const labels = tripData.map((day, i) => `第 ${i + 1} 天 · ${day.date} · ${day.day_title}`);
         const toc = labels.map((text, i) => `<li><a href="#page-${i + 1}" data-page="${i + 1}"><small>DAY ${String(i + 1).padStart(2, '0')} · ${escapeHtml(tripData[i].date)}</small>${escapeHtml(tripData[i].day_title)}</a></li>`).join('');
         const options = ['封面與目錄', ...labels].map((text, i) => `<option value="${i}">${escapeHtml(text)}</option>`).join('');
         const dates = `${tripData[0].date} — ${tripData[tripData.length - 1].date}`;
-        const art = await coverArt();
+        const generatedCover = images.find(image => image.subject.role === 'cover');
+        const art = generatedCover?.dataUrl || await coverArt();
+        const imageCss = `.has-itinerary-art{background:#e8dfcb}.journal-hero img.hero-art{width:100%;height:100%;object-fit:contain}.itinerary-picture{margin:14px 0;break-inside:avoid;page-break-inside:avoid}.itinerary-picture img{display:block;width:100%;height:auto;max-height:calc(var(--leaf-height,700px) * .32);object-fit:contain}.itinerary-picture figcaption{font-size:11px;line-height:1.5;color:#69533e;margin-top:5px}.has-itinerary-art .day-summary{background:#211a1166;border-radius:4px;padding:3px 7px}`;
         const html = `<!doctype html>
 <html lang="zh-Hant" data-roam-book="1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
-<title>${escapeHtml(title)}</title><style>${css}${boundCss}${postcardCss}${art ? `:root{--cover-art:url('${art}')}` : ''}</style></head><body class="${art ? '' : 'without-art'}">
+<title>${escapeHtml(title)}</title><style>${css}${boundCss}${postcardCss}${imageCss}${art ? `:root{--cover-art:url('${art}')}` : ''}</style></head><body class="${art ? '' : 'without-art'}">
 <nav class="reader-nav" aria-label="小冊目錄" hidden><div class="reader-brand"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 24 13 8l6 8L27 3l11 21H2Z"/><path d="m10 12 3 3 3-3m8-4 3 4 3-4"/></svg><span>${escapeHtml(title)}</span></div><label for="pagePicker">目錄</label><select id="pagePicker" aria-label="選擇章節">${options}</select><button id="printBook" class="print">列印 / PDF</button></nav>
 <noscript><aside class="preview-notice" style="margin:16px;padding:16px;background:#fff3d6;color:#533d13;border:1px solid #cfb46e;border-radius:6px"><strong>目前為靜態預覽，無法翻頁。</strong><br>此開啟方式未執行互動程式，仍可閱讀下方完整行程。若從 iPhone「檔案」開啟，請向提供者索取小冊的網頁網址，再用 Safari 開啟以使用翻書功能。</aside></noscript>
-<main><section class="book-page cover" id="page-0" tabindex="-1" aria-label="封面與目錄"><div class="eyebrow">GREETINGS FROM · ROAM TRAVEL BOOK</div><h1>${escapeHtml(title)}</h1><p class="dates">${escapeHtml(dates)} · ${days.length} 天</p><p class="cover-intro">把沿途的風景、美食與小提醒，收進同一本旅行小冊。</p><h2>旅程目錄</h2><ol class="toc">${toc}</ol><div class="cover-foot">使用左右箭頭翻頁，手機可左右滑動。內容會自動接續到下一頁。<br>這是行程與便利貼的閱讀副本，需使用支援互動程式的瀏覽器；地圖需連網。修改後請重新下載。<br>iPhone「檔案」預覽若無法翻頁，請改用 Safari 開啟小冊的網頁網址。<br>製作於 ${escapeHtml(new Date().toLocaleString('zh-TW'))} · 封面為旅行意象插畫</div></section>${chapters}</main>
+<main><section class="book-page cover" id="page-0" tabindex="-1" aria-label="封面與目錄"><div class="eyebrow">GREETINGS FROM · ROAM TRAVEL BOOK</div><h1>${escapeHtml(title)}</h1><p class="dates">${escapeHtml(dates)} · ${days.length} 天</p><p class="cover-intro">把沿途的風景、美食與小提醒，收進同一本旅行小冊。</p><h2>旅程目錄</h2><ol class="toc">${toc}</ol><div class="cover-foot">使用左右箭頭翻頁，手機可左右滑動。內容會自動接續到下一頁。<br>這是行程與便利貼的閱讀副本，需使用支援互動程式的瀏覽器；地圖需連網。修改後請重新下載。<br>iPhone「檔案」預覽若無法翻頁，請改用 Safari 開啟小冊的網頁網址。<br>製作於 ${escapeHtml(new Date().toLocaleString('zh-TW'))} · ${generatedCover ? '封面為 AI 行程示意圖，非景點實拍' : '封面為旅行意象插畫'}</div></section>${chapters}</main>
 <footer class="reader-footer"><div class="reader-controls" aria-label="書本翻頁" hidden><button id="previous" aria-label="上一頁">‹</button><output id="pageNumber" aria-live="polite"></output><button id="next" aria-label="下一頁">›</button></div><span class="reader-hint">左右翻頁 · 可離線分享</span></footer>
 <script>(${reader.toString()})();<\/script></body></html>`;
         const filename = `${city.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_').slice(0, 60)}_${tripData[0].date}_旅行小冊.html`;
+        if (maxBytes && new Blob([html]).size > maxBytes) {
+            if (images.length && level < sizes.length - 1) return snapshot({ maxBytes, level: level + 1 });
+            throw new Error('壓縮後的小冊仍超過 5 MiB 分享上限，請使用本機下載。原圖片已保留，沒有刪除圖片。');
+        }
         return { html, title, filename };
     }
 
@@ -604,7 +709,7 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
         let submitted = false;
         try {
             await loadShares();
-            const { html, title } = await snapshot();
+            const { html, title } = await snapshot({ maxBytes: 5 * 1024 * 1024 });
             submitted = true;
             const created = await shareRequest('/api/shares', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Roam-Token': shareToken }, body: JSON.stringify({ html, title: title.slice(0, 200) }) });
             // Keep a successful result visible even if refreshing the complete list fails.

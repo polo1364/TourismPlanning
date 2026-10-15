@@ -7,10 +7,11 @@ const crypto = require('node:crypto');
 const { checkLogin, runCodex, readUsage, validateModel } = require('./codex-bridge.cjs');
 const { files } = require('./scripts/build-pages.cjs');
 const { createShareStore, MAX_BYTES, PUBLIC_CSP, ID } = require('./book-shares.cjs');
+const { createImageJobs, imageRoute } = require('./image-jobs.cjs');
 const digest = value => crypto.createHash('sha256').update(value).digest();
 const fail = (message, status, code) => Object.assign(new Error(message), { status, code });
 
-function createCloud({ origin, passwordHash, root = __dirname, shareDirectory = path.join(root, '.roam-shares'), login = checkLogin, generate = runCodex, usage = readUsage } = {}) {
+function createCloud({ origin, passwordHash, root = __dirname, shareDirectory = path.join(root, '.roam-shares'), login = checkLogin, generate = runCodex, usage = readUsage, imageGenerate, imageDirectory = process.env.ROAM_IMAGE_DIR || path.join(root, '.roam-images') } = {}) {
     const publicURL = new URL(origin);
     if (publicURL.protocol !== 'https:' || publicURL.origin !== origin || publicURL.username || publicURL.password) throw new Error('A canonical HTTPS origin is required.');
     // Hash a generated >= 192-bit random password, not a human-chosen password.
@@ -23,6 +24,15 @@ function createCloud({ origin, passwordHash, root = __dirname, shareDirectory = 
     let shareStarts = [];
     let busy = false;
     let starts = [];
+    const images = createImageJobs({ directory: imageDirectory, generate: imageGenerate,
+        authorize: async model => { await login(); return validateModel(model, usage); },
+        acquire: () => {
+            if (busy) throw fail('另一個生成工作尚未完成。', 409, 'BUSY');
+            starts = starts.filter(time => Date.now() - time < 3600000);
+            if (starts.length >= 60) throw fail('已達每小時 60 次生成上限。', 429, 'RATE');
+            busy = true; starts.push(Date.now()); return () => { busy = false; };
+        }
+    });
     const server = http.createServer(async (req, res) => {
         const json = (status, data) => {
             if (!res.destroyed) { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(data)); }
@@ -70,6 +80,10 @@ function createCloud({ origin, passwordHash, root = __dirname, shareDirectory = 
         if (req.headers.origin && req.headers.origin !== origin) return json(403, { error: '不接受其他網站的請求。', code: 'ORIGIN' });
         let measuredUsage;
         try {
+            if (pathname === '/codex/images' || pathname.startsWith('/codex/images/')) {
+                if (req.method === 'POST' && req.headers.origin !== origin) return json(403, { error: '不接受其他網站的圖片請求。' });
+                if (await imageRoute(req, json, images, '/codex/images', token)) return;
+            }
             if (pathname === '/api/shares' || pathname.startsWith('/api/shares/')) {
                 if (req.method === 'GET' && pathname === '/api/shares') {
                     return json(200, { token, shares: (await shares.list()).map(item => ({ ...item, url: `${origin}/s/${item.id}` })) });
@@ -159,6 +173,7 @@ function createCloud({ origin, passwordHash, root = __dirname, shareDirectory = 
     server.requestTimeout = 15000;
     server.headersTimeout = 10000;
     server.keepAliveTimeout = 5000;
+    server.on('close', () => images.stop());
     return server;
 }
 

@@ -10,7 +10,7 @@
 
 `main` 更新後，`.github/workflows/pages.yml` 會執行 Node 測試，透過 `npm run build:pages` 打包，再發布到 GitHub Pages。儲存庫 Settings → Pages 的 Source 使用 **GitHub Actions**。
 
-建置以明確清單輸出 23 個前端檔案及 `.nojekyll`，共 24 個檔案至 `dist/`，包含前端、插畫與 Motion 授權；不發布本機服務、測試報告、備份或憑證。為避免混入舊檔，`dist/` 已存在時建置會停止；重跑前請先將舊 `dist/` 移至備份位置。GitHub Actions 每次使用新的工作目錄。
+建置以明確清單輸出 27 個前端檔案及 `.nojekyll`，共 28 個檔案至 `dist/`，包含前端、插畫與 Motion 授權；不發布本機服務、測試報告、備份或憑證。為避免混入舊檔，`dist/` 已存在時建置會停止；重跑前請先將舊 `dist/` 移至備份位置。GitHub Actions 每次使用新的工作目錄。
 
 來源儲存庫保留本機啟動程式及測試，方便下載使用。更新與部署狀態可在儲存庫 Actions 查看；部署方式參考 [GitHub Pages 官方文件](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)。
 
@@ -61,6 +61,22 @@ python tests/codex_smoke.py
 截至 2026-10-14，使用官方文件列出的 `deepseek-flash` 與 `deepseek-v4-pro`，端點為 `https://api.deepseek.com/chat/completions`，使用 JSON 輸出與非思考模式。單次請求最多等待 120 秒，失敗不自動重送；逾時的請求可能已計費。參見 [DeepSeek 模型說明](https://api-docs.deepseek.com/quick_start/pricing/) 與 [JSON 輸出文件](https://api-docs.deepseek.com/guides/json_mode/)。
 
 ## 儲存與備份
+
+### 行程插圖：生成一次、下載重用
+
+在行程頁展開「行程插圖與圖片備份」，按「生成行程插圖／補齊缺圖」。先顯示主題與張數，確認後使用現有 Codex 登入額度，逐張生成寫實旅行示意圖。封面一張、每天景點與美食／活動各一張；每日兩張各選最多三個當日景點或美食，以攝影拼貼組合，保留不同地點的畫面區隔，不暗示它們相鄰。只有一站時第二張使用同一活動的細節，沒有指定美食時不虛構餐廳或菜色。相同主題、角色及地址可共用圖片。圖片是 AI 行程示意圖，非景點實拍；舊手繪風格圖片保留在儲存空間，但不會當作新版圖片重用。
+
+生成只在按下生成按鈕並確認後開始；下載、分享、重新整理、切換旅程不會生圖。修改對應景點或地址後，舊圖片標記待更新且不放入新版小冊；改時間、費用或便利貼不影響圖片。可單張重新生成，失敗或取消保留原圖。連線中斷後再次按生成會先查原工作；失敗或服務重啟中斷的工作須手動確認重新送出，不會自動改用付費 API。
+
+圖片保存在目前網址的 IndexedDB，旅程收藏僅保存索引。生成圖片下載到瀏覽器時會轉成最寬 1440 px、品質 0.82 的 JPEG；含圖備份攜帶這些壓縮成品，匯入不再次壓縮，原始生成檔另留在後端。清除網站資料會失去瀏覽器圖片；換瀏覽器或裝置請使用「備份目前旅程（含插圖）」或「備份全部（含插圖）」。含圖 JSON 上限 100 MiB，從原有「匯入備份」入口匯入，會新增旅程，保留既有收藏。純文字備份與舊格式繼續支援；純文字備份不攜帶圖片成品。若目前行程的索引缺少成品，需先補齊或改用純文字備份；已不屬於目前行程、且缺少成品的歷史索引會從備份副本排除並提示筆數，原旅程索引不變。
+
+HTML 小冊會嵌入已存圖片，可離線閱讀。分享仍限制 5 MiB，必要時只壓縮匯出副本；瀏覽器中已存的成品不變，仍超限會提示改用本機下載。GitHub Pages 可匯入圖片與下載小冊，但生成需使用本機或私人雲端版。
+
+圖片後端使用 `codex-images.cjs` 與 `image-jobs.cjs`，透過官方 app-server 圖片完成事件取得成品，單張上限 10 分鐘；需要支援 `image_generation` 與 `code_mode_host` 的 Codex CLI。已用本機 0.162.1 成功生成並保存一張圖片。沿用 ChatGPT 登入，關閉 shell、外掛、連接應用與其他無關工具；不使用 API 金鑰。私人雲端主機仍需另行驗收。
+
+後端工作與成品預設在 `.roam-images/`，可用 `ROAM_IMAGE_DIR` 指定；此目錄不可發布至靜態網站或納入 Git。已送出的單張工作可在頁面斷線後繼續，但整批尚未送出的圖片需回到頁面手動接續。後端保存成品便於接續，並非旅程或圖片的自動跨裝置同步。
+
+驗證：`node --test tests/artwork.test.cjs`、`python tests/artwork_smoke.py`。瀏覽器測試使用隔離資料與模擬生圖，不消耗額度；報告與預覽在 `artifacts/illustrations/`。官方額度說明：[Codex 圖片生成](https://learn.chatgpt.com/docs/image-generation)。
 
 行程與偏好保留原本的 `myTrip_v27`、`tripDraft_v27`、`generationState_v27` 儲存名稱。新版 JSON 備份包含旅程設定、已生成行程與續生狀態；仍可匯入舊版 `{ i, t }` 備份，但舊備份沒有續生資訊。匯入前會檢查格式並要求確認取代，檔案上限 5 MB。
 

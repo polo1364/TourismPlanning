@@ -96,7 +96,7 @@ def main():
                             book.wait_for_function('() => !document.body.dataset.turning')
                             turns += 1
                             assert turns < 50
-                        check(f'{engine_name} {width} every page reachable', turns > 1)
+                        check(f'{engine_name} {width} every page reachable', turns >= 1 and book.locator('#next').is_disabled())
                         check(f'{engine_name} {width} no page scroll', book.evaluate('scrollX === 0 && scrollY === 0 && document.documentElement.scrollWidth <= innerWidth'))
                         book.locator('#previous').tap()
                         check(f'{engine_name} {width} reverse page available', not book.locator('#next').is_disabled())

@@ -166,5 +166,21 @@
         const connected = await check();
         if (!saved && !touched && connected && !isBusy) { $('aiProvider').value = 'codex'; update(); }
     }
-    window.CodexLocal = Object.freeze({ selected, update, check, generate, init, refreshUsage, chooseModel });
+    async function imageRequest(path, body) {
+        if (!localPage && !cloudPage) throw new Error('生成插圖需使用本機或私人雲端版；此版本可匯入、閱讀與下載已存圖片。');
+        if (!token && !await check()) throw new Error('請先檢查 Codex 連線與登入。');
+        const response = await fetch(BASE + '/images' + path, {
+            method: body === undefined ? 'GET' : 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Roam-Token': token },
+            body: body === undefined ? undefined : JSON.stringify({ ...body, model: chosenModel }),
+            signal: AbortSignal.timeout(45000)
+        });
+        const value = await response.json();
+        if (!response.ok) {
+            if (value.code === 'TOKEN' || value.code === 'LOGIN') token = '';
+            throw Object.assign(new Error(value.error || '圖片請求失敗。'), { code: value.code, status: response.status });
+        }
+        return value;
+    }
+    window.CodexLocal = Object.freeze({ selected, update, check, generate, init, refreshUsage, chooseModel, imageRequest, imagesAvailable: () => localPage || cloudPage });
 })();

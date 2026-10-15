@@ -9,6 +9,7 @@ const { spawn, execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 const execFileAsync = promisify(execFile);
 const { tokenUsage, readLimits, createUsageReader, stopChild } = require('./codex-usage.cjs');
+const { createImageJobs, imageRoute } = require('./image-jobs.cjs');
 const PORT = 8081;
 const MAX_BODY = 128 * 1024;
 const MAX_OUTPUT = 2 * 1024 * 1024;
@@ -123,10 +124,20 @@ async function runCodex(prompt, signal, { model = '', onUsage = () => {} } = {})
     }
 }
 
-function createBridge({ login = checkLogin, generate = runCodex, usage = readUsage } = {}) {
+function createBridge({ login = checkLogin, generate = runCodex, usage = readUsage, imageGenerate, imageDirectory = process.env.ROAM_IMAGE_DIR || path.join(__dirname, '.roam-images') } = {}) {
     const token = crypto.randomBytes(32).toString('hex');
     let busy = false;
-    return http.createServer(async (req, res) => {
+    let imageStarts = [];
+    const images = createImageJobs({ directory: imageDirectory, generate: imageGenerate,
+        authorize: async model => { await login(); return validateModel(model, usage); },
+        acquire: () => {
+            if (busy) throw fail('另一個生成工作尚未完成。', 'BUSY', 409);
+            imageStarts = imageStarts.filter(time => Date.now() - time < 3600000);
+            if (imageStarts.length >= 60) throw fail('已達每小時 60 次插圖生成上限。', 'RATE', 429);
+            busy = true; imageStarts.push(Date.now()); return () => { busy = false; };
+        }
+    });
+    const server = http.createServer(async (req, res) => {
         const json = (status, data) => { if (!res.destroyed) { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(data)); } };
         res.setHeader('Cache-Control', 'no-store');
         res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -141,6 +152,7 @@ function createBridge({ login = checkLogin, generate = runCodex, usage = readUsa
         }
         let measuredUsage;
         try {
+            if (await imageRoute(req, json, images, '/images', token)) return;
             if (req.method === 'GET' && req.url === '/status') {
                 const state = await login();
                 return json(200, { service: 'roam-codex', ready: state.ready, auth: state.auth, token });
@@ -183,6 +195,8 @@ function createBridge({ login = checkLogin, generate = runCodex, usage = readUsa
             json(error.status || 500, { error: error.status ? error.message : '本機 Codex 連線失敗，請重新檢查。', code: error.status ? error.code : 'BRIDGE', usage: measuredUsage });
         }
     });
+    server.on('close', () => images.stop());
+    return server;
 }
 
 if (require.main === module) {
@@ -190,4 +204,4 @@ if (require.main === module) {
     server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? 'Codex bridge port 8081 is already in use.' : 'Codex bridge could not start.'); process.exitCode = 1; });
     server.listen(PORT, '127.0.0.1', () => console.log('Codex bridge ready at http://127.0.0.1:8081 (personal local use only).'));
 }
-module.exports = { createBridge, parseEvents, cliArgs, childEnv, checkLogin, runCodex, readUsage, validateModel };
+module.exports = { createBridge, parseEvents, cliArgs, cliCommand, childEnv, checkLogin, runCodex, readUsage, validateModel };
