@@ -61,6 +61,88 @@ body.bound{height:100vh;height:100dvh;overflow:hidden;display:grid;grid-template
 @media print{.page-turn{display:none!important}.sheet-window{display:block!important;position:static;overflow:visible;break-after:page}.sheet-window:last-child{break-after:auto}.sheet-numbers{display:none}.book-page{columns:auto!important;transform:none!important;width:auto!important;height:auto!important}.stop-entry{break-inside:avoid}.stop-topline{display:flex;justify-content:space-between}.stop-topline .type-cell{display:flex;gap:8px}.book-page.cover{color:#183b51}}
 `;
 
+    // Postcard theme: a wooden desk, cream card stock, stamps, washi tape and wax seals. Screen only; print stays plain.
+    const postcardCss = `
+@media screen{
+:root{--card:#fbf6ea;--card-ink:#3a2f25;--card-blue:#2c4a7a;--card-muted:#8b775e;--card-rule:#d9cbb0;--card-dash:#c9b896;--seal:#a8261d;--kai:'LXGW WenKai TC','Kaiti TC',STKaiti,BiauKai,DFKai-SB,'Noto Serif TC',serif;--paper-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .4 0 0 0 0 .3 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+body,body.bound{color:var(--card-ink);background:radial-gradient(ellipse at 30% 20%,#ffffff40,transparent 60%),repeating-linear-gradient(92deg,#5a371e0f 0 3px,transparent 3px 11px),repeating-linear-gradient(88deg,#3c230f0d 0 1px,transparent 1px 7px),#b98a5e}
+a{color:var(--card-blue)}:focus-visible{outline-color:var(--seal)}
+.reader-nav,.bound .reader-nav{background:#3b2a1cf2;color:#f3e6d0;border-bottom:1px solid #6b4f36}.reader-nav select,.reader-nav button{background:#5a412c;color:#fbf1df;border-color:#8b6a4a}
+.reader-brand{color:#fbf1df;font-family:var(--kai)}
+.book-page{background:var(--card) var(--paper-grain);border:0;border-radius:6px;box-shadow:0 2px 0 #e8dcc4,0 30px 50px #28140566,0 6px 12px #28140540}
+.sheet-window{border:0;border-radius:6px;background:var(--paper-grain),linear-gradient(90deg,var(--card),var(--card) 47%,#eadfc8 49.8%,#f6efdf 50.2%,var(--card) 53%);box-shadow:0 2px 0 #e8dcc4,0 30px 50px #28140566,0 6px 12px #28140540}
+.bound[data-spread='1'] .sheet-window:not(.cover-sheet){background:var(--paper-grain),var(--card)}
+.bound[data-spread='2'] .sheet-window::after{background:var(--card-rule);box-shadow:-5px 0 14px 4px #3a24140f}
+.turn-face{background:var(--card) var(--paper-grain);box-shadow:0 0 16px #2814053d}
+.cover,.sheet-window.cover-sheet{background:linear-gradient(180deg,#1a0e0426 25%,#1a0e04d9),var(--cover-art,none) center/cover,#6b4a2c;color:#fff7ea}
+.eyebrow{color:#ffe2b8;letter-spacing:.32em}.cover h1,.bound .cover h1{font-family:var(--kai);font-weight:700;text-shadow:0 4px 20px #0006}.cover .dates,.cover-intro,.cover-foot{color:#f6e7cf}.cover-foot{border-top:1px dashed #f6e7cf66}
+.toc a,.bound .toc a{background:#fbf6eaeb;color:var(--card-ink);border:1px dashed var(--card-dash);border-radius:3px;box-shadow:0 4px 10px #1a0e0433;font-family:var(--kai);font-size:18px}.toc a:hover{background:#fff}.toc small{color:var(--card-muted);font-family:system-ui,sans-serif}
+.chapter-heading{background:linear-gradient(90deg,#3a2414f0,#3a2414b8),var(--cover-art,none) center/cover,#3a2414}
+.bound .chapter-heading{color:var(--card-ink)}
+.bound .day-number{display:grid;place-items:center;width:84px;height:100px;padding:7px;margin:0 22px 12px 0;border:0;font-family:var(--kai);font-size:44px;letter-spacing:0;color:#fff7ea;background:linear-gradient(160deg,#e2572b,#a8261d) content-box,#fff;-webkit-mask:linear-gradient(#000 0 0) content-box,radial-gradient(circle 4px,#0000 97%,#000) -6px -6px/12px 12px round;mask:linear-gradient(#000 0 0) content-box,radial-gradient(circle 4px,#0000 97%,#000) -6px -6px/12px 12px round;transform:rotate(-3deg)}
+.bound .day-date{display:inline-block;padding:4px 14px;border:2px solid #3c466e8c;border-radius:999px;color:#3c466ebf;font-family:Consolas,ui-monospace,monospace;font-size:13px;letter-spacing:.08em;transform:rotate(-4deg)}
+.bound .day-summary{font-family:var(--kai);font-weight:700;color:var(--card-ink)}
+.bound .travel-caution{color:#9b4a1b}.bound .day-cost-badge,.bound .weather-badge{color:var(--card-muted)}
+.manual-kicker{color:var(--card-muted);border-bottom:1px dashed var(--card-dash);font-family:var(--kai);letter-spacing:.2em}
+.manual-heading{display:table;margin:22px 0 14px -4px;padding:2px 16px;border-left:0;background:#bfe0d0;color:var(--card-ink);font-family:var(--kai);transform:rotate(-1deg);clip-path:polygon(2% 0,98% 6%,100% 50%,97% 100%,1% 94%,0 50%)}
+.manual-details>.manual-heading{background:#f2c4b3}
+.chapter-scenery{border:8px solid #fff;box-shadow:0 6px 14px #3a24142e;transform:rotate(-.6deg)}.chapter-scenery figcaption{background:#3a2414cc}
+.schedule{border-top:1.5px solid var(--card-dash)}.schedule-row{border-bottom:1px solid var(--card-rule);color:var(--card-blue)}.schedule-head{background:transparent;color:var(--card-muted);font-family:var(--kai)}.schedule-kind{color:var(--card-muted)}
+.manual-overview .chapter-intro{color:var(--card-ink)}.manual-overview .chapter-budget,.chapter-budget{color:var(--card-muted);border-color:var(--card-rule)}
+.stop-entry{border-top:1px dashed var(--card-dash)}.time-cell,.bound .time-cell{color:var(--card-blue);font-family:var(--kai)}
+.stop-name{font-family:var(--kai);color:var(--card-ink)}.stop-entry.stop-food .stop-name{color:#a0522d}.stop-entry.stop-spot .stop-name{color:#3d6b4f}.stop-entry.stop-transport .stop-name{color:var(--card-blue)}
+.stop-meta{color:var(--card-muted)}.table-cost{color:#8a5a22}
+.inline-place{border:0;border-radius:0;background:#bfe0d0b3;color:#2f5a44}.inline-place.food{background:#f2c4b3b3;color:#7a3a17}
+.place-sticker{border:0;border-radius:0;box-shadow:0 1px 2px #3a241426;background:#bfe0d0;color:#2f5a44;transform:rotate(-2deg);clip-path:polygon(3% 0,97% 5%,100% 50%,96% 100%,2% 95%,0 50%)}.place-sticker.food{background:#f2c4b3;color:#7a3a17}.place-sticker.transport{background:#c9d6f2;color:#2c4a7a}.place-sticker.booking{background:#e5c9ef;color:#5d3a77}
+.table-tips{background:#fffaf0;border-left:3px solid #e2c792;color:#5b4a36}
+.transit-details{background:#f5eedd;border:1px dashed var(--card-dash)}
+.table-map-link,.btn-route{border-radius:999px;background:radial-gradient(circle at 35% 30%,#d9534a,#9b1d16 70%);color:#fbe3d3;box-shadow:inset 0 -3px 6px #0000004d,0 4px 10px #3c0a0540}
+.sheet-numbers{color:var(--card-muted);border-top:1px dashed var(--card-dash);font-family:var(--kai)}.cover-sheet .sheet-numbers{color:#f6e7cf;border-top-color:#f6e7cf55}
+.reader-footer{color:#fbf1df}.reader-hint{color:#f3e6d0}
+.reader-controls button{border:0;background:radial-gradient(circle at 35% 30%,#d9534a,#9b1d16 70%);color:#fbe3d3;box-shadow:inset 0 -3px 6px #0000004d,0 6px 12px #3c0a0559}
+.reader-controls output{color:#fff7ea;font-family:var(--kai);font-size:16px}
+/* Content layout: details follow the overview without a forced blank column, stops read as a timeline. */
+body{counter-reset:day}.book-page:not(.cover){counter-increment:day}
+.bound .manual-details{break-before:auto;margin-top:30px}
+.bound .manual-overview .chapter-budget{margin-top:16px;padding:12px 14px;border:1px dashed var(--card-dash);background:#fffaf0}
+.manual-overview .chapter-intro{font-size:16px;line-height:1.95}
+.manual-overview .chapter-intro::first-letter{float:left;margin:6px 8px 0 0;font-family:var(--kai);font-size:2.2em;line-height:1;color:#a8261d}
+.bound .chapter-facts{display:flex;flex-wrap:wrap;gap:6px 8px;margin:4px 0 10px}.bound .chapter-facts>span,.bound .day-cost-badge,.bound .weather-badge{padding:1px 10px;border:1px dashed var(--card-dash);border-radius:999px;color:var(--card-muted);margin:0 6px 6px 0}.bound .chapter-facts>span .day-cost-badge,.bound .chapter-facts>span .weather-badge{border:0;padding:0;margin:0}
+.schedule{border-top:0;margin:4px 0 18px}.schedule-head{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.schedule-row{grid-template-columns:56px minmax(0,1fr) auto;align-items:baseline;gap:10px;padding:7px 2px;border-bottom:0}
+.schedule-time{font-family:var(--kai);color:var(--card-blue);font-size:15px}.schedule-name{display:flex;align-items:baseline;gap:8px;color:var(--card-ink);font-size:15px}.schedule-name::after{content:'';flex:1 1 12px;min-width:12px;border-bottom:1.5px dotted var(--card-dash)}
+.schedule-kind{padding:0 8px;white-space:nowrap;font-size:12px;color:#2f5a44;background:#bfe0d0b3}.schedule-food .schedule-kind{color:#7a3a17;background:#f2c4b3b3}.schedule-transport .schedule-kind{color:var(--card-blue);background:#c9d6f2b3}
+.stop-entry,.bound .stop-entry{position:relative;margin:0 0 26px;padding:4px 0 0 30px;border-top:0}
+.stop-entry::before{content:'';position:absolute;left:8px;top:28px;bottom:-22px;border-left:2px dashed var(--card-dash)}.stop-list>.stop-entry:last-child::before{bottom:0}
+.stop-entry::after{content:'';position:absolute;left:1px;top:9px;width:16px;height:16px;border-radius:50%;background:var(--card);box-shadow:0 0 0 4px #3d6b4f inset}.stop-entry.stop-food::after{box-shadow:0 0 0 4px #a0522d inset}.stop-entry.stop-transport::after{box-shadow:0 0 0 4px var(--card-blue) inset}
+.bound .stop-topline{margin-bottom:2px}.bound .time-cell{font-size:20px;letter-spacing:.02em}.bound .end-time{color:var(--card-muted);font-size:14px}
+.bound .title-cell{margin-bottom:12px}.bound .stop-name{font-size:23px;line-height:1.45}
+.bound .stop-meta{gap:6px}.bound .stop-meta>span{padding:0 8px;border:1px dashed var(--card-dash);border-radius:999px}
+.bound .stop-description{font-size:16.5px;line-height:1.95;color:var(--card-ink)}
+.bound .table-cost,.bound .table-address{font-size:14.5px;margin:6px 0}
+.bound .stop-note{break-inside:avoid;margin-top:26px}
+.bound .action-cell{padding-top:4px}
+@media (orientation:landscape) and (max-height:500px){
+.bound .reader-nav{position:fixed;top:0;left:0;right:0;z-index:30;transition:opacity .3s ease,transform .3s ease}
+.bound .reader-footer{position:fixed;left:0;right:0;bottom:0;z-index:30;min-height:46px;background:#3b2a1ce6;transition:opacity .3s ease,transform .3s ease}
+.bound main{grid-row:1 / -1;margin:8px auto}
+body[data-chrome='hidden'] .reader-nav{opacity:0;transform:translateY(-6px);pointer-events:none}
+body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);pointer-events:none}
+}
+.sheet-fade{animation:sheet-fade .28s ease-out}
+@keyframes sheet-fade{from{opacity:.25}to{opacity:1}}
+.arriving .day-number{animation:stamp-drop .55s cubic-bezier(.2,1.5,.4,1) .35s backwards}
+.arriving .day-date{animation:postmark .45s ease-out .75s backwards}
+.arriving .stop-entry::after{animation:dot-in .35s ease-out backwards}
+.arriving .stop-entry:nth-child(1)::after{animation-delay:.9s}.arriving .stop-entry:nth-child(2)::after{animation-delay:1s}.arriving .stop-entry:nth-child(3)::after{animation-delay:1.1s}.arriving .stop-entry:nth-child(4)::after{animation-delay:1.2s}.arriving .stop-entry:nth-child(n+5)::after{animation-delay:1.3s}
+@keyframes stamp-drop{from{opacity:0;transform:translateY(-12px) rotate(-12deg) scale(1.15)}to{opacity:1;transform:rotate(-3deg)}}
+@keyframes postmark{0%{opacity:0;transform:rotate(-4deg) scale(1.25)}60%{opacity:1}100%{opacity:1;transform:rotate(-4deg)}}
+@keyframes dot-in{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.arriving .day-number,.arriving .day-date,.arriving .stop-entry::after{animation:none}.reader-nav,.reader-footer{transition:none}}
+.manual-details::after{content:'— 第 ' counter(day) ' 天 · 完 —';display:block;margin:26px 0 6px;text-align:center;font-family:var(--kai);font-size:14px;letter-spacing:.3em;color:var(--card-muted);break-before:avoid}
+}
+`;
+
     // This function is embedded verbatim. It deliberately has no app dependencies.
     function reader() {
         const chapters = [...document.querySelectorAll('.book-page')];
@@ -83,6 +165,21 @@ body.bound{height:100vh;height:100dvh;overflow:hidden;display:grid;grid-template
         let current = 0;
         let activeTurn = null;
         const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+        const TURN_MS = 720;
+        const canAnimate = () => !reducedMotion.matches && typeof book.animate === 'function';
+        const seen = new Set();
+        // First visit to a day: the stamp drops in and the postmark lands (CSS, skipped for reduced motion).
+        function arrive() {
+            const page = pages[current], sheet = sheets[page.chapter];
+            if (page.offset !== 0 || seen.has(page.chapter) || sheet.classList.contains('cover-sheet')) return;
+            seen.add(page.chapter);
+            sheet.classList.remove('arriving'); void sheet.offsetWidth; sheet.classList.add('arriving');
+            setTimeout(() => sheet.classList.remove('arriving'), 2200);
+        }
+        // Reduced motion replaces the leaf with a short fade.
+        function fade(sheet) {
+            sheet.classList.remove('sheet-fade'); void sheet.offsetWidth; sheet.classList.add('sheet-fade');
+        }
         function finishTurn() {
             if (!activeTurn) return;
             const turn = activeTurn;
@@ -100,7 +197,7 @@ body.bound{height:100vh;height:100dvh;overflow:hidden;display:grid;grid-template
             copy.querySelectorAll('[id],[tabindex]').forEach(node => { node.removeAttribute('id'); node.removeAttribute('tabindex'); });
             return copy;
         }
-        function turnPage(oldSheet, newSheet, forward) {
+        function turnPage(oldSheet, newSheet, forward, manual = false) {
             const layer = document.createElement('div');
             layer.className = 'page-turn ' + (forward ? 'forward' : 'backward');
             layer.setAttribute('aria-hidden', 'true'); layer.inert = true;
@@ -118,19 +215,22 @@ body.bound{height:100vh;height:100dvh;overflow:hidden;display:grid;grid-template
                 const shadow = document.createElement('div'); shadow.className = 'turn-shadow'; face.append(shadow); return shadow;
             });
             book.append(layer);
-            const options = {duration:720, easing:'cubic-bezier(.3,.08,.2,1)', fill:'forwards'};
+            // A finger-driven turn is linear so the leaf stays under the finger; buttons keep the eased turn.
+            const options = {duration:TURN_MS, easing:manual ? 'linear' : 'cubic-bezier(.3,.08,.2,1)', fill:'forwards'};
             const flip = leaf.animate([{transform:'rotateY(0deg)'},{transform:`rotateY(${forward ? -180 : 180}deg)`}], options);
             const shading = shadows.map(shadow => shadow.animate([{opacity:0},{opacity:1,offset:.5},{opacity:0}], options));
-            const turn = {layer, animations:[flip, ...shading]}; activeTurn = turn;
+            const turn = {layer, animations:[flip, ...shading], done:null}; activeTurn = turn;
+            if (manual) turn.animations.forEach(animation => animation.pause());
             document.body.dataset.turning = forward ? 'forward' : 'backward';
-            flip.finished.then(() => { if (activeTurn === turn) finishTurn(); }).catch(() => {});
+            flip.finished.then(() => { if (activeTurn === turn) { finishTurn(); turn.done?.(); } }).catch(() => {});
+            return turn;
         }
         function select(index, moveFocus = true) {
             if (!Number.isInteger(index) || index < 0 || index >= pages.length) return;
             finishTurn();
             const forward = index > current;
-            const oldSheet = moveFocus && index !== current && !reducedMotion.matches && typeof book.animate === 'function'
-                ? snapshot(sheets[pages[current].chapter]) : null;
+            const moved = moveFocus && index !== current;
+            const oldSheet = moved && canAnimate() ? snapshot(sheets[pages[current].chapter]) : null;
             current = index;
             const page = pages[index], sheet = sheets[page.chapter];
             sheets.forEach((item, i) => { item.hidden = i !== page.chapter; });
@@ -153,6 +253,8 @@ body.bound{height:100vh;height:100dvh;overflow:hidden;display:grid;grid-template
             document.body.dataset.readerPage = String(index);
             if (moveFocus) sheet.focus({ preventScroll: true });
             if (oldSheet) turnPage(oldSheet, sheet, forward);
+            else if (moved && reducedMotion.matches) fade(sheet);
+            if (moved) arrive();
         }
         function layout() {
             finishTurn();
@@ -160,7 +262,8 @@ body.bound{height:100vh;height:100dvh;overflow:hidden;display:grid;grid-template
             const old = pages[current];
             const oldCount = old ? Number(chapters[old.chapter].dataset.leaves) : 1;
             const fraction = old ? old.offset / oldCount : 0;
-            columns = innerWidth >= 900 ? 2 : 1;
+            // Landscape phones open the book as a spread, like a desktop.
+            columns = innerWidth >= 900 || (innerWidth >= 640 && innerWidth > innerHeight * 1.25) ? 2 : 1;
             document.body.dataset.spread = String(columns);
             pages = []; totalLeaves = 0;
             sheets.forEach((sheet, chapter) => {
@@ -199,29 +302,92 @@ body.bound{height:100vh;height:100dvh;overflow:hidden;display:grid;grid-template
                 event.preventDefault(); select(event.key === 'Home' ? 0 : pages.length - 1);
             }
         });
+        // Landscape phones: the toolbars float over the book and fade away while reading.
+        const nav = document.querySelector('.reader-nav'), footer = document.querySelector('.reader-footer');
+        const compact = matchMedia('(orientation: landscape) and (max-height: 500px)');
+        let touched = false, chromeTimer = 0;
+        function showChrome(stay = false) {
+            delete document.body.dataset.chrome;
+            clearTimeout(chromeTimer);
+            if (!stay && touched && compact.matches) chromeTimer = setTimeout(hideChrome, 2800);
+        }
+        function hideChrome() {
+            if (!compact.matches || nav.contains(document.activeElement) || footer.contains(document.activeElement)) return;
+            document.body.dataset.chrome = 'hidden';
+        }
+        [nav, footer].forEach(bar => {
+            bar.addEventListener('focusin', () => showChrome(true));
+            bar.addEventListener('focusout', () => showChrome());
+            bar.addEventListener('pointerdown', () => showChrome());
+        });
+        compact.addEventListener('change', () => showChrome());
+
         let touch = null, suppressClickUntil = 0;
+        // Drag the leaf with the finger; on release it completes or falls back depending on distance and speed.
+        function startDrag(forward) {
+            const target = current + (forward ? 1 : -1);
+            if (!canAnimate() || target < 0 || target >= pages.length) return 'edge';
+            const from = current, oldSnap = snapshot(sheets[pages[current].chapter]);
+            select(target, false);
+            const turn = turnPage(oldSnap, sheets[pages[target].chapter], forward, true);
+            return { turn, from, forward, width: columns === 2 ? book.clientWidth / 2 : book.clientWidth };
+        }
+        function dragProgress(drag, dx) {
+            return Math.max(0, Math.min(1, (drag.forward ? -dx : dx) / (drag.width * .9)));
+        }
+        function releaseDrag(drag, progress, speed) {
+            if (drag.turn !== activeTurn) return;
+            const complete = progress > .35 || (speed > .45 && progress > .06);
+            drag.turn.done = complete
+                ? () => { sheets[pages[current].chapter].focus({ preventScroll: true }); arrive(); }
+                : () => select(drag.from, false);
+            drag.turn.animations.forEach(animation => { animation.playbackRate = complete ? 1.8 : -1.8; animation.play(); });
+        }
         book.addEventListener('touchstart', event => {
+            touched = true;
             touch = event.touches.length === 1 && !event.target.closest('button,summary,select,input,textarea')
-                ? { x: event.touches[0].clientX, y: event.touches[0].clientY, horizontal: false } : null;
+                ? { x: event.touches[0].clientX, y: event.touches[0].clientY, horizontal: false, drag: null, last: [] } : null;
         }, { passive: true });
         book.addEventListener('touchmove', event => {
             if (!touch) return;
-            if (event.touches.length !== 1) { touch = null; return; }
+            if (event.touches.length !== 1) { if (touch.drag?.turn) releaseDrag(touch.drag, 0, 0); touch = null; return; }
             const dx = event.touches[0].clientX - touch.x, dy = event.touches[0].clientY - touch.y;
             if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.5 && !String(window.getSelection())) touch.horizontal = true;
             // Safari must know this is a book gesture before it starts native panning.
             // Leave vertical motion and two-finger zoom to the browser.
             if (touch.horizontal && event.cancelable) event.preventDefault();
+            if (!touch.horizontal) return;
+            if (!touch.drag) touch.drag = startDrag(dx < 0);
+            touch.last.push({ dx, t: event.timeStamp });
+            if (touch.last.length > 5) touch.last.shift();
+            if (touch.drag.turn && touch.drag.turn === activeTurn) {
+                const time = dragProgress(touch.drag, dx) * TURN_MS;
+                touch.drag.turn.animations.forEach(animation => { animation.currentTime = time; });
+            }
         }, { passive: false });
-        book.addEventListener('touchcancel', () => { touch = null; }, { passive: true });
+        book.addEventListener('touchcancel', () => {
+            if (touch?.drag?.turn) releaseDrag(touch.drag, 0, 0);
+            touch = null;
+        }, { passive: true });
         book.addEventListener('touchend', event => {
             if (!touch || !event.changedTouches.length) return;
             const dx = event.changedTouches[0].clientX - touch.x;
             const dy = event.changedTouches[0].clientY - touch.y;
+            const gesture = touch;
             touch = null;
+            if (gesture.drag?.turn) {
+                const first = gesture.last[0], last = gesture.last.at(-1);
+                const speed = first && last && last.t > first.t ? (gesture.drag.forward ? first.dx - last.dx : last.dx - first.dx) / (last.t - first.t) : 0;
+                suppressClickUntil = Date.now() + 500;
+                releaseDrag(gesture.drag, dragProgress(gesture.drag, dx), speed);
+                return;
+            }
             if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && !String(window.getSelection())) {
                 suppressClickUntil = Date.now() + 500;
                 select(current + (dx < 0 ? 1 : -1));
+            } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && compact.matches && !event.target.closest('a,button,summary,select')) {
+                // A plain tap on the page toggles the floating toolbars.
+                if (document.body.dataset.chrome === 'hidden') showChrome(); else hideChrome();
             }
         }, { passive: true });
         book.addEventListener('click', event => {
@@ -235,6 +401,7 @@ body.bound{height:100vh;height:100dvh;overflow:hidden;display:grid;grid-template
         const scheduleLayout = () => { cancelAnimationFrame(pending); pending = requestAnimationFrame(layout); };
         new ResizeObserver(scheduleLayout).observe(book);
         reducedMotion.addEventListener('change', finishTurn);
+        showChrome();
         window.addEventListener('beforeprint', finishTurn);
         matchMedia('print').addEventListener('change', scheduleLayout);
         document.fonts.ready.then(scheduleLayout);
@@ -270,7 +437,7 @@ body.bound{height:100vh;height:100dvh;overflow:hidden;display:grid;grid-template
             const kind = ['food', 'spot', 'transport'].find(name => row.querySelector('.place-sticker.' + name)) || 'spot';
             entry.className = 'stop-entry stop-' + kind;
             const scheduleRow = document.createElement('div');
-            scheduleRow.className = 'schedule-row'; scheduleRow.setAttribute('role', 'row');
+            scheduleRow.className = 'schedule-row schedule-' + kind; scheduleRow.setAttribute('role', 'row');
             const time = row.querySelector('.time-cell').childNodes[0]?.textContent.trim() || '待確認';
             const name = row.querySelector('.stop-name').textContent;
             const type = row.querySelector('.place-sticker > span').textContent;
@@ -340,10 +507,10 @@ body.bound{height:100vh;height:100dvh;overflow:hidden;display:grid;grid-template
         const html = `<!doctype html>
 <html lang="zh-Hant" data-roam-book="1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
-<title>${escapeHtml(title)}</title><style>${css}${boundCss}${art ? `:root{--cover-art:url('${art}')}` : ''}</style></head><body class="${art ? '' : 'without-art'}">
+<title>${escapeHtml(title)}</title><style>${css}${boundCss}${postcardCss}${art ? `:root{--cover-art:url('${art}')}` : ''}</style></head><body class="${art ? '' : 'without-art'}">
 <nav class="reader-nav" aria-label="小冊目錄" hidden><div class="reader-brand"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 24 13 8l6 8L27 3l11 21H2Z"/><path d="m10 12 3 3 3-3m8-4 3 4 3-4"/></svg><span>${escapeHtml(title)}</span></div><label for="pagePicker">目錄</label><select id="pagePicker" aria-label="選擇章節">${options}</select><button id="printBook" class="print">列印 / PDF</button></nav>
 <noscript><aside class="preview-notice" style="margin:16px;padding:16px;background:#fff3d6;color:#533d13;border:1px solid #cfb46e;border-radius:6px"><strong>目前為靜態預覽，無法翻頁。</strong><br>此開啟方式未執行互動程式，仍可閱讀下方完整行程。若從 iPhone「檔案」開啟，請向提供者索取小冊的網頁網址，再用 Safari 開啟以使用翻書功能。</aside></noscript>
-<main><section class="book-page cover" id="page-0" tabindex="-1" aria-label="封面與目錄"><div class="eyebrow">ROAM / TRAVEL BOOK</div><h1>${escapeHtml(title)}</h1><p class="dates">${escapeHtml(dates)} · ${days.length} 天</p><p class="cover-intro">把沿途的風景、美食與小提醒，收進同一本旅行小冊。</p><h2>旅程目錄</h2><ol class="toc">${toc}</ol><div class="cover-foot">使用左右箭頭翻頁，手機可左右滑動。內容會自動接續到下一頁。<br>這是行程與便利貼的閱讀副本，需使用支援互動程式的瀏覽器；地圖需連網。修改後請重新下載。<br>iPhone「檔案」預覽若無法翻頁，請改用 Safari 開啟小冊的網頁網址。<br>製作於 ${escapeHtml(new Date().toLocaleString('zh-TW'))} · 封面為旅行意象插畫</div></section>${chapters}</main>
+<main><section class="book-page cover" id="page-0" tabindex="-1" aria-label="封面與目錄"><div class="eyebrow">GREETINGS FROM · ROAM TRAVEL BOOK</div><h1>${escapeHtml(title)}</h1><p class="dates">${escapeHtml(dates)} · ${days.length} 天</p><p class="cover-intro">把沿途的風景、美食與小提醒，收進同一本旅行小冊。</p><h2>旅程目錄</h2><ol class="toc">${toc}</ol><div class="cover-foot">使用左右箭頭翻頁，手機可左右滑動。內容會自動接續到下一頁。<br>這是行程與便利貼的閱讀副本，需使用支援互動程式的瀏覽器；地圖需連網。修改後請重新下載。<br>iPhone「檔案」預覽若無法翻頁，請改用 Safari 開啟小冊的網頁網址。<br>製作於 ${escapeHtml(new Date().toLocaleString('zh-TW'))} · 封面為旅行意象插畫</div></section>${chapters}</main>
 <footer class="reader-footer"><div class="reader-controls" aria-label="書本翻頁" hidden><button id="previous" aria-label="上一頁">‹</button><output id="pageNumber" aria-live="polite"></output><button id="next" aria-label="下一頁">›</button></div><span class="reader-hint">左右翻頁 · 可離線分享</span></footer>
 <script>(${reader.toString()})();<\/script></body></html>`;
         const filename = `${city.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_').slice(0, 60)}_${tripData[0].date}_旅行小冊.html`;

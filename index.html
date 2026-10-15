@@ -3,11 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // 首次繪製前決定畫面：有已存行程就直接開閱讀頁，避免重新整理時先閃出輸入頁。
+        (function () {
+            let view = 'settings';
+            try { const trip = JSON.parse(localStorage.getItem('myTrip_v27') || '[]'); if (Array.isArray(trip) && trip.length) view = 'itinerary'; } catch (_) { /* Storage is optional. */ }
+            const root = document.documentElement;
+            if (!root) return;
+            root.dataset.bootView = view;
+            root.dataset.booting = 'true';
+            // 外部資源載入過慢時仍要顯示內容。
+            setTimeout(() => { delete root.dataset.booting; }, 4000);
+        }());
+    </script>
     <title>漫遊 Roam · AI 旅程規劃</title>
     <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48" type="image/x-icon">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
@@ -1579,6 +1592,8 @@
     <link rel="stylesheet" href="editorial.css">
     <link rel="stylesheet" href="scenes.css">
     <link rel="stylesheet" href="book.css">
+    <link rel="stylesheet" href="boarding.css">
+    <link rel="stylesheet" href="postcard.css">
     <script src="deepseek.js" defer></script>
     <script src="codex-local.js" defer></script>
     <script src="vendor/motion.js" defer></script>
@@ -1592,6 +1607,7 @@
     <script src="book-export.js" defer></script>
 </head>
 <body>
+    <script>if (document.body && document.documentElement) document.body.dataset.bookView = document.documentElement.dataset.bootView;</script>
 
     <div id="saveStatus" role="status" aria-live="polite">資料已儲存於此瀏覽器</div>
 
@@ -1673,8 +1689,9 @@
         <div class="operation-actions"><button id="cancelOperation" type="button" onclick="PlannerUI.cancel()">取消本次生成</button><button id="retryOperation" type="button" onclick="PlannerUI.retry()" hidden>重試這一步</button></div>
     </section>
     <div class="container" data-view="settings">
+        <script>if (document.currentScript?.parentElement && document.documentElement?.dataset.bootView) document.currentScript.parentElement.dataset.view = document.documentElement.dataset.bootView;</script>
         <div class="column" id="settingsPanel">
-            <section class="brief-intro" aria-label="開始規劃"><div class="brief-orbit" aria-hidden="true"><span>R</span><i></i><b>YOUR WORLD, IN PAGES</b></div><div><span class="eyebrow">YOUR NEXT CHAPTER / 你的下一章</span><h2>先說說，<br>你想怎麼旅行<span>？</span></h2><p>從一個想法出發。讓城市、時間與喜好，<br>成為一本可以編輯、收藏、帶著走的旅遊書。</p><div class="brief-steps"><span>01 輸入想法</span><span>02 逐日生成</span><span>03 翻閱旅程</span></div></div></section>
+            <section class="brief-intro" aria-label="開始規劃"><div class="brief-orbit" aria-hidden="true"><span>R</span><i></i><b>YOUR WORLD, IN PAGES</b></div><div><span class="eyebrow">BOARDING NOW / 你的下一章</span><h2>每趟旅行，<br>都從一張<span>登機證</span>開始。</h2><p>把想法填在登機證上，出票之後，<br>城市、時間與喜好會逐日編成一本可以翻閱、收藏、帶著走的旅遊書。</p><div class="brief-steps"><span>01 輸入想法</span><span>02 逐日生成</span><span>03 翻閱旅程</span></div></div></section>
             <div class="card">
                 <div class="section-kicker">TRAVEL BRIEF / 旅行提案</div>
                 <h2>這次的旅行想法 <button onclick="openModal('apiModal')" class="btn-setting" aria-label="開啟服務與資料設定">⚙</button></h2>
@@ -2037,6 +2054,7 @@
             </div>
         </div>
 
+        <script src="boarding-ui.js"></script>
         <div class="column" id="itineraryPanel">
             <section id="journeyPanel" hidden aria-label="旅途中模式"></section>
             <div class="workspace-heading"><div><div class="eyebrow">YOUR PERSONAL ATLAS</div><h2>你的電子旅遊書</h2><p>一天一個章節，把沿途的風景讀進生活。</p></div><span class="workspace-label">EXPLORE / EDIT / KEEP</span></div>
@@ -3761,6 +3779,12 @@ Output strictly in Traditional Chinese (Taiwan).
                     : `已列站間移動 ${Math.floor(travel.minutes / 60) ? `${Math.floor(travel.minutes / 60)} 小時 ` : ''}${travel.minutes % 60} 分鐘`;
                 const travelHtml = `<div class="chapter-facts"><span>${day.itinerary.length} 個停靠點</span><span>${travelText}${travel.missing ? ` · ${travel.missing} 段待確認` : ''}</span>${travel.minutes >= 360 ? '<span class="travel-caution">移動時間較長，請預留休息</span>' : ''}</div>`;
                 const costNote = `<p class="chapter-cost-note">${costResult.unpriced ? `${costResult.unpriced} 站費用未計入小計（共用、條件不明或幣別不同），請核對各站原文。` : '小計依各站已列金額估算，未含未列費用。'}${day.itinerary.some(item => isSharedCost(item.cost)) ? ' 每車／共用費用另列，不自動攤分。' : ''}</p>`;
+                // 目錄式時刻表：時間、站名與類別，供閱讀頁快速瀏覽當天安排
+                const scheduleLabels = { SPOT: '景點', FOOD: '美食', TRANSPORT: '交通' };
+                const scheduleHtml = `<ol class="day-schedule" aria-label="今日行程時間表">${day.itinerary.map(item => {
+                    const kind = Object.hasOwn(scheduleLabels, item.type) ? item.type : 'SPOT';
+                    return `<li class="schedule-${kind.toLowerCase()}"><span class="schedule-time">${escapeHtml(item.time || '待確認')}</span><span class="schedule-name">${escapeHtml(item.title)}</span><span class="schedule-kind">${scheduleLabels[kind]}</span></li>`;
+                }).join('')}</ol>`;
                 const html = `
                 <details ${isOpen} data-date="${escapeHtml(day.date)}">
                     <summary>
@@ -3776,7 +3800,7 @@ Output strictly in Traditional Chinese (Taiwan).
                     </summary>
                     <div class="day-content">
                         <section class="chapter-context" aria-label="當日概覽與費用說明">
-                            <div class="chapter-overview"><h3>今日行程</h3><p class="chapter-intro">${highlightPlaceNames(day.summary, day)}</p></div>
+                            <div class="chapter-overview"><h3>今日行程</h3>${scheduleHtml}<p class="chapter-intro">${highlightPlaceNames(day.summary, day)}</p></div>
                             <div class="chapter-budget"><h3>費用說明</h3>${costNote}</div>
                         </section>
                         <table class="itinerary-table">

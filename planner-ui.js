@@ -381,6 +381,7 @@
         $('settingsPanel').addEventListener('input', () => { invalidateRetry(); afterRender(); });
         switchView(tripData.length ? 'itinerary' : 'settings', false);
         afterRender();
+        delete document.documentElement.dataset.booting;
     }
     function resetContext() {
         editing = null;

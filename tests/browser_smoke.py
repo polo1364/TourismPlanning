@@ -223,7 +223,7 @@ def smoke(browser, base_url):
             page.locator("#modifyInstruction").fill("微調：改成輕鬆路線")
             page.locator("#modifyModal button[onclick='submitModification()']").click()
             page.wait_for_function("document.getElementById('tripContainer').textContent.includes('微調後景點') && !document.getElementById('planBtn').disabled")
-            check(prefix + "modification immediately rerenders", page.locator("#tripContainer").get_by_text("微調後景點", exact=True).count() == 1)
+            check(prefix + "modification immediately rerenders", page.locator("#tripContainer .itinerary-table").get_by_text("微調後景點", exact=True).count() == 1)
 
             page.reload(wait_until="networkidle")
             page.wait_for_function("document.querySelectorAll('#tripContainer > details').length === 2")

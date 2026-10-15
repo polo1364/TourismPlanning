@@ -10,7 +10,7 @@
 
 `main` 更新後，`.github/workflows/pages.yml` 會執行 Node 測試，透過 `npm run build:pages` 打包，再發布到 GitHub Pages。儲存庫 Settings → Pages 的 Source 使用 **GitHub Actions**。
 
-建置以明確清單輸出 20 個前端檔案及 `.nojekyll`，共 21 個檔案至 `dist/`，包含前端、插畫與 Motion 授權；不發布本機服務、測試報告、備份或憑證。為避免混入舊檔，`dist/` 已存在時建置會停止；重跑前請先將舊 `dist/` 移至備份位置。GitHub Actions 每次使用新的工作目錄。
+建置以明確清單輸出 23 個前端檔案及 `.nojekyll`，共 24 個檔案至 `dist/`，包含前端、插畫與 Motion 授權；不發布本機服務、測試報告、備份或憑證。為避免混入舊檔，`dist/` 已存在時建置會停止；重跑前請先將舊 `dist/` 移至備份位置。GitHub Actions 每次使用新的工作目錄。
 
 來源儲存庫保留本機啟動程式及測試，方便下載使用。更新與部署狀態可在儲存庫 Actions 查看；部署方式參考 [GitHub Pages 官方文件](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)。
 

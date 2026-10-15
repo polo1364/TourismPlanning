@@ -1,0 +1,128 @@
+/* Boarding pass: the travel brief presented as one ticket. Loaded after book.css; boarding-ui.js adds the decorative parts. */
+:root { --pass-paper: #fffdf8; --pass-ink: #16233a; --pass-accent: #e2572b; --pass-line: #ece5d6; --pass-dash: #cfc6b4; --pass-muted: #6f7789; --pass-tag: #f4ead3; --pass-mono: 'Cascadia Mono', Consolas, 'SFMono-Regular', ui-monospace, monospace; --pass-serif: 'Noto Serif TC', 'Songti TC', PMingLiU, serif; }
+
+#settingsPanel { display: block; max-width: 1240px; margin: 0 auto; }
+.brief-intro { position: static; padding: 18px 4px 30px; }
+#settingsPanel .brief-orbit { display: none; }
+.brief-intro > div { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,380px); column-gap: 48px; align-items: end; }
+.brief-intro .eyebrow { grid-column: 1; color: #ff9a72; font-family: var(--pass-mono); letter-spacing: .2em; font-size: .8rem; }
+.brief-intro h2 { grid-column: 1; grid-row: 2 / span 2; font-family: var(--pass-serif); font-weight: 900; font-size: clamp(2.2rem,4vw,3.4rem); line-height: 1.22; letter-spacing: 0; margin: 14px 0 0; color: #fffdf8; }
+.brief-intro h2 span { color: #ff8a5c; }
+.brief-intro p { grid-column: 2; grid-row: 2; margin: 0; color: #b9c4d6; font-size: 1rem; }
+.brief-steps { grid-column: 2; grid-row: 3; margin-top: 14px; font-family: var(--pass-mono); font-size: .8rem; letter-spacing: .06em; color: #8fa0b8; }
+.brief-steps span:first-child { color: #ff9a72; }
+
+/* Ticket body and tear-off stub */
+#settingsPanel .card.boarding-pass { position: relative; display: grid; grid-template-columns: minmax(0,1fr) 300px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; filter: drop-shadow(0 30px 45px #0009); color: var(--pass-ink); color-scheme: light; }
+.pass-main, .pass-stub { background: var(--pass-paper); }
+.pass-main { position: relative; padding: 0 34px 30px; border-radius: 20px 0 0 20px;
+  -webkit-mask: radial-gradient(circle 18px at 100% 0,#0000 98%,#000) top right/100% 51% no-repeat, radial-gradient(circle 18px at 100% 100%,#0000 98%,#000) bottom right/100% 51% no-repeat;
+  mask: radial-gradient(circle 18px at 100% 0,#0000 98%,#000) top right/100% 51% no-repeat, radial-gradient(circle 18px at 100% 100%,#0000 98%,#000) bottom right/100% 51% no-repeat; }
+.pass-stub { display: flex; flex-direction: column; padding: 0 22px 26px; border-left: 2px dashed var(--pass-dash); border-radius: 0 20px 20px 0;
+  -webkit-mask: radial-gradient(circle 18px at 0 0,#0000 98%,#000) top left/100% 51% no-repeat, radial-gradient(circle 18px at 0 100%,#0000 98%,#000) bottom left/100% 51% no-repeat;
+  mask: radial-gradient(circle 18px at 0 0,#0000 98%,#000) top left/100% 51% no-repeat, radial-gradient(circle 18px at 0 100%,#0000 98%,#000) bottom left/100% 51% no-repeat; }
+.pass-band { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 -34px 26px; padding: 16px 34px; background: var(--pass-ink); color: var(--pass-paper); font: .78rem/1.5 var(--pass-mono); letter-spacing: .18em; }
+.pass-band b { font-family: var(--pass-serif); font-size: 1.1rem; letter-spacing: .12em; }
+.pass-band b i { font-style: normal; color: #ff8a5c; }
+.pass-stub .pass-band { margin: 0 -22px 22px; padding: 16px 22px; background: var(--pass-accent); }
+
+/* Text inside the ticket */
+#settingsPanel .boarding-pass h2 { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-family: var(--pass-serif); font-size: 1.6rem; font-weight: 900; color: var(--pass-ink); }
+#settingsPanel .boarding-pass .section-kicker { color: var(--pass-accent); font-family: var(--pass-mono); font-size: .75rem; letter-spacing: .2em; }
+#settingsPanel .boarding-pass .form-section-title { margin: 26px 0 14px; padding-top: 16px; border: 0; border-top: 1px solid var(--pass-line); color: var(--pass-muted); font-family: var(--pass-mono); font-size: .75rem; letter-spacing: .22em; }
+#settingsPanel .boarding-pass label { color: var(--pass-muted); font-size: .82rem; font-weight: 700; letter-spacing: .06em; }
+#settingsPanel .boarding-pass input:not([type='checkbox']), #settingsPanel .boarding-pass select, #settingsPanel .boarding-pass textarea { background: transparent; color: var(--pass-ink); border: 0 !important; border-bottom: 1.5px solid var(--pass-dash) !important; border-radius: 0; box-shadow: none; padding: 8px 2px; color-scheme: light; }
+#settingsPanel .boarding-pass input:focus, #settingsPanel .boarding-pass select:focus, #settingsPanel .boarding-pass textarea:focus { border-bottom-color: var(--pass-accent) !important; box-shadow: none; outline: none; }
+#settingsPanel .boarding-pass input::placeholder, #settingsPanel .boarding-pass textarea::placeholder { color: #a99f8c; }
+#settingsPanel .boarding-pass #customPrefs { min-height: 132px; padding: 0 2px; line-height: 33px; border-bottom: 0 !important; background: repeating-linear-gradient(transparent 0 32px, var(--pass-line) 32px 33px); }
+#settingsPanel .boarding-pass .field-hint, #settingsPanel .boarding-pass .field-help, #settingsPanel .boarding-pass .field-help > summary { color: var(--pass-muted); }
+#settingsPanel .boarding-pass .btn-setting { width: 40px; min-height: 40px; border: 1.5px solid var(--pass-ink); border-radius: 50%; background: transparent; color: var(--pass-ink); }
+.boarding-pass .brief-suggestions button { background: transparent; border: 1.5px solid var(--pass-ink); color: var(--pass-ink); }
+.boarding-pass .brief-suggestions button:hover { background: var(--pass-ink); color: var(--pass-paper); }
+
+/* Route: origin → destination */
+#settingsPanel .pass-route { grid-template-columns: minmax(0,1fr) 140px minmax(0,1fr) !important; align-items: end; gap: 16px !important; padding-bottom: 6px; }
+#settingsPanel .pass-route #origin, #settingsPanel .pass-route #city { font-family: var(--pass-serif); font-weight: 900; font-size: 2.3rem; line-height: 1.2; border-bottom-color: transparent !important; padding: 2px 0; }
+#settingsPanel .pass-route #origin:focus, #settingsPanel .pass-route #city:focus { border-bottom-color: var(--pass-accent) !important; }
+#settingsPanel .pass-route > div:last-child, #settingsPanel .pass-route #city { text-align: right; }
+.pass-code { display: block; margin-top: 2px; font: 700 1rem/1.4 var(--pass-mono); letter-spacing: .22em; color: var(--pass-accent); }
+.pass-flight { position: relative; height: 64px; align-self: center; }
+.pass-flight::before { content: ''; position: absolute; left: 0; right: 0; top: 30px; border-top: 2px dashed var(--pass-dash); }
+.pass-flight svg { position: absolute; top: 16px; left: 30%; width: 30px; height: 30px; padding: 0 3px; fill: var(--pass-ink); background: var(--pass-paper); animation: pass-fly 3.6s ease-in-out infinite; }
+.pass-flight small { position: absolute; left: 0; right: 0; top: 42px; text-align: center; font: .72rem var(--pass-mono); letter-spacing: .12em; color: var(--pass-muted); }
+@keyframes pass-fly { 0%, 100% { left: 30%; } 50% { left: calc(70% - 30px); } }
+
+/* Field grid: transport, times, pace, days, budget */
+.pass-fields { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); border-top: 1px solid var(--pass-line); border-bottom: 1px solid var(--pass-line); margin-bottom: 18px; }
+.pass-fields > div { min-width: 0; margin: 0; padding: 14px 16px 14px 0; }
+.pass-fields > div:not(:nth-child(3n+1)) { padding-left: 16px; border-left: 1px solid var(--pass-line); }
+.pass-fields > div:nth-child(n+4) { border-top: 1px solid var(--pass-line); }
+#settingsPanel .pass-fields input, #settingsPanel .pass-fields select { border-bottom-color: transparent !important; font-family: var(--pass-mono); font-weight: 700; font-size: 1rem; }
+#settingsPanel .pass-fields .field-hint { font-size: .78rem; line-height: 1.6; margin: 4px 0 0; }
+#settingsPanel .boarding-pass #durationDisplay { color: var(--pass-accent); background: transparent; text-align: left !important; }
+
+/* Disclosures, luggage tags and helper buttons */
+#settingsPanel .boarding-pass .form-disclosure, #settingsPanel .boarding-pass .form-disclosure[open] { background: #faf6ec; border: 1px dashed var(--pass-dash); border-radius: 10px; }
+#settingsPanel .boarding-pass .form-disclosure > summary, #settingsPanel .boarding-pass .form-disclosure[open] > summary { background: transparent; color: var(--pass-ink); font-weight: 700; }
+#settingsPanel .boarding-pass .form-disclosure > summary span { color: var(--pass-muted); }
+#settingsPanel .boarding-pass .btn-magic { background: transparent; color: var(--pass-ink); border: 1.5px solid var(--pass-ink); border-radius: 8px; }
+#settingsPanel .boarding-pass .btn-magic:hover:not(:disabled) { background: var(--pass-ink); color: var(--pass-paper); border-color: var(--pass-ink); }
+#settingsPanel .boarding-pass .btn-magic:disabled { background: #efe9dc; color: var(--pass-muted); border-color: var(--pass-dash); }
+.boarding-pass .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
+#settingsPanel .boarding-pass .checkbox-item label { position: relative; padding: 6px 14px 6px 26px; background: var(--pass-tag); color: var(--pass-ink); border: 1px solid #e3d3ad; border-radius: 4px 12px 12px 4px; transform: rotate(-1.5deg); transition: transform .2s; }
+#settingsPanel .boarding-pass .checkbox-item:nth-child(even) label { transform: rotate(1.5deg); }
+#settingsPanel .boarding-pass .checkbox-item label::before { content: ''; display: block; position: absolute; left: 9px; top: 50%; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: var(--pass-paper); box-shadow: inset 0 0 0 1.5px #c9b27b; }
+#settingsPanel .boarding-pass .checkbox-item label:hover { transform: none; background: #efe1c0; border-color: #d6c08b; }
+#settingsPanel .boarding-pass .checkbox-item input:checked + label { background: var(--pass-accent); color: #fff; border-color: var(--pass-accent); }
+#settingsPanel .boarding-pass .checkbox-item input:checked + label::before { box-shadow: none; }
+#settingsPanel .boarding-pass .checkbox-item input:focus-visible + label, #settingsPanel .boarding-pass .btn-magic:focus-visible { outline: 3px solid var(--pass-accent); }
+
+/* Stub summary, barcode and actions */
+.pass-stub-body { position: sticky; top: 24px; }
+.pass-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; margin: 0; }
+.pass-summary div { min-width: 0; }
+.pass-summary dt { font: .68rem/1.4 var(--pass-mono); letter-spacing: .16em; color: var(--pass-muted); }
+.pass-summary dd { margin: 2px 0 0; font: 700 1rem/1.4 var(--pass-mono); color: var(--pass-ink); overflow-wrap: anywhere; }
+.pass-summary .pass-dest { grid-column: 1 / -1; }
+.pass-summary .pass-dest dd { font-family: var(--pass-serif); font-size: 1.8rem; font-weight: 900; }
+.pass-barcode { height: 62px; margin: 22px 0 16px; background: repeating-linear-gradient(90deg,var(--pass-ink) 0 2px,transparent 2px 4px,var(--pass-ink) 4px 5px,transparent 5px 9px,var(--pass-ink) 9px 12px,transparent 12px 13px,var(--pass-ink) 13px 14px,transparent 14px 17px) content-box; }
+#settingsPanel .pass-stub #planBtn { width: 100%; padding: 16px; border: 0; border-radius: 12px; background: var(--pass-ink); color: var(--pass-paper); font-weight: 900; letter-spacing: .12em; }
+#settingsPanel .pass-stub #planBtn:hover:not(:disabled) { background: var(--pass-accent); }
+#settingsPanel .pass-stub .field-hint { margin-top: 10px; font-size: .8rem; line-height: 1.7; color: var(--pass-muted); }
+#settingsPanel .pass-stub > div[style] { margin-top: 18px !important; padding-top: 14px !important; border-top: 1px dashed var(--pass-dash) !important; }
+#settingsPanel .pass-stub .btn-danger { background: transparent; color: var(--pass-muted); border: 1px solid var(--pass-dash); }
+#settingsPanel .pass-stub .btn-danger:hover { color: #b3261e; border-color: #b3261e; }
+.pass-stamp { position: absolute; right: 40px; top: 120px; width: 180px; height: 180px; display: grid; place-content: center; text-align: center; border: 5px double #d6372b; border-radius: 50%; color: #d6372b; font: 900 1.6rem/1 var(--pass-mono); letter-spacing: .14em; opacity: 0; transform: rotate(-18deg) scale(2.2); pointer-events: none; mix-blend-mode: multiply; }
+.pass-stamp small { display: block; margin-top: 8px; font-family: var(--pass-serif); font-size: 1.3rem; letter-spacing: .3em; }
+.pass-stamp.go { animation: pass-stamp .5s cubic-bezier(.2,1.4,.4,1) forwards; }
+@keyframes pass-stamp { to { opacity: .85; transform: rotate(-18deg) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .pass-flight svg { animation: none; left: calc(50% - 15px); } .pass-stamp.go { animation: none; opacity: .85; transform: rotate(-18deg); } }
+
+@media (max-width: 900px) {
+  .brief-intro > div { display: block; }
+  .brief-intro h2 { font-size: 2.1rem; }
+  .brief-intro p { margin-top: 12px; }
+  #settingsPanel .card.boarding-pass { grid-template-columns: minmax(0,1fr); }
+  .pass-main { overflow: clip; padding: 0 20px 24px; border-radius: 18px 18px 0 0; -webkit-mask: none; mask: none; }
+  .pass-stub { padding: 0 20px 24px; border-left: 0; border-top: 2px dashed var(--pass-dash); border-radius: 0 0 18px 18px; -webkit-mask: none; mask: none; }
+  .pass-band { flex-direction: column; align-items: flex-start; gap: 2px; margin: 0 -20px 22px; padding: 14px 20px; }
+  .pass-stub .pass-band { margin: 0 -20px 18px; padding: 14px 20px; }
+  #settingsPanel .pass-route { grid-template-columns: minmax(0,1fr) !important; gap: 0 !important; }
+  #settingsPanel .pass-route > div:last-child, #settingsPanel .pass-route #city { text-align: left; }
+  #settingsPanel .pass-route #origin, #settingsPanel .pass-route #city { font-size: 1.9rem; }
+  .pass-flight { height: 40px; }
+  .pass-flight::before { top: 19px; }
+  .pass-flight svg { top: 5px; }
+  .pass-flight small { display: none; }
+  .pass-fields { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .pass-fields > div, .pass-fields > div:not(:nth-child(3n+1)) { grid-column: 1 / -1; padding: 12px 0; border-left: 0; border-top: 1px solid var(--pass-line); }
+  .pass-fields > div:first-child { border-top: 0; }
+  .pass-fields > div:nth-child(4), .pass-fields > div:nth-child(5) { grid-column: auto; }
+  .pass-fields > div:nth-child(5) { padding-left: 12px; border-left: 1px solid var(--pass-line); }
+  .pass-barcode { height: 48px; }
+  .pass-stub-body { position: static; }
+  .pass-stamp { right: 16px; top: 150px; width: 140px; height: 140px; font-size: 1.2rem; }
+}
+
+/* The brief is converted while the page parses; never paint the plain card in between. */
+html[data-booting] #settingsPanel > .card:not(.boarding-pass) { visibility: hidden; }
