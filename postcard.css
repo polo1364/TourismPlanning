@@ -120,7 +120,19 @@ body[data-scene='town'] #itineraryPanel #tripContainer > details > summary::befo
 #itineraryPanel .schedule-food .schedule-kind { color: #7a3a17; background: #f2c4b3b3; }
 #itineraryPanel .schedule-transport .schedule-kind { color: var(--card-blue); background: #c9d6f2b3; }
 #itineraryPanel .chapter-context .chapter-intro { line-height: 1.95; }
-#itineraryPanel .chapter-context .chapter-intro::first-letter { float: left; margin: 6px 8px 0 0; font-family: var(--kai); font-size: 2.2em; line-height: 1; color: #a8261d; }
+#itineraryPanel .chapter-context .chapter-intro { font-family: var(--sans, sans-serif); font-size: 15px; line-height: 1.9; overflow-wrap: anywhere; }
+#itineraryPanel .summary-overview { margin: 20px 0; padding: 18px 20px; background: #f4f3eb; border-radius: 6px; }
+#itineraryPanel .summary-overview h4 { margin: 0 0 12px; color: var(--card-muted); font-size: 13px; letter-spacing: .08em; }
+#itineraryPanel .summary-overview p, #itineraryPanel .summary-review-copy p { margin: 0 0 12px; }
+#itineraryPanel .summary-overview p:last-child, #itineraryPanel .summary-review-copy p:last-child { margin-bottom: 0; }
+#itineraryPanel details.summary-review { margin: 18px 0 0; padding: 0; border: 1px solid #d8d3c4; border-radius: 6px; background: #fffdf7; box-shadow: none; }
+#itineraryPanel details.summary-review > summary { display: block; padding: 14px 18px; background: transparent; color: var(--card-ink); font: 600 15px/1.7 var(--sans, sans-serif); cursor: pointer; }
+#itineraryPanel details.summary-review > summary::after { content: '＋'; float: right; }
+#itineraryPanel details.summary-review[open] > summary::after { content: '−'; }
+#itineraryPanel .summary-review summary span { display: block; font-size: 12px; font-weight: 400; color: var(--card-muted); }
+#itineraryPanel .summary-review-copy { padding: 4px 18px 18px; }
+#itineraryPanel .summary-review-copy p { padding: 12px 0; border-bottom: 1px solid #e9e4d8; }
+#itineraryPanel .summary-review-copy p:last-child { border: 0; }
 
 #itineraryPanel #tripContainer .itinerary-table tbody tr { position: relative; margin: 0; padding: 18px 8px 28px; column-gap: 40px; background: transparent; border: 0; border-radius: 0; box-shadow: none; }
 #itineraryPanel #tripContainer .itinerary-table tbody tr::before { content: ''; display: block; position: absolute; left: 115px; top: 0; bottom: 0; width: 0; background: none; border-left: 2px dashed var(--card-dash); }

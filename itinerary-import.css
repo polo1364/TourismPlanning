@@ -18,6 +18,23 @@
 .import-actions button { min-height: 44px; }
 #itineraryImportCancel[hidden], #itineraryPreviewSection[hidden], #itineraryImportError[hidden] { display: none !important; }
 #itineraryImportStatus { color: var(--primary); font-size: .9rem; }
+#itineraryWorkHeading[hidden], #itineraryWorkActivity[hidden] { display: none !important; }
+#itineraryWorkPanel.is-running { margin: 20px 0; padding: 20px; border: 1px solid #b9c8b2; border-left: 4px solid #58745d; border-radius: 8px; background: #f1f5eb; box-shadow: 0 5px 18px rgba(42, 62, 37, .06); }
+#itineraryWorkHeading { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+#itineraryWorkTitle { flex: 1; min-width: 140px; color: var(--ink); font-size: 1.08rem; line-height: 1.5; }
+#itineraryWorkElapsed { padding: 5px 9px; border: 1px solid #cbd5c5; border-radius: 4px; background: #fff; color: #3e5842; font: 12px/1.5 ui-monospace, monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.import-work-spinner { width: 26px; height: 26px; flex: 0 0 26px; border: 3px solid #d5dfce; border-top-color: #58745d; border-radius: 50%; animation: import-work-spin .9s linear infinite; }
+#itineraryWorkPanel.is-running #itineraryImportStatus { margin: 14px 0; color: #3e5842; line-height: 1.7; }
+.import-work-track { height: 5px; overflow: hidden; border-radius: 8px; background: #dce5d5; }
+.import-work-track span { display: block; width: 35%; height: 100%; border-radius: inherit; background: #58745d; animation: import-work-scan 2s ease-in-out infinite; }
+#itineraryWorkHint { margin: 12px 0 16px; color: #52634e; font-size: .8rem; line-height: 1.7; }
+#itineraryWorkPanel #itineraryImportCancel { width: auto; min-height: 44px; margin: 0; padding: 8px 18px; background: transparent; border-color: #a4b49c; color: #3e5842; }
+@keyframes import-work-spin { to { transform: rotate(360deg); } }
+@keyframes import-work-scan { from { transform: translateX(-110%); } to { transform: translateX(390%); } }
+@media (prefers-reduced-motion: reduce) {
+    .import-work-spinner, .import-work-track span { animation: none; }
+    .import-work-track span { width: 100%; opacity: .5; }
+}
 #itineraryImportError { color: var(--danger); border-left: 3px solid var(--danger); padding-left: 12px; }
 #itineraryPreviewSection { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 12px; }
 #itineraryImportPreview { overflow-wrap: anywhere; }
@@ -27,7 +44,16 @@
 #itineraryImportPreview ol { padding: 0 22px 8px 38px; }
 #itineraryImportPreview li { padding: 8px 0; }
 #itineraryImportPreview li p { margin: 4px 0; white-space: pre-wrap; font-size: .9rem; color: var(--text-gray); }
-.import-warning { border-left: 3px solid var(--accent); padding-left: 10px; font-size: .9rem; }
+.import-preview-total { padding: 16px 18px; background: #edf2e7; border-radius: 6px; font-weight: 600; line-height: 1.8; }
+.import-preview-notes { margin: 18px 0; }
+.import-preview-notes h5 { margin: 0 0 12px; font-size: .9rem; color: var(--ink); }
+.import-warning { margin: 10px 0; border-left: 3px solid var(--accent); padding: 12px 16px; background: #fbf6ed; font-size: .9rem; line-height: 1.85; }
+.import-warning p { margin: 0 0 10px; }
+.import-warning p:last-child { margin-bottom: 0; }
+#itineraryImportPreview details > p { line-height: 1.85; margin: 12px 0; }
+#itineraryImportPreview li + li { border-top: 1px solid var(--line); }
+#itineraryImportPreview li strong { display: block; line-height: 1.8; }
+#itineraryImportPreview li p { line-height: 1.85; }
 #itinerarySaveButton { margin-top: 16px; }
 #itineraryCorrections[hidden] { display: none !important; }
 #itineraryCorrections { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 20px; overflow-wrap: anywhere; }
@@ -36,6 +62,8 @@
 .import-correction textarea { width: 100%; min-height: 110px; resize: vertical; font-size: 16px; line-height: 1.6; }
 #itineraryCorrectionRetry { white-space: normal; min-height: 44px; }
 @media (max-width: 600px) {
+    #itineraryWorkPanel.is-running { padding: 16px; }
+    #itineraryWorkElapsed { margin-left: 44px; }
     .trip-library .library-picker { flex-wrap: wrap; }
     .trip-library .library-picker #tripSelect { flex: 1 0 100%; width: 100%; }
     .trip-library .library-picker button { flex: 1; }

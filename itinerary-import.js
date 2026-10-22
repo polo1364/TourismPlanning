@@ -338,6 +338,30 @@ ${JSON.stringify(text)}`;
         return encoded.length / 4 * 3 - (encoded.endsWith('==') ? 2 : encoded.endsWith('=') ? 1 : 0);
     }
     function status(text) { $('itineraryImportStatus').textContent = text; }
+    function startProgress(task, phase) {
+        const codex = phase === 'codex';
+        const started = performance.now();
+        $('itineraryWorkPanel').classList.add('is-running');
+        $('itineraryWorkHeading').hidden = false;
+        $('itineraryWorkActivity').hidden = false;
+        $('itineraryWorkTitle').textContent = codex ? 'Codex 正在讀取並整合' : '正在準備行程檔案';
+        const tick = () => {
+            const seconds = Math.floor((performance.now() - started) / 1000);
+            $('itineraryWorkElapsed').textContent = `已等待 ${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+            $('itineraryWorkHint').textContent = codex
+                ? seconds >= 60 ? '尚未收到 Codex 回覆，請保持此頁開啟；也可取消後重試，已準備的來源與補充仍保留。' : '正在等待 Codex 回覆，完成後會自動顯示預覽。請保持此頁開啟。'
+                : '正在本機讀取文字與準備圖片／PDF 頁面，尚未傳送至 Codex。';
+        };
+        tick();
+        task.progressTimer = setInterval(tick, 1000);
+        requestAnimationFrame(() => { if (pending === task) $('itineraryWorkPanel').scrollIntoView({ block: 'nearest' }); });
+    }
+    function stopProgress(task) {
+        clearInterval(task.progressTimer);
+        $('itineraryWorkPanel').classList.remove('is-running');
+        $('itineraryWorkHeading').hidden = true;
+        $('itineraryWorkActivity').hidden = true;
+    }
     function error(text = '') { $('itineraryImportError').textContent = text; $('itineraryImportError').hidden = !text; }
     function invalidate() {
         candidate = null;
@@ -362,13 +386,14 @@ ${JSON.stringify(text)}`;
     function cancel() {
         if (!pending) return;
         const task = pending;
+        stopProgress(task);
         pending = null;
         task.controller.abort();
         setBusy(false);
         status('已取消處理，現有旅程未變更。');
         syncControls();
     }
-    async function run(work) {
+    async function run(work, phase = 'files') {
         if (isBusy || pending) return;
         error();
         const task = { controller: new AbortController() };
@@ -378,6 +403,7 @@ ${JSON.stringify(text)}`;
         $('itineraryImportClose').disabled = false;
         $('itineraryImportCancel').hidden = false;
         $('itineraryImportCancel').disabled = false;
+        startProgress(task, phase);
         try { await work(task.controller.signal, () => pending === task); }
         catch (err) {
             if (pending === task) {
@@ -386,7 +412,7 @@ ${JSON.stringify(text)}`;
                 if (!$('itineraryCorrections').hidden) $('itineraryCorrections').scrollIntoView({ block: 'nearest' });
             }
         } finally {
-            if (pending === task) { pending = null; setBusy(false); syncControls(); persistDraft(); }
+            if (pending === task) { stopProgress(task); pending = null; setBusy(false); syncControls(); persistDraft(); }
         }
     }
     async function readFile() {
@@ -499,13 +525,20 @@ ${JSON.stringify(text)}`;
         const panel = $('itineraryImportPreview');
         panel.replaceChildren();
         addText(panel, 'p', `${value.city || '未標示目的地'} · ${value.days.length} 天 · ${value.days.reduce((sum, day) => sum + day.itinerary.length, 0)} 個活動${value.mergedCount > 0 ? ` · 已合併 ${value.mergedCount} 個重複活動` : ''}`, 'import-preview-total');
-        for (const warning of value.warnings) addText(panel, 'p', warning, 'import-warning');
+        if (value.warnings.length) {
+            const notes = addText(panel, 'section', '', 'import-preview-notes');
+            addText(notes, 'h5', `需核對事項 · ${value.warnings.length} 則`);
+            for (const warning of value.warnings) {
+                const note = addText(notes, 'div', '', 'import-warning');
+                for (const line of warning.split(/\r?\n+|(?<=[。；！？])\s*/u).filter(line => line.trim())) addText(note, 'p', line);
+            }
+        }
         value.days.forEach((day, index) => {
             const details = document.createElement('details');
             details.open = index === 0;
             panel.append(details);
             addText(details, 'summary', `${day.date}${value.provisionalDates?.includes(day.date) ? '（暫定）' : ''} · ${day.day_title}`);
-            if (day.summary) addText(details, 'p', day.summary);
+            for (const line of (day.summary || '').split(/\r?\n+|(?<=[。；！？])\s*/u).filter(line => line.trim())) addText(details, 'p', line);
             const list = document.createElement('ol');
             details.append(list);
             for (const item of day.itinerary) {
@@ -539,7 +572,7 @@ ${JSON.stringify(text)}`;
             renderPreview(candidate);
             status(candidate.warnings.length ? '整理結果有待核對事項，請先閱讀下方提醒並對照來源，再決定是否另存。' : '整理完成，請核對下方行程，再另存為新旅程。');
             $('itineraryPreviewSection').scrollIntoView({ block: 'nearest' });
-        });
+        }, 'codex');
     }
     function save() {
         if (isBusy || !candidate || candidateInput !== signature()) return;
@@ -574,8 +607,13 @@ ${JSON.stringify(text)}`;
             <button type="button" id="itineraryAddCorrection" class="btn-outline" disabled>手動補充日期或辨識內容</button>
             <p id="itineraryPrivacy" class="field-hint"></p>
             <p id="itineraryCodexNotice" class="field-hint" hidden>公開版無法直接使用 Codex 額度。請開啟<a href="https://roam-161-33-192-81.sslip.io/" target="_blank" rel="noopener noreferrer">私人正式站（需登入）</a>，或依<a href="https://github.com/polo1364/TourismPlanning#使用-codex-額度本機個人版" target="_blank" rel="noopener noreferrer">本機啟動說明</a>開啟。不同網站的已選檔案不會自動帶入。</p>
-            <div class="import-actions"><button type="button" id="itineraryParseButton" class="btn-primary" disabled>使用 Codex 額度讀取並整合</button><button type="button" id="itineraryImportSettings" class="btn-outline">連線與模型設定</button><button type="button" id="itineraryImportCancel" class="btn-outline" hidden>取消處理</button></div>
-            <p id="itineraryImportStatus" role="status" aria-live="polite">選擇檔案或貼上文字開始。</p><p id="itineraryImportError" role="alert" hidden></p>
+            <div class="import-actions"><button type="button" id="itineraryParseButton" class="btn-primary" disabled>使用 Codex 額度讀取並整合</button><button type="button" id="itineraryImportSettings" class="btn-outline">連線與模型設定</button></div>
+            <div id="itineraryWorkPanel">
+                <div id="itineraryWorkHeading" hidden><span class="import-work-spinner" aria-hidden="true"></span><strong id="itineraryWorkTitle"></strong><span id="itineraryWorkElapsed" aria-live="off"></span></div>
+                <p id="itineraryImportStatus" role="status" aria-live="polite">選擇檔案或貼上文字開始。</p>
+                <div id="itineraryWorkActivity" hidden><div class="import-work-track" role="progressbar" aria-label="正在處理，完成比例尚未提供"><span></span></div><p id="itineraryWorkHint"></p></div>
+                <button type="button" id="itineraryImportCancel" class="btn-outline" hidden>取消處理</button>
+            </div><p id="itineraryImportError" role="alert" hidden></p>
             <section id="itineraryCorrections" hidden aria-labelledby="itineraryCorrectionTitle"><h4 id="itineraryCorrectionTitle">直接補上看不清楚的內容</h4><p class="field-hint">已選附件仍保留，不必重新選檔。請依下方位置補上正確文字，再交給 Codex 重新整合所有來源。每處最多 4,000 字，合計 10,000 字；補充內容會保留在新旅程的核對事項。</p><div id="itineraryCorrectionFields"></div><button type="button" id="itineraryCorrectionRetry" class="btn-primary" disabled>套用補充，使用 Codex 重新整合</button><p class="field-hint">補充與附件會自動保存；下次開啟此網站可繼續整合，不必重新選檔。另存為旅程後草稿仍保留，可按「清除本次來源」移除。</p></section>
             <section id="itineraryPreviewSection" hidden aria-labelledby="itineraryPreviewTitle"><h4 id="itineraryPreviewTitle">3. 確認行程預覽</h4><p class="field-hint">AI 可能誤讀日期或活動，請對照原文核對。要修正內容，可修改上方文字再整理；另存後也能逐站編輯。</p><div id="itineraryImportPreview"></div><label for="itineraryImportName">新旅程名稱</label><input type="text" id="itineraryImportName" maxlength="80" value="匯入的旅程"><button type="button" id="itinerarySaveButton" class="btn-primary" disabled>另存為新旅程</button></section>
         </div></div>`);

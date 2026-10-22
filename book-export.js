@@ -105,7 +105,12 @@ a{color:var(--card-blue)}:focus-visible{outline-color:var(--seal)}
 .bound .manual-details{break-before:auto;margin-top:30px}
 .bound .manual-overview .chapter-budget{margin-top:16px;padding:12px 14px;border:1px dashed var(--card-dash);background:#fffaf0}
 .manual-overview .chapter-intro{font-size:16px;line-height:1.95}
-.manual-overview .chapter-intro::first-letter{float:left;margin:6px 8px 0 0;font-family:var(--kai);font-size:2.2em;line-height:1;color:#a8261d}
+.manual-overview .chapter-intro{font-family:system-ui,sans-serif;font-size:15px;line-height:1.9;overflow-wrap:anywhere}
+.summary-overview{margin:18px 0;padding:14px 16px;background:#f4f1e6;border-left:3px solid #a9b59e}
+.summary-overview h4,.summary-review h4{font:600 14px/1.6 system-ui,sans-serif;margin:0 0 12px;color:#52634e;break-after:avoid}
+.summary-overview p,.summary-review-copy p{margin:0 0 12px;orphans:2;widows:2}
+.summary-review{margin-top:26px;border-top:1px solid #cfc7b5;padding-top:18px;font:14px/1.95 system-ui,sans-serif;overflow-wrap:anywhere}
+.summary-review-copy p{padding-bottom:12px;border-bottom:1px solid #e7e0d2}
 .bound .chapter-facts{display:flex;flex-wrap:wrap;gap:6px 8px;margin:4px 0 10px}.bound .chapter-facts>span,.bound .day-cost-badge,.bound .weather-badge{padding:1px 10px;border:1px dashed var(--card-dash);border-radius:999px;color:var(--card-muted);margin:0 6px 6px 0}.bound .chapter-facts>span .day-cost-badge,.bound .chapter-facts>span .weather-badge{border:0;padding:0;margin:0}
 .schedule{border-top:0;margin:4px 0 18px}.schedule-head{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .schedule-row{grid-template-columns:56px minmax(0,1fr) auto;align-items:baseline;gap:10px;padding:7px 2px;border-bottom:0}
@@ -557,6 +562,12 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
             details.querySelector('summary')?.remove();
             route.innerHTML = details.innerHTML; details.replaceWith(route);
         });
+        const review = copy.querySelector('.summary-review');
+        let reviewHtml = '';
+        if (review) {
+            reviewHtml = `<section class="summary-review"><h4>匯入核對事項 · 日期與來源補充</h4>${review.querySelector('.summary-review-copy').outerHTML}</section>`;
+            review.remove();
+        }
         const intro = copy.querySelector('.chapter-intro').outerHTML;
         const budget = copy.querySelector('.chapter-budget').outerHTML;
         const actions = copy.querySelector('.day-actions').outerHTML;
@@ -567,7 +578,7 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
 <div class="journal-hero${hero ? ' has-itinerary-art' : ''}">${hero ? `<img class="hero-art" src="${hero.dataUrl}" width="${hero.width}" height="${hero.height}" alt="${escapeHtml(hero.caption)}・AI 行程示意圖">` : '<span class="hero-art" role="img" aria-label="旅行意象插畫，非景點實拍"></span>'}${part('.day-number')}${part('.day-summary')}<small class="hero-cap">${hero ? 'AI 行程示意圖' : '旅行意象插畫 · 非景點實拍'}</small></div>
 <div class="journal-meta">${part('.day-date')}${part('.chapter-facts')}${part('.day-cost-badge')}${part('.weather-badge')}</div></header>
 <h3 class="manual-heading">今日路線</h3>${route.outerHTML}${actions}${intro}${budget}</section>
-<section class="manual-details"><p class="manual-kicker">行程詳解 / 旅途備忘</p><h3 class="manual-heading">各站安排</h3>${stops.outerHTML}<p class="day-end" aria-hidden="true">— 第 ${index + 1} 天 · 完 —</p></section></article>`;
+<section class="manual-details"><p class="manual-kicker">行程詳解 / 旅途備忘</p><h3 class="manual-heading">各站安排</h3>${stops.outerHTML}${reviewHtml}<p class="day-end" aria-hidden="true">— 第 ${index + 1} 天 · 完 —</p></section></article>`;
     }
 
     function coverArt() {

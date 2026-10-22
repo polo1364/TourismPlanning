@@ -2214,6 +2214,16 @@
             return `<aside class="stop-note" aria-label="我的便利貼"><div class="stop-note-heading"><strong>我的便利貼</strong>${edit}</div><p class="stop-note-text">${escapeHtml(item.userNote)}</p></aside>`;
         }
 
+        function renderDaySummary(day) {
+            const text = String(day.summary || '');
+            const parts = text.split(/(?:^|\n)匯入核對事項(?:\n|$)/);
+            const paragraphs = value => value.split(/\r?\n+|(?<=[。；！？])\s*/u).map(line => line.trim()).filter(Boolean)
+                .map(line => `<p>${highlightPlaceNames(line, day)}</p>`).join('');
+            const overview = paragraphs(parts.shift());
+            const review = parts.join('\n');
+            return `<div class="chapter-intro">${overview ? `<section class="summary-overview"><h4>行程摘要</h4>${overview}</section>` : ''}${review ? `<details class="summary-review"><summary>匯入核對事項<span>日期、來源與補充說明 · 展開閱讀</span></summary><div class="summary-review-copy">${paragraphs(review)}</div></details>` : ''}</div>`;
+        }
+
         function highlightPlaceNames(value, day) {
             const text = String(value || '');
             const names = new Map();
@@ -3816,7 +3826,7 @@ Output strictly in Traditional Chinese (Taiwan).
                     </summary>
                     <div class="day-content">
                         <section class="chapter-context" aria-label="當日概覽與費用說明">
-                            <div class="chapter-overview"><h3>今日行程</h3>${scheduleHtml}<p class="chapter-intro">${highlightPlaceNames(day.summary, day)}</p></div>
+                            <div class="chapter-overview"><h3>今日行程</h3>${scheduleHtml}${renderDaySummary(day)}</div>
                             <div class="chapter-budget"><h3>費用說明</h3>${costNote}</div>
                         </section>
                         <table class="itinerary-table">
