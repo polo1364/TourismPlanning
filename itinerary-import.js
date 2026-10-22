@@ -1,6 +1,7 @@
 (function (root) {
     'use strict';
     const MAX_TEXT = 30000;
+    const MAX_FILES = 50;
     const MAX_IMAGES = 60;
     const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
     function validDate(value) {
@@ -285,7 +286,7 @@ ${JSON.stringify(text)}`;
                 if (!Array.isArray(form.fields) || form.fields.length !== draftFields.length || form.fields.some(value => typeof value !== 'string')
                     || !Array.isArray(form.corrections) || !Number.isSafeInteger(form.sourceRevision)) throw new Error('Invalid draft');
                 const files = sources?.files || [], images = sources?.images || [], originals = sources?.originals || [];
-                if (!Array.isArray(files) || files.length > 10 || files.some(file => typeof file !== 'string')
+                if (!Array.isArray(files) || files.length > MAX_FILES || files.some(file => typeof file !== 'string')
                     || !Array.isArray(images) || images.length > MAX_IMAGES || images.reduce((sum, image) => sum + imageBytes(image), 0) > MAX_IMAGE_BYTES
                     || !Array.isArray(originals) || originals.length !== files.length || originals.some(file => !(file instanceof Blob))) throw new Error('Invalid sources');
                 correctionData(form.corrections.map(([index, entry]) => ({ index, text: entry.text })), images);
@@ -373,7 +374,7 @@ ${JSON.stringify(text)}`;
         $('itinerarySourceFile').value = '';
         if (!files.length || isBusy) return;
         await run(async (signal, current) => {
-            if (files.length + sourceFiles.length > 10) throw new Error('一次旅程最多讀取 10 個檔案；請先清除來源，或分成多份旅程。');
+            if (files.length + sourceFiles.length > MAX_FILES) throw new Error(`一次旅程最多讀取 ${MAX_FILES} 個檔案；本批檔案尚未加入，先前來源與補充已保留。請減少檔案後重試。`);
             if (files.some(file => !file.name.trim() || file.name.length > 200 || /[\\/:\x00-\x1f\x7f]/.test(file.name) || /^\.{1,2}$/.test(file.name))) throw new Error('檔名須為 1 至 200 字，且不能包含斜線、冒號或控制字元；請重新命名後選取。本批檔案尚未加入，先前內容已保留。');
             let combined = $('itinerarySourceText').value;
             const added = [];
@@ -544,7 +545,7 @@ ${JSON.stringify(text)}`;
             <div class="editor-heading"><div><div class="eyebrow">FROM YOUR FILES</div><h3 id="itineraryImportTitle">讀取行程檔案</h3></div><button type="button" id="itineraryImportClose" class="modal-close" aria-label="關閉行程匯入">×</button></div>
             <p class="field-hint">把多份行程整合成一本旅遊書，依日期合併重複活動，確認後新增一份旅程。原有旅程會保留。</p>
             <label for="itinerarySourceFile">1. 選擇行程檔案（可多選、繼續加入）</label><input type="file" id="itinerarySourceFile" multiple accept=".pdf,.txt,.md,.markdown,.png,.jpg,.jpeg,.webp,application/pdf,text/plain,text/markdown,image/png,image/jpeg,image/webp" aria-describedby="itineraryFileHelp">
-            <p id="itineraryFileHelp" class="field-hint">PDF、TXT、Markdown 與 PNG／JPG／JPEG／WebP 圖片可混選。最多 10 個檔案，每檔 8 MiB、合計 30,000 字元；每份 PDF 最多 60 頁，圖片最多 2400 萬像素。文字版、掃描版及混合 PDF 都可直接加入；合計最多 60 張圖片／PDF 頁圖、20 MiB 圖片資料。多頁準備或 Codex 讀取可能較久，可取消。HEIC 請先轉 JPG，加密 PDF 須先解密。</p>
+            <p id="itineraryFileHelp" class="field-hint">PDF、TXT、Markdown 與 PNG／JPG／JPEG／WebP 圖片可混選。最多 ${MAX_FILES} 個檔案，每檔 8 MiB、合計 30,000 字元；每份 PDF 最多 60 頁，圖片最多 2400 萬像素。文字版、掃描版及混合 PDF 都可直接加入；合計最多 60 張圖片／PDF 頁圖、20 MiB 圖片資料。多頁準備或 Codex 讀取可能較久，可取消。HEIC 請先轉 JPG，加密 PDF 須先解密。</p>
             <p id="itineraryFileInfo" class="field-hint"></p><p id="itineraryDraftStatus" class="field-hint" role="status" aria-live="polite"></p><p class="field-hint">草稿包含原檔與補充，只保存在此裝置、此瀏覽器與此網站。清除網站資料或無痕模式可能使草稿消失；請保留原始檔案。離開前請確認顯示「草稿已儲存」。</p>
             <button type="button" id="itineraryClearFiles" class="btn-outline">清除本次來源</button>
             <label for="itinerarySourceText">2. 核對文字或補充說明（圖片可直接送讀）</label><textarea id="itinerarySourceText" rows="8" spellcheck="false" placeholder="TXT 與 PDF 原生文字會顯示在這裡。掃描頁與圖片由 Codex 在送出後讀取，不需要先辨識成文字；可補充行程說明。"></textarea>

@@ -267,7 +267,7 @@ def main():
                     source_file("第一份.txt", TEXT.encode("utf-8"))
                     record_check("same file can be selected again after clearing", "大稻埕" in page.locator("#itinerarySourceText").input_value())
                     before_files = page.locator("#itinerarySourceText").input_value()
-                    page.locator("#itinerarySourceFile").set_input_files([{"name": f"第{i}份.txt", "mimeType": "text/plain", "buffer": b"day 1"} for i in range(11)])
+                    page.locator("#itinerarySourceFile").set_input_files([{"name": f"第{i}份.txt", "mimeType": "text/plain", "buffer": b"day 1"} for i in range(50)])
                     page.wait_for_function("!isBusy && !!document.getElementById('itineraryImportError').textContent.trim()")
                     record_check("file-count limit rejects entire selection", page.locator("#itinerarySourceText").input_value() == before_files)
                     page.locator('#itineraryClearFiles').click()
