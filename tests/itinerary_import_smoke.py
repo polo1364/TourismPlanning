@@ -6,6 +6,7 @@ Run: python tests/itinerary_import_smoke.py
 from __future__ import annotations
 
 import json
+import base64
 import sys
 import threading
 import traceback
@@ -48,22 +49,44 @@ class ImportNetwork(Network):
     def __init__(self):
         super().__init__()
         self.result = response()
+        self.ocr_requests = []
+        self.deepseek_requests = []
+
+    @staticmethod
+    def cors(route):
+        return {'Access-Control-Allow-Origin': route.request.headers.get('origin', '*'), 'Access-Control-Allow-Headers': 'Content-Type, X-Roam-Token'}
 
     def route(self, route):
-        if urlparse(route.request.url).hostname != "api.deepseek.com":
+        url = urlparse(route.request.url)
+        if '/vendor/tesseract/' in url.path:
+            self.ocr_requests.append(route.request.url)
+            return route.abort()
+        if url.hostname == "api.deepseek.com":
+            self.deepseek_requests.append(route.request.url)
+            return route.abort()
+        if url.hostname != "127.0.0.1" or url.port != 8081:
             return super().route(route)
+        headers = self.cors(route)
+        if route.request.method == 'OPTIONS':
+            return route.fulfill(status=204, headers=headers)
+        if url.path == '/status':
+            return route.fulfill(status=200, headers=headers, content_type='application/json', body=json.dumps({'ready': True, 'auth': 'chatgpt', 'token': 'mock-import-token'}))
+        if url.path == '/usage':
+            return route.fulfill(status=200, headers=headers, content_type='application/json', body=json.dumps({'available': False, 'limits': [], 'models': []}))
+        if url.path != '/import-itinerary' or route.request.method != 'POST':
+            return route.abort()
         self.ai_requests.append(route.request.post_data_json)
-        payload = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(self.result, ensure_ascii=False)}}]}
+        payload = {'data': self.result, 'usage': {'inputTokens': 10, 'outputTokens': 10, 'totalTokens': 20}}
         if self.hold_ai:
             self.pending.append((route, payload))
             return
-        return route.fulfill(status=200, content_type="application/json", body=json.dumps(payload))
+        return route.fulfill(status=200, headers=headers, content_type="application/json", body=json.dumps(payload))
 
     def release(self):
         pending, self.pending = self.pending, []
         for route, payload in pending:
             try:
-                route.fulfill(status=200, content_type="application/json", body=json.dumps(payload))
+                route.fulfill(status=200, headers=self.cors(route), content_type="application/json", body=json.dumps(payload))
             except Exception:
                 # AbortSignal may have already closed the request.
                 pass
@@ -74,12 +97,18 @@ def fixture_pdfs(browser):
     page.set_content("<h1>Taipei itinerary</h1><p>2026-11-10</p><p>09:00 Dadaocheng</p><p>12:00 Lunch</p>")
     text_pdf = ARTIFACTS / "itinerary-source-text.pdf"
     page.pdf(path=str(text_pdf), format="A4")
+    # Blank and scanned pages are sent as images; Codex decides if they contain an itinerary.
+    page.set_content('<html><body></body></html>')
+    blank_pdf = ARTIFACTS / "itinerary-source-blank.pdf"
+    page.pdf(path=str(blank_pdf), format="A4", print_background=True)
     page.set_content('<canvas id="scan" width="600" height="300"></canvas>')
-    page.evaluate("""() => {const c=document.querySelector('canvas').getContext('2d');c.fillStyle='white';c.fillRect(0,0,600,300);c.fillStyle='black';c.font='28px sans-serif';c.fillText('Scanned itinerary image 2026-11-10',20,60);} """)
+    page.evaluate("""() => {const c=document.querySelector('canvas').getContext('2d');c.fillStyle='white';c.fillRect(0,0,600,300);c.fillStyle='black';c.font='28px sans-serif';c.fillText('2026-11-10 09:00 Taipei scan',20,60);} """)
+    image_png = ARTIFACTS / "itinerary-source-image.png"
+    page.locator('canvas').screenshot(path=str(image_png))
     scan_pdf = ARTIFACTS / "itinerary-source-scan.pdf"
     page.pdf(path=str(scan_pdf), format="A4", print_background=True)
     page.close()
-    return text_pdf, scan_pdf
+    return text_pdf, blank_pdf, image_png, scan_pdf
 
 
 def main():
@@ -97,13 +126,13 @@ def main():
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()
-            text_pdf, scan_pdf = fixture_pdfs(browser)
+            text_pdf, blank_pdf, image_png, scan_pdf = fixture_pdfs(browser)
             for label, width in [("desktop", 1440), ("mobile", 390)]:
                 context = browser.new_context(viewport={"width": width, "height": 950}, timezone_id="Asia/Taipei")
                 network = ImportNetwork()
                 context.route("**/*", network.route)
                 legacy = {"i": {"city": "台北", "hasHotel": False, "flightArrival": START + "T08:00", "flightDeparture": START + "T20:00"}, "t": [sample_day()], "g": None}
-                context.add_init_script("""sessionStorage.setItem('deepseekApiKey','mock-not-a-real-key');localStorage.setItem('roamReadingMode','continuous');if(!localStorage.importSeeded){const d=SEED;localStorage.setItem('tripDraft_v27',JSON.stringify(d.i));localStorage.setItem('myTrip_v27',JSON.stringify(d.t));localStorage.importSeeded='yes';}""".replace("SEED", json.dumps(legacy, ensure_ascii=False)))
+                context.add_init_script("""localStorage.setItem('aiProvider','deepseek');localStorage.setItem('roamReadingMode','continuous');if(!localStorage.importSeeded){const d=SEED;localStorage.setItem('tripDraft_v27',JSON.stringify(d.i));localStorage.setItem('myTrip_v27',JSON.stringify(d.t));localStorage.importSeeded='yes';}""".replace("SEED", json.dumps(legacy, ensure_ascii=False)))
                 page = context.new_page()
                 page.set_default_timeout(15000)
                 errors = []
@@ -145,9 +174,10 @@ def main():
                     record_check("seed retains an Undo checkpoint", bool(original["undo"]))
                     record_check("JSON backup picker remains separate", page.locator("#importFile").get_attribute("accept") == ".json,application/json")
                     open_import()
-                    source_file("行程.txt", TEXT.encode("utf-8"))
+                    source_file('a' * 196 + '.txt', TEXT.encode("utf-8"))
                     page.wait_for_function("document.getElementById('itinerarySourceText').value.includes('大稻埕')")
                     record_check("UTF-8 TXT extracted locally", "2026-11-10" in page.locator("#itinerarySourceText").input_value() and len(network.ai_requests) == 0)
+                    record_check('200-character filename is accepted', 'a' * 196 + '.txt' in page.locator('#itineraryFileInfo').text_content())
                     record_check("extraction does not mutate saved trips", saved_state() == original_state)
                     source_file("行程.md", ("# 行程\n" + TEXT).encode("utf-8"), "text/markdown")
                     record_check("Markdown extracted", "# 行程" in page.locator("#itinerarySourceText").input_value())
@@ -158,10 +188,15 @@ def main():
                     record_check("real PDF.js reads selectable PDF text", "2026-11-10" in page.locator("#itinerarySourceText").input_value())
                     record_check("file picker supports selecting multiple files", page.locator("#itinerarySourceFile").get_attribute("multiple") is not None)
                     page.locator("#itineraryClearFiles").click()
+                    source_file("只有圖片.png", image_png.read_bytes(), "image/png")
+                    record_check("image-only input can be submitted without local OCR", page.locator("#itinerarySourceText").input_value() == '' and page.locator("#itineraryParseButton").is_enabled() and not network.ocr_requests and not network.ai_requests)
+                    page.locator("#itineraryClearFiles").click()
                     multi = [
                         {"name": "第一份.txt", "mimeType": "text/plain", "buffer": (TEXT + "\nTXT來源標記").encode("utf-8")},
                         {"name": "第二份.md", "mimeType": "text/markdown", "buffer": "# Markdown來源標記\n2026-11-11 台北植物園".encode("utf-8")},
                         {"name": "第三份.pdf", "mimeType": "application/pdf", "buffer": text_pdf.read_bytes()},
+                        {"name": "第四份.png", "mimeType": "image/png", "buffer": image_png.read_bytes()},
+                        {"name": "第五份掃描.pdf", "mimeType": "application/pdf", "buffer": scan_pdf.read_bytes()},
                     ]
                     page.locator("#itinerarySourceFile").set_input_files(multi)
                     page.wait_for_function("!isBusy && document.getElementById('itinerarySourceText').value.includes('Dadaocheng')", timeout=30000)
@@ -170,13 +205,16 @@ def main():
                     source_file("補充.txt", "追加來源標記：記得帶雨傘".encode("utf-8"))
                     merged = page.locator("#itinerarySourceText").input_value()
                     record_check("later file selection appends previous sources", all(marker in merged for marker in ["TXT來源標記", "Markdown來源標記", "Dadaocheng", "追加來源標記"]))
-                    record_check("reading multiple files is local and never writes trips", len(network.ai_requests) == 0 and saved_state() == original_state)
+                    record_check("reading multiple files is local and never writes trips", len(network.ai_requests) == 0 and not network.ocr_requests and saved_state() == original_state)
                     page.evaluate("() => {window.scrollTo(0,0);document.getElementById('itineraryImportModal').scrollTop=0;}")
                     source_shot = ARTIFACTS / f"itinerary-import-source-{label}.png"
                     page.screenshot(path=str(source_shot)); screenshots.append(str(source_shot))
                     ready_preview(keep_source=True)
-                    prompt = network.ai_requests[-1]["messages"][-1]["content"]
+                    prompt = network.ai_requests[-1]["prompt"]
                     record_check("AI receives all selected and appended files", all(marker in prompt for marker in ["TXT來源標記", "Markdown來源標記", "Dadaocheng", "追加來源標記"]))
+                    images = network.ai_requests[-1]['images']
+                    record_check("all image and scanned PDF attachments share one Codex request", len(network.ai_requests) == 1 and [image['name'] for image in images] == ['第四份.png', '第五份掃描.pdf'] and all(image['dataBase64'] and image['page'] == 1 for image in images) and all(name in prompt for name in ['第四份.png', '第五份掃描.pdf']))
+                    record_check("import always uses Codex without altering the global provider", page.evaluate("!CodexLocal.selected() && localStorage.aiProvider==='deepseek'") and not network.deepseek_requests)
                     preview_before = page.locator("#itineraryImportPreview").text_content()
                     page.locator("#itinerarySourceFile").set_input_files([
                         {"name": "不應部分加入.txt", "mimeType": "text/plain", "buffer": "這份不能部分寫入".encode("utf-8")},
@@ -185,6 +223,30 @@ def main():
                     page.wait_for_function("!isBusy && !!document.getElementById('itineraryImportError').textContent.trim()")
                     record_check("failed batch keeps all earlier source and preview", page.locator("#itinerarySourceText").input_value() == merged and page.locator("#itineraryImportPreview").text_content() == preview_before and page.locator("#itinerarySaveButton").is_enabled())
                     record_check("failed batch identifies offending filename", "本批毀損.pdf" in page.locator("#itineraryImportError").inner_text())
+                    info_before = page.locator('#itineraryFileInfo').text_content()
+                    page.evaluate("""() => {window.importOriginalReader=ItineraryFile;window.importReaderCalls=0;window.ItineraryFile={...ItineraryFile,read:(...args)=>{window.importReaderCalls++;return window.importOriginalReader.read(...args);}};} """)
+                    page.locator('#itinerarySourceFile').set_input_files([
+                        {'name': '不可先讀的正常檔.txt', 'mimeType': 'text/plain', 'buffer': b'first file'},
+                        {'name': 'a' * 197 + '.txt', 'mimeType': 'text/plain', 'buffer': b'too long'},
+                    ])
+                    page.wait_for_function("!isBusy && document.getElementById('itineraryImportError').textContent.includes('200')")
+                    page.evaluate('() => {window.ItineraryFile=window.importOriginalReader;delete window.importOriginalReader;}')
+                    record_check('201-character filename rejects the entire batch before reading', page.evaluate('window.importReaderCalls === 0') and page.locator('#itinerarySourceText').input_value() == merged and page.locator('#itineraryFileInfo').text_content() == info_before and page.locator('#itineraryImportPreview').text_content() == preview_before and page.locator('#itinerarySaveButton').is_enabled() and saved_state() == original_state)
+                    for boundary in ['count', 'bytes']:
+                        page.evaluate("""kind => {window.importOriginalReader=ItineraryFile;const dataBase64=kind==='bytes'?'A'.repeat(2796200):'AAAA';window.ItineraryFile={...ItineraryFile,read:async()=>({text:'不應加入的附件文字',format:'pdf',pages:1,warnings:[],images:Array.from({length:kind==='bytes'?11:59},()=>({mime:'image/png',page:1,dataBase64}))})};} """, boundary)
+                        source_file('附件超限.pdf', b'%PDF mock', 'application/pdf')
+                        page.wait_for_function("!isBusy && document.getElementById('itineraryImportError').textContent.includes('20 MiB')")
+                        page.evaluate('() => {window.ItineraryFile=window.importOriginalReader;delete window.importOriginalReader;}')
+                        record_check(f"aggregate image {boundary} limit preserves earlier source and candidate", page.locator('#itinerarySourceText').input_value() == merged and page.locator('#itineraryFileInfo').text_content() == info_before and page.locator('#itineraryImportPreview').text_content() == preview_before and page.locator('#itinerarySaveButton').is_enabled())
+                    page.evaluate("""() => {window.importOriginalReader=ItineraryFile;window.importLateReadResolved=false;window.ItineraryFile={...ItineraryFile,read:()=>new Promise(resolve=>{window.importReleaseReader=()=>resolve({text:'取消後不得加入',format:'image',pages:null,warnings:[],images:[{mime:'image/png',page:1,dataBase64:'AAAA'}]});}).then(result=>{window.importLateReadResolved=true;return result;})};} """)
+                    page.locator('#itinerarySourceFile').set_input_files({'name': '取消的圖片.png', 'mimeType': 'image/png', 'buffer': image_png.read_bytes()})
+                    page.wait_for_function('isBusy')
+                    page.locator('#itineraryImportCancel').click()
+                    page.evaluate('() => {window.importReleaseReader();window.ItineraryFile=window.importOriginalReader;delete window.importOriginalReader;}')
+                    page.wait_for_function('!isBusy && window.importLateReadResolved')
+                    record_check('cancelled preparation discards late attachments and keeps source preview', page.locator('#itinerarySourceText').input_value() == merged and page.locator('#itineraryFileInfo').text_content() == info_before and page.locator('#itineraryImportPreview').text_content() == preview_before and page.locator('#itinerarySaveButton').is_enabled() and saved_state() == original_state)
+                    ready_preview(keep_source=True)
+                    record_check('failed attachment batches leave original images available', [image['name'] for image in network.ai_requests[-1]['images']] == ['第四份.png', '第五份掃描.pdf'])
                     page.locator("#itinerarySourceText").fill("原文" * 14500)
                     before_limit = page.locator("#itinerarySourceText").input_value()
                     source_file("合併超限.txt", ("追加" * 1000).encode("utf-8"))
@@ -192,15 +254,31 @@ def main():
                     record_check("merged text limit rejects without truncating source", page.locator("#itinerarySourceText").input_value() == before_limit)
                     page.locator("#itineraryClearFiles").click()
                     record_check("clear resets source and preview without changing trips", page.locator("#itinerarySourceText").input_value() == "" and page.locator("#itinerarySaveButton").is_disabled() and saved_state() == original_state)
+                    page.evaluate("""dataBase64 => {window.importOriginalReader=ItineraryFile;window.ItineraryFile={...ItineraryFile,read:async()=>({text:'',format:'pdf',pages:60,warnings:[],images:Array.from({length:60},(_,i)=>({mime:'image/png',page:i+1,dataBase64}))})};} """, base64.b64encode(image_png.read_bytes()).decode('ascii'))
+                    source_file('旅' * 196 + '.pdf', b'%PDF prepared fixture', 'application/pdf')
+                    page.evaluate('() => {window.ItineraryFile=window.importOriginalReader;delete window.importOriginalReader;}')
+                    page.locator('#itinerarySourceText').fill('旅' * 30000)
+                    ready_preview(keep_source=True)
+                    large_prompt = network.ai_requests[-1]['prompt']
+                    record_check('30000 Chinese characters with 60 image source names reach Codex despite exceeding old byte cap', len(large_prompt) <= 60000 and len(json.dumps({'prompt': large_prompt}, ensure_ascii=False).encode('utf-8')) > 120000 and len(network.ai_requests[-1]['images']) == 60 and page.locator('#itinerarySaveButton').is_enabled() and saved_state() == original_state)
+                    page.locator('#itineraryClearFiles').click()
                     source_file("第一份.txt", TEXT.encode("utf-8"))
                     record_check("same file can be selected again after clearing", "大稻埕" in page.locator("#itinerarySourceText").input_value())
                     before_files = page.locator("#itinerarySourceText").input_value()
                     page.locator("#itinerarySourceFile").set_input_files([{"name": f"第{i}份.txt", "mimeType": "text/plain", "buffer": b"day 1"} for i in range(11)])
                     page.wait_for_function("!isBusy && !!document.getElementById('itineraryImportError').textContent.trim()")
                     record_check("file-count limit rejects entire selection", page.locator("#itinerarySourceText").input_value() == before_files)
+                    page.locator('#itineraryClearFiles').click()
+                    source_file('全空白.pdf', blank_pdf.read_bytes(), 'application/pdf')
+                    record_check('blank PDF prepares an image without OCR or persistence', page.locator('#itinerarySourceText').input_value() == '' and page.locator('#itineraryParseButton').is_enabled() and not network.ocr_requests and saved_state() == original_state)
+                    network.result = {'error': '來源沒有可讀行程，請提供其他檔案。'}
+                    page.locator('#itineraryParseButton').click()
+                    page.wait_for_function("!isBusy && document.getElementById('itineraryImportError').textContent.includes('沒有可讀行程')")
+                    record_check('Codex empty-document error preserves source attachment and stored journeys', len(network.ai_requests[-1]['images']) == 1 and '全空白.pdf' in page.locator('#itineraryFileInfo').text_content() and page.locator('#itinerarySaveButton').is_disabled() and saved_state() == original_state)
+                    page.locator('#itineraryClearFiles').click()
+                    source_file('第一份.txt', TEXT.encode('utf-8'))
                     local_request_count = len(network.ai_requests)
                     for name, content, mime in [
-                        ("掃描行程.pdf", scan_pdf.read_bytes(), "application/pdf"),
                         ("毀損.pdf", b"%PDF-1.7\nnot a valid document", "application/pdf"),
                         ("empty.txt", b" \n\t", "text/plain"),
                         ("不支援.docx", b"PK mock word document", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
@@ -211,6 +289,7 @@ def main():
                         record_check(name + " rejected without persistence", saved_state() == original_state and page.locator("#itinerarySaveButton").is_disabled())
                     record_check("all file parsing uses no extra AI requests", len(network.ai_requests) == local_request_count)
                     ready_preview()
+                    record_check('clearing sources removes every previous attachment from the request', network.ai_requests[-1]['images'] == [])
                     record_check("AI preview does not persist", saved_state() == original_state)
                     record_check("preview renders source values safely", PAYLOAD in page.locator("#itineraryImportPreview").inner_text() and page.locator("#itineraryImportPreview img").count() == 0 and not page.evaluate("Boolean(window.importXss)"))
                     record_check("preview shows activities", "大稻埕" in page.locator("#itineraryImportPreview").inner_text() and "植物園" in page.locator("#itineraryImportPreview").inner_text())
@@ -316,6 +395,7 @@ def main():
                         page.wait_for_function("!isBusy && !!document.getElementById('itineraryImportError').textContent.trim()")
                         record_check("20-journey limit preserves library", saved_state() == full_state and len(json.loads(full_state)["trips"]) == 20)
                     record_check("no uncaught browser exceptions", not errors)
+                    record_check('no DeepSeek fallback or local OCR requests occur', not network.deepseek_requests and not network.ocr_requests)
                 except Exception as exc:
                     failures.append({"viewport": label, "error": str(exc), "trace": traceback.format_exc(), "page_errors": errors})
                     shot = ARTIFACTS / f"itinerary-import-failure-{label}.png"
@@ -325,7 +405,7 @@ def main():
             browser.close()
     finally:
         server.shutdown()
-    report = {"checks": checks, "failures": failures, "screenshots": screenshots, "passed": not failures and all(c["passed"] for c in checks), "limits": ["AI responses are mocked; no real provider billing or model quality was tested.", "Chromium mobile viewports are emulation, not physical-phone verification.", "PDF fixtures include selectable text and raster-only pages; OCR is not exercised."]}
+    report = {"checks": checks, "failures": failures, "screenshots": screenshots, "passed": not failures and all(c["passed"] for c in checks), "limits": ["Codex import responses are mocked; no real account quota or vision model quality was tested.", "Chromium mobile viewports are emulation, not physical-phone verification.", "PDF and PNG fixtures are prepared as real attachments; no local OCR or DeepSeek requests are allowed."]}
     report_path = ARTIFACTS / "itinerary-import-report.json"
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))

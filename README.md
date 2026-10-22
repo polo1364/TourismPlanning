@@ -4,13 +4,17 @@
 
 ## 讀取多個行程檔案
 
-在「我的旅程」旁按「讀取行程檔案」，可混選 PDF、TXT、Markdown（`.md`／`.markdown`）與行程圖片（PNG／JPG／JPEG／WebP），也可再次選檔追加。各檔文字會標示來源並合併在可編輯的原文區；也支援直接貼上文字。最多 10 個檔案、每檔 8 MiB、每份 PDF 60 頁，合併含來源標記最多 30,000 字元。新一批有任一檔失敗或合併超限時，整批不加入，先前文字與預覽保留。「清除本次來源」只清除匯入視窗內容，不影響已存旅程。PDF 與圖片辨識請透過 HTTP／HTTPS 網站或本機服務開啟（可執行 `啟動Codex旅遊書.vbs`）；直接雙擊 `index.html` 的 `file://` 模式可讀 TXT／Markdown。
+在「我的旅程」旁按「讀取行程檔案」，可混選 PDF、TXT、Markdown（`.md`／`.markdown`）與行程圖片（PNG／JPG／JPEG／WebP），也可再次選檔追加。選檔只在瀏覽器檢查並準備附件，尚不呼叫 AI；TXT／Markdown 與 PDF 原生文字會標示來源，合併至可編輯的文字區，掃描頁與圖片保留為待讀取附件。也支援直接貼上文字，或只有圖片而不填文字。
 
-核對原文後按「整理成行程」，會把所有來源整合為同一份行程，依日期合併重複活動與互補說明。當日已知時間由早到晚排列；時間未知的活動依原順序列於當日最後，並提示補上時間。不同日期的同名景點不會直接合併；同日同名但時間或地址衝突、無法確定是否同一站時，保留候選站點並提示核對。已確認為同站的費用若有不同版本，會在提醒保留來源費用並留空費用欄，不任選金額。預覽的核對事項也會保存至首日摘要。文件只有「第一天」或缺少年份時，請補充完整開始日期；目的地可選填。整理結果最多 15 天，按「另存為新旅程」才寫入收藏，既有旅程、完成標記、復原紀錄及 JSON 備份入口保留。修改原文或補充資料後須重新整理，取消或儲存失敗不會覆蓋原旅程。
+最多 10 個檔案、每檔 8 MiB、每份 PDF 60 頁；合計最多 60 張圖片／PDF 頁圖、20 MiB 圖片資料及 30,000 字元（含文字來源標記）。新一批有任一檔失敗或合併超限時，整批不加入，先前文字、附件與預覽保留。「清除本次來源」只清除匯入視窗內容，不影響已存旅程。圖片與 PDF 頁圖保留於目前分頁記憶體，重新整理後需重新選取。網路較慢時，大批圖片上傳可能逾時；請減少檔案或頁面後重試，原旅程不變。
 
-檔案先在瀏覽器本機讀取，不會自動傳送；只有按「整理成行程」才把預覽文字送到目前選用的 Codex／DeepSeek，並使用該服務額度。可先刪除訂位編號或個人資料。AI 仍可能誤讀或合併錯誤，請在另存前核對日期、活動及注意事項。PDF 以本地封裝的 [Mozilla PDF.js](https://mozilla.github.io/pdf.js/) 解析，不依賴第三方 CDN；加密檔須先解密，部分頁面無文字會提示。表格、多欄與特殊字型的抽取順序需人工確認。TXT／Markdown 支援 UTF-8、帶 BOM 的 UTF-16，以及 UTF-8 解碼失敗時嘗試 Big5（會提示核對編碼）。
+按「使用 Codex 額度讀取並整合」，會將全部附件、來源檔名／頁碼及文字一次送給 Codex，由 Codex 讀取並整合為同一份行程。此匯入功能固定使用目前 ChatGPT 登入帳號的 Codex 額度，純文字也一樣，不跟隨其他旅程規劃功能的服務選項；連線或額度失敗時保留來源，不改用 DeepSeek／API Key。
 
-圖片會在此瀏覽器以 OCR 辨識繁體中文與英文；圖片不會因讀取而傳送給 AI。首次辨識需從本站下載辨識元件及語言資料，手機或連續多張圖片可能較久，過程可取消。原圖最多 2400 萬像素、單邊 12,000 像素；辨識時縮至長邊 2,400 像素且最多 400 萬像素，每張辨識最多 120 秒。請使用清晰、端正的圖片，並在文字預覽核對日期、時間、地址與費用；辨識誤字可直接修改。HEIC／HEIF 尚未支援，請先轉存為 JPG 或 PNG。掃描 PDF 不會自動逐頁 OCR，可先將需要的頁面匯出為圖片再混合匯入；Word 仍未支援。
+整合結果依日期合併重複活動與互補說明。當日已知時間由早到晚排列；時間未知的活動依原順序列於當日最後，並提示補上時間。不同日期的同名景點不會直接合併；同日同名但時間或地址衝突、無法確定是否同一站時，保留候選站點並提示核對。已確認為同站的費用若有不同版本，會在提醒保留來源費用並留空費用欄，不任選金額。預覽的核對事項也會保存至首日摘要。文件只有「第一天」或缺少年份時，請補充完整開始日期；目的地可選填。看不清或缺漏的資訊會標示待確認，請核對日期、時間、地址與費用。整理結果最多 15 天，按「另存為新旅程」才寫入收藏，既有旅程、完成標記、復原紀錄及 JSON 備份入口保留。修改來源或補充資料後須重新整理，取消或儲存失敗不會覆蓋原旅程。
+
+本功能需使用 [私人正式站（需登入）](https://roam-161-33-192-81.sslip.io/) 或執行 `啟動Codex旅遊書.vbs` 的本機版，並以 `codex login` 登入 ChatGPT。GitHub Pages 可在本機準備來源，但無 Codex 後端，會提示改開私人站或本機版；已選檔案不會跨網站自動帶入。按送出後，圖片及 PDF 頁圖內容也會傳送至 Codex；請先在原始檔移除訂位編號或個人資料，僅刪除文字區內容不會修改附件。AI 仍可能誤讀或合併錯誤，請在另存前核對。
+
+文字版、掃描版及文字圖片混合的 PDF 都可直接加入，以本地封裝的 [Mozilla PDF.js](https://mozilla.github.io/pdf.js/) 準備原生文字與必要頁圖；頁首有文字而內文為掃描圖片的頁面也會保留圖片。準備時顯示頁碼，多頁處理或 Codex 讀取可能較久，可隨時取消。加密 PDF 須先解密。圖片原圖最多 2400 萬像素、單邊 12,000 像素，會在本機縮小為適合傳送的附件；請使用清晰、端正的來源。HEIC／HEIF 尚未支援，請先轉存為 JPG 或 PNG；Word 仍未支援。TXT／Markdown 支援 UTF-8、帶 BOM 的 UTF-16，以及 UTF-8 解碼失敗時嘗試 Big5（會提示核對編碼）。
 
 ```powershell
 npm test
@@ -19,7 +23,7 @@ npm run check:tesseract
 python tests/itinerary_import_smoke.py
 ```
 
-`itinerary-file.js` 管理擷取與限制，圖片交由 `itinerary-image.js` 按需載入本地 OCR 元件；`itinerary-import.js`／`itinerary-import.css` 管理多檔預覽、整合與另存。`scripts/sync-pdfjs.cjs` 同步鎖定版本的解析器、worker、字元對照及字型資產，`check:pdfjs` 比對 SHA-256。`scripts/sync-tesseract.cjs` 同步鎖定版本的 OCR worker、WASM 與繁中／英文語言資料，`npm run check:tesseract` 核對各資產 SHA-256。
+`itinerary-file.js`／`itinerary-image.js` 準備文字及圖片附件，匯入使用 `prepareImages` 模式，不執行本機 OCR。`itinerary-import.js`／`itinerary-import.css` 管理多檔預覽、整合與另存；`codex-local.js` 使用專用匯入端點，一次交給 Codex 讀取與整合。`scripts/sync-pdfjs.cjs` 同步鎖定版本的解析器、worker、字元對照及字型資產，`check:pdfjs` 比對 SHA-256。保留的 OCR 元件由 `scripts/sync-tesseract.cjs` 同步鎖定版本，`npm run check:tesseract` 核對各資產 SHA-256。
 
 先依下方「本機啟動」開啟服務，再於另一個終端執行圖片整合驗證：
 
@@ -27,7 +31,7 @@ python tests/itinerary_import_smoke.py
 python tests/itinerary_import_live.py --url http://127.0.0.1:8080/ --images --report itinerary-images-local-live.json
 ```
 
-既有 PDF／TXT 回歸報告為 `artifacts/itinerary-import-report.json`；圖片整合報告為 `artifacts/itinerary-images-local-live.json`。圖片測試會實際載入本機 OCR 資產並辨識圖片，AI 回覆仍為模擬，不會使用真實 AI 額度。桌機與手機尺寸使用隔離 Chromium 瀏覽器驗證；不代表已驗證實體手機、真實 AI 的整理品質或正式站部署。
+PDF／TXT 回歸報告為 `artifacts/itinerary-import-report.json`；圖片整合報告為 `artifacts/itinerary-images-local-live.json`。測試會實際準備 PDF 與圖片附件，Codex 回覆使用模擬，不會使用真實 AI 額度。桌機與手機尺寸使用隔離 Chromium 瀏覽器驗證；不代表已驗證實體手機、真實 Codex 的辨識整理品質或正式站部署。
 
 ## 啟動
 
@@ -64,7 +68,7 @@ python -m http.server 8080 --bind 127.0.0.1
 
 若已開啟網頁服務，只需另開終端執行 `npm run codex:bridge`，以 `Ctrl+C` 結束前景連接服務。連接綁定 `127.0.0.1:8081`，只接受來自 `http://127.0.0.1:8080` 或 `http://localhost:8080` 的網頁，並驗證每次啟動的請求權杖；`file://`、其他連接埠與實體手機不能直接使用這個本機模式。權杖只留在頁面記憶體，不是 Codex 登入憑證。
 
-`codex-bridge.cjs` 透過 stdin 呼叫官方 `codex exec`，不把需求拼入 shell 指令，不讀取或傳出 Codex 憑證檔。生成預設使用 CLI 預設模型，也可在服務設定選擇目前 Codex 提供的模型；後端驗證模型白名單。執行時忽略使用者自訂工具設定，以暫存空目錄、唯讀沙箱及關閉 shell、外掛、連接應用、瀏覽器與多代理工具執行；不提供即時網路查證。每次呼叫上限 180 秒，不自動重送；取消或逾時會終止該次本機程序，但不保證服務端已消耗的額度返還。整本生成仍逐日儲存、顯示進度並可接續。
+`codex-bridge.cjs` 透過 stdin 呼叫官方 `codex exec`，不把需求拼入 shell 指令，不讀取或傳出 Codex 憑證檔。生成預設使用 CLI 預設模型，也可在服務設定選擇目前 Codex 提供的模型；後端驗證模型白名單。執行時忽略使用者自訂工具設定，使用隔離暫存目錄、唯讀沙箱，關閉 shell、外掛、連接應用、瀏覽器與多代理工具；不提供即時網路查證。匯入僅將本次圖片附件寫入暫存目錄，以 `--image` 一次交給 Codex，結束後清除。一般生成與檔案讀取整合每次上限均為 180 秒，不自動重送；取消或逾時會終止該次本機程序，但不保證服務端已消耗的額度返還。整本生成仍逐日儲存、顯示進度並可接續。
 
 此連接供個人本機使用，不可直接暴露成公開或商業託管服務；公開服務應另整合官方 [Sign in with ChatGPT](https://developers.openai.com/siwc)，確認註冊與授權資格，不能共享你的本機登入憑證。參見 [Codex 整合的驗證範圍](https://learn.chatgpt.com/docs/app-server#auth-endpoints)。
 

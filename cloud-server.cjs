@@ -8,6 +8,7 @@ const { checkLogin, runCodex, readUsage, validateModel } = require('./codex-brid
 const { files } = require('./scripts/build-pages.cjs');
 const { createShareStore, MAX_BYTES, PUBLIC_CSP, ID } = require('./book-shares.cjs');
 const { createImageJobs, imageRoute } = require('./image-jobs.cjs');
+const { validateImport, MAX_BODY: MAX_IMPORT_BODY, TIMEOUT: IMPORT_TIMEOUT } = require('./codex-import.cjs');
 const digest = value => crypto.createHash('sha256').update(value).digest();
 const fail = (message, status, code) => Object.assign(new Error(message), { status, code });
 
@@ -120,7 +121,8 @@ function createCloud({ origin, passwordHash, root = __dirname, shareDirectory = 
                 await login();
                 return json(200, await usage());
             }
-            if (req.method === 'POST' && req.url === '/codex/generate') {
+            const importing = req.url === '/codex/import-itinerary';
+            if (req.method === 'POST' && (importing || req.url === '/codex/generate')) {
                 if (req.headers.origin !== origin || req.headers['x-roam-token'] !== token) return json(403, { error: '連線已更新，請重新檢查連線。', code: 'TOKEN' });
                 if (req.headers['content-type'] !== 'application/json') return json(415, { error: '請使用 JSON。' });
                 if (busy) return json(409, { error: '另一個生成工作尚未完成，請稍後再試。', code: 'BUSY' });
@@ -135,17 +137,18 @@ function createCloud({ origin, passwordHash, root = __dirname, shareDirectory = 
                     const chunks = []; let bytes = 0;
                     for await (const chunk of req) {
                         bytes += chunk.length;
-                        if (bytes > 128 * 1024) throw fail('旅行需求過長。', 413, 'SIZE');
+                        if (bytes > (importing ? MAX_IMPORT_BODY : 128 * 1024)) throw fail('旅行需求或附件過長。', 413, 'SIZE');
                         chunks.push(chunk);
                     }
                     let body;
                     try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw fail('JSON 格式錯誤。', 400, 'BODY'); }
                     if (typeof body?.prompt !== 'string' || !body.prompt.trim() || body.prompt.length > 60000) throw fail('請提供有效旅行需求。', 400, 'PROMPT');
+                    const images = importing ? validateImport(body) : undefined;
                     await login();
                     const model = await validateModel(body.model, usage);
                     if (controller.signal.aborted) return;
                     starts.push(now);
-                    const data = await generate(body.prompt, controller.signal, { model, onUsage: value => { measuredUsage = value; } });
+                    const data = await generate(body.prompt, controller.signal, { model, onUsage: value => { measuredUsage = value; }, ...(importing ? { images, timeout: IMPORT_TIMEOUT } : {}) });
                     if (!controller.signal.aborted) json(200, { data, usage: measuredUsage });
                 } finally {
                     busy = false;

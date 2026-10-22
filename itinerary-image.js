@@ -11,6 +11,7 @@
     const OCR_PIXELS = 4000000;
     const OCR_SIDE = 2400;
     const MAX_TEXT = 30000;
+    const MAX_ATTACHMENT_BYTES = 2 * 1024 * 1024;
     const TIMEOUT_MS = 120000;
     const scriptURL = typeof document === 'object' && (document.currentScript?.src || document.baseURI);
     const fail = (code, message) => Object.assign(new Error(message), { code });
@@ -68,6 +69,73 @@
         const url = new URL(`vendor/tesseract/${relative}`, scriptURL);
         if (url.origin !== location.origin || !['http:', 'https:'].includes(url.protocol)) throw fail('IMAGE_ASSET', '圖片辨識元件必須由本站載入，請透過本機服務或網站開啟。');
         return url.href;
+    }
+    // Prepare only local pixels. Codex reads the returned attachment in the later
+    // combined import request; this path never starts an OCR worker or a request.
+    function prepare(bytes, { extension, signal } = {}) {
+        return new Promise((resolve, reject) => {
+            let image, canvas, objectURL, timer;
+            let finished = false;
+            const warnings = [];
+            function finish(error, result) {
+                if (finished) return;
+                finished = true;
+                clearTimeout(timer);
+                signal?.removeEventListener('abort', abort);
+                if (image) { image.onload = null; image.onerror = null; image.src = ''; }
+                if (objectURL) URL.revokeObjectURL(objectURL);
+                if (canvas) { canvas.width = 0; canvas.height = 0; }
+                if (error) reject(error); else resolve(result);
+            }
+            const abort = () => finish(Object.assign(new Error('已取消圖片準備。'), { name: 'AbortError' }));
+            try {
+                if (signal?.aborted) { abort(); return; }
+                const info = dimensions(bytes, extension);
+                if (typeof document !== 'object' || typeof Image !== 'function') {
+                    finish(fail('IMAGE_ASSET', '圖片準備需要瀏覽器，請透過本機服務或網站開啟。')); return;
+                }
+                signal?.addEventListener('abort', abort, { once: true });
+                timer = setTimeout(() => finish(fail('IMAGE_TIMEOUT', '圖片準備超過 120 秒，請縮小或分割圖片後重試。')), TIMEOUT_MS);
+                image = new Image();
+                image.onerror = () => finish(invalid());
+                image.onload = async () => {
+                    if (finished) return;
+                    try {
+                        const width = image.naturalWidth, height = image.naturalHeight;
+                        if (!width || !height || width > MAX_SIDE || height > MAX_SIDE || width * height > MAX_PIXELS) throw invalid();
+                        const ratio = Math.min(1, OCR_SIDE / Math.max(width, height), Math.sqrt(OCR_PIXELS / (width * height)));
+                        canvas = document.createElement('canvas');
+                        canvas.width = Math.max(1, Math.floor(width * ratio)); canvas.height = Math.max(1, Math.floor(height * ratio));
+                        const context = canvas.getContext('2d');
+                        if (!context) throw invalid();
+                        context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                        if (ratio < 1) warnings.push('圖片已縮小至適合讀取的尺寸；小字可能遺漏，請核對整理結果。');
+                        let blob;
+                        for (const [type, quality] of [['image/png', undefined], ['image/jpeg', 0.95], ['image/jpeg', 0.85], ['image/jpeg', 0.70], ['image/jpeg', 0.55]]) {
+                            blob = await new Promise(resolveBlob => canvas.toBlob(resolveBlob, type, quality));
+                            if (finished) return;
+                            if (!blob || !['image/png', 'image/jpeg'].includes(blob.type)) throw invalid();
+                            if (blob.size <= MAX_ATTACHMENT_BYTES) {
+                                if (quality && quality < 0.95) warnings.push('圖片已壓縮以符合附件大小，小字可能模糊，請核對整理結果。');
+                                break;
+                            }
+                        }
+                        if (blob.size > MAX_ATTACHMENT_BYTES) throw fail('IMAGE_ATTACHMENT_LIMIT', '圖片壓縮後仍超過 2 MiB，請裁切或縮小圖片後再匯入。');
+                        const data = new Uint8Array(await blob.arrayBuffer());
+                        if (finished) return;
+                        if (!data.length || data.length > MAX_ATTACHMENT_BYTES) throw fail('IMAGE_ATTACHMENT_LIMIT', '圖片附件超過 2 MiB 或沒有內容，請縮小圖片後再匯入。');
+                        const chunks = [];
+                        for (let offset = 0; offset < data.length; offset += 32768) chunks.push(String.fromCharCode(...data.subarray(offset, offset + 32768)));
+                        const dataBase64 = btoa(chunks.join(''));
+                        finish(null, { text: '', format: 'image', pages: null, warnings, images: [{ mime: blob.type, dataBase64, page: 1 }] });
+                    } catch (error) { finish(error.code === 'IMAGE_ATTACHMENT_LIMIT' ? error : invalid()); }
+                };
+                objectURL = URL.createObjectURL(new Blob([bytes], { type: info.mime }));
+                image.src = objectURL;
+            } catch (error) {
+                finish(['IMAGE_FORMAT', 'IMAGE_LIMIT', 'IMAGE_DIMENSIONS', 'IMAGE_INVALID'].includes(error.code) ? error : invalid());
+            }
+        });
     }
     function read(bytes, { extension, signal, onProgress } = {}) {
         return new Promise((resolve, reject) => {
@@ -172,5 +240,5 @@
             }
         });
     }
-    return { read, MAX_BYTES, MAX_PIXELS, MAX_SIDE, OCR_PIXELS, OCR_SIDE, MAX_TEXT, TIMEOUT_MS };
+    return { read, prepare, MAX_BYTES, MAX_PIXELS, MAX_SIDE, OCR_PIXELS, OCR_SIDE, MAX_TEXT, MAX_ATTACHMENT_BYTES, TIMEOUT_MS };
 }));

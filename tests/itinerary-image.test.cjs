@@ -27,7 +27,7 @@ function webp(kind = 'VP8X') {
     return bytes;
 }
 function browser(options = {}) {
-    const state = { workers: [], revoked: [], images: [], canvasSizes: [], requests: [], clearCount: 0 };
+    const state = { workers: [], revoked: [], images: [], canvasSizes: [], requests: [], encodings: [], clearCount: 0 };
     class TestURL extends URL {
         static createObjectURL() { return 'blob:http://example.test/image'; }
         static revokeObjectURL(value) { state.revoked.push(value); }
@@ -36,7 +36,7 @@ function browser(options = {}) {
         constructor() { this.naturalWidth = options.width || 1600; this.naturalHeight = options.height || 800; state.images.push(this); }
         set src(value) {
             this.value = value;
-            if (value) queueMicrotask(() => options.decodeError ? this.onerror?.() : this.onload?.());
+            if (value && !options.decodeHang) queueMicrotask(() => options.decodeError ? this.onerror?.() : this.onload?.());
         }
     }
     class TestWorker {
@@ -55,11 +55,17 @@ function browser(options = {}) {
     }
     const document = { currentScript: { src: 'https://example.test/app/itinerary-image.js' }, baseURI: 'https://example.test/app/', createElement(type) {
         assert.equal(type, 'canvas');
-        const canvas = { width: 0, height: 0, getContext: () => ({ fillRect() {}, drawImage() { state.canvasSizes.push([canvas.width, canvas.height]); } }), toBlob(callback) { callback({ arrayBuffer: async () => png().buffer }); } };
+        const canvas = { width: 0, height: 0, getContext: () => ({ fillRect() {}, drawImage() { state.canvasSizes.push([canvas.width, canvas.height]); } }), toBlob(callback, type, quality) {
+            state.encodings.push({ type, quality });
+            options.onEncode?.();
+            if (options.encodeHang) return;
+            const size = options.encodeSize?.(type, quality) ?? png().length;
+            callback({ type, size, arrayBuffer: async () => { options.onBuffer?.(); return options.encodeSize ? new ArrayBuffer(size) : png().buffer; } });
+        } };
         state.canvas = canvas;
         return canvas;
     } };
-    const context = vm.createContext({ window: {}, document, location: { origin: 'https://example.test', protocol: options.protocol || 'https:' }, URL: TestURL, Worker: TestWorker, Image: TestImage, Blob, Uint8Array, DataView,
+    const context = vm.createContext({ window: {}, document, location: { origin: 'https://example.test', protocol: options.protocol || 'https:' }, URL: TestURL, Worker: TestWorker, Image: TestImage, Blob, Uint8Array, DataView, btoa,
         setTimeout: (fn, ms) => setTimeout(fn, options.timeout ? 5 : ms), clearTimeout: timer => { state.clearCount++; clearTimeout(timer); } });
     vm.runInContext(source, context);
     return { api: context.window.ItineraryImage, state };
@@ -157,6 +163,63 @@ test('timeout bounds stalled initialization and a later read can succeed', async
     await assert.rejects(api.read(png(), { extension: 'png' }), { code: 'IMAGE_TIMEOUT' });
     assert.equal(state.workers[0].terminated, 1);
     const next = browser(); assert.equal((await next.api.read(png(), { extension: 'png' })).format, 'image');
+});
+
+test('prepare returns one bounded attachment with empty text and never starts OCR', async () => {
+    for (const [extension, bytes] of [['png', png()], ['jpg', jpeg()], ['webp', webp()]]) {
+        const { api, state } = browser();
+        const result = await api.prepare(bytes, { extension });
+        assert.equal(result.text, ''); assert.equal(result.format, 'image'); assert.equal(result.pages, null);
+        assert.equal(result.images.length, 1); assert.equal(result.images[0].page, 1); assert.equal(result.images[0].mime, 'image/png');
+        assert.equal(Buffer.from(result.images[0].dataBase64, 'base64').length, png().length);
+        assert.equal(state.workers.length, 0); assert.equal(state.requests.length, 0);
+        assert.equal(state.revoked.length, 1); assert.equal(state.images[0].value, '');
+        assert.equal(state.canvas.width, 0); assert.equal(state.canvas.height, 0);
+    }
+});
+
+test('prepare validates magic, encoding and source dimensions before allocation', async () => {
+    await assert.rejects(Reader.prepare(png(), { extension: 'jpg' }), { code: 'IMAGE_INVALID' });
+    await assert.rejects(Reader.prepare(png(), { extension: 'heic' }), { code: 'IMAGE_FORMAT' });
+    await assert.rejects(Reader.prepare(new Uint8Array(Reader.MAX_BYTES + 1), { extension: 'png' }), { code: 'IMAGE_LIMIT' });
+    for (const bytes of [png(12001, 1), png(5000, 5000)]) await assert.rejects(Reader.prepare(bytes, { extension: 'png' }), { code: 'IMAGE_DIMENSIONS' });
+    const { api, state } = browser({ decodeError: true });
+    await assert.rejects(api.prepare(png(), { extension: 'png' }), { code: 'IMAGE_INVALID' });
+    assert.equal(state.workers.length, 0); assert.equal(state.revoked.length, 1);
+});
+
+test('prepare resizes to 2400 pixels and 4 MP, uses bounded JPEG quality fallback, and enforces 2 MiB', async () => {
+    const { api, state } = browser({ width: 6000, height: 4000, encodeSize: (type, quality) => quality === 0.85 ? Reader.MAX_ATTACHMENT_BYTES : Reader.MAX_ATTACHMENT_BYTES + 1 });
+    const result = await api.prepare(png(6000, 4000), { extension: 'png' });
+    const [width, height] = state.canvasSizes[0];
+    assert.ok(width <= 2400 && height <= 2400 && width * height <= 4000000);
+    assert.equal(result.images[0].mime, 'image/jpeg'); assert.equal(Buffer.from(result.images[0].dataBase64, 'base64').length, Reader.MAX_ATTACHMENT_BYTES);
+    assert.deepEqual(state.encodings.map(value => value.quality), [undefined, 0.95, 0.85]);
+    assert.match(result.warnings.join('\n'), /縮小/); assert.match(result.warnings.join('\n'), /壓縮/);
+    const over = browser({ encodeSize: () => Reader.MAX_ATTACHMENT_BYTES + 1 });
+    await assert.rejects(over.api.prepare(png(), { extension: 'png' }), { code: 'IMAGE_ATTACHMENT_LIMIT' });
+    assert.equal(over.state.encodings.length, 5); assert.equal(over.state.canvas.width, 0); assert.equal(over.state.workers.length, 0);
+});
+
+test('prepare cancellation before decoding, during encoding and after byte loading never returns late attachments', async () => {
+    const before = new AbortController(); before.abort();
+    await assert.rejects(Reader.prepare(png(), { extension: 'png', signal: before.signal }), { name: 'AbortError' });
+    for (const hook of ['onEncode', 'onBuffer']) {
+        const controller = new AbortController();
+        const { api, state } = browser({ [hook]: () => controller.abort() });
+        await assert.rejects(api.prepare(png(), { extension: 'png', signal: controller.signal }), { name: 'AbortError' });
+        await new Promise(resolve => setImmediate(resolve));
+        assert.equal(state.revoked.length, 1); assert.equal(state.canvas.width, 0); assert.equal(state.workers.length, 0);
+    }
+});
+
+test('prepare timeout bounds stalled decoding or encoding and releases resources', async () => {
+    for (const stage of ['decodeHang', 'encodeHang']) {
+        const { api, state } = browser({ [stage]: true, timeout: true });
+        await assert.rejects(api.prepare(png(), { extension: 'png' }), { code: 'IMAGE_TIMEOUT' });
+        assert.equal(state.revoked.length, 1); assert.equal(state.workers.length, 0);
+        if (state.canvas) assert.equal(state.canvas.width, 0);
+    }
 });
 
 test('all OCR vendor assets match locked installed packages and include every LSTM variant', () => {

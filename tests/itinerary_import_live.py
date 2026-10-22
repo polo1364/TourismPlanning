@@ -44,6 +44,31 @@ def mocked_itinerary():
     ], "warnings": [WARNING]}
 
 
+def scanned_pdf_fixtures(browser):
+    """Raster-only PDF plus a native/header-image/blank three-page PDF."""
+    page = browser.new_page(viewport={"width": 1200, "height": 700})
+    images = []
+    for marker, time, stop in [("SCANPAGEONE", "09:00", "大稻埕"), ("SCANPAGETWO", "12:00", "台北車站"), ("HYBRIDSCAN", "15:00", "台北植物園")]:
+        page.set_content(f'''<style>body{{margin:50px;background:white;color:black;font:48px "Microsoft JhengHei",sans-serif;line-height:1.8}}</style>
+            <div>台北旅遊行程 Taipei</div><div>{marker}</div><div>2026-11-10</div><div>{time} {stop}</div>''')
+        page.evaluate("document.fonts.ready")
+        image_type = "jpeg" if marker == "SCANPAGETWO" else "png"
+        pixels = page.screenshot(type=image_type, **({"quality": 95} if image_type == "jpeg" else {}))
+        images.append(f"data:image/{image_type};base64," + base64.b64encode(pixels).decode("ascii"))
+    style = '''<style>@page{size:800px 600px;margin:0}body{margin:0}section{height:600px;box-sizing:border-box;break-after:page;overflow:hidden}section:last-child{break-after:auto}img{width:100%;height:auto}h1{font:24px sans-serif;margin:10px}</style>'''
+    page.set_content(style + ''.join(f'<section><img src="{data}"></section>' for data in images[:2]))
+    page.evaluate("Promise.all([...document.images].map(image=>image.decode()))")
+    scanned = page.pdf(prefer_css_page_size=True, print_background=True)
+    page.set_content(style + f'<section><h1>NATIVEPAGE 2026-11-10 08:00 Taipei</h1></section><section><h1>HEADERONLY</h1><img src="{images[2]}"></section><section></section>')
+    page.evaluate("Promise.all([...document.images].map(image=>image.decode()))")
+    mixed = page.pdf(prefer_css_page_size=True, print_background=True)
+    page.close()
+    return [
+        {"name": "兩頁掃描行程.pdf", "mimeType": "application/pdf", "buffer": scanned},
+        {"name": "文字與掃描混合.pdf", "mimeType": "application/pdf", "buffer": mixed},
+    ]
+
+
 class LiveNetwork:
     """Only same-origin static GET/HEAD reaches the real deployment."""
     def __init__(self, base):
@@ -56,11 +81,23 @@ class LiveNetwork:
     def route(self, route):
         request = route.request
         parsed = urlsplit(request.url)
-        if parsed.hostname == "api.deepseek.com":
+        local_bridge = parsed.hostname in {"127.0.0.1", "localhost"} and parsed.port == 8081
+        same_origin = f"{parsed.scheme}://{parsed.netloc}" == self.base_origin
+        cors = {"Access-Control-Allow-Origin": request.headers.get("origin", self.base_origin),
+                "Access-Control-Allow-Headers": "Content-Type, X-Roam-Token", "Access-Control-Allow-Methods": "GET, POST, OPTIONS"}
+        if (local_bridge or same_origin) and parsed.path in {"/import-itinerary", "/codex/import-itinerary"}:
+            if request.method == "OPTIONS":
+                return route.fulfill(status=204, headers=cors)
             if request.method == "POST":
                 self.ai_requests.append(request.post_data_json)
-                payload = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(mocked_itinerary(), ensure_ascii=False)}}]}
-                return route.fulfill(status=200, content_type="application/json", body=json.dumps(payload))
+                return route.fulfill(status=200, headers=cors, content_type="application/json", body=json.dumps({"data": mocked_itinerary(), "usage": {"inputTokens": 10, "outputTokens": 10, "totalTokens": 20}}))
+        if (local_bridge or same_origin) and parsed.path in {"/status", "/codex/status", "/usage", "/codex/usage"}:
+            value = {"service": "roam-codex", "ready": True, "auth": "chatgpt", "token": "mock-import-test-token"} if parsed.path.endswith("status") else {"available": False, "limits": [], "models": []}
+            return route.fulfill(status=200, headers=cors, content_type="application/json", body=json.dumps(value))
+        if local_bridge and request.method == "OPTIONS":
+            return route.fulfill(status=204, headers=cors)
+        if parsed.hostname == "api.deepseek.com":
+            self.blocked_mutations.append({"method": request.method, "path": parsed.path})
             return route.abort()
         if request.method not in {"GET", "HEAD"}:
             self.blocked_mutations.append({"method": request.method, "path": parsed.path})
@@ -140,6 +177,8 @@ def run(args):
                 {"name": "照片行程.jpg", "mimeType": "image/jpeg", "buffer": jpeg},
                 {"name": "截圖行程.webp", "mimeType": "image/webp", "buffer": base64.b64decode(webp)},
             ]
+        scan_files = scanned_pdf_fixtures(browser) if args.scans else []
+        initial_count = 3 + len(image_files) + len(scan_files)
         for label, width in [("desktop", 1440), ("mobile", 390)]:
             options = {"viewport": {"width": width, "height": 950}, "timezone_id": "Asia/Taipei", "service_workers": "block"}
             if auth:
@@ -169,68 +208,97 @@ def run(args):
                 navigation = page.goto(args.url, wait_until="networkidle", timeout=60000)
                 check(label, "real website document loads", navigation is not None and navigation.status == 200)
                 page.wait_for_selector("#openItineraryImport")
-                check(label, "test selects mocked DeepSeek provider", page.locator("#aiProvider").input_value() == "deepseek")
+                check(label, "global DeepSeek preference does not control Codex import", page.locator("#aiProvider").input_value() == "deepseek")
                 page.evaluate("""() => {const days=structuredClone(tripData);days[0].summary+='，含復原紀錄';TripLibrary.write({myTrip_v27:JSON.stringify(days)},{label:'部署驗收測試'});} """)
                 original = page.evaluate("TripLibrary.active()")
                 original_raw = page.evaluate("localStorage.tourismTrips_v1")
                 page.locator("#openItineraryImport").click()
+                if args.scans:
+                    page.evaluate(r'''() => {
+                        window.livePdfProgress=[];
+                        new MutationObserver(() => {
+                            const text=document.getElementById('itineraryImportStatus').textContent;
+                            if(text.includes('PDF') && /第\s*\d+\s*\/\s*\d+\s*頁/.test(text)) window.livePdfProgress.push(text);
+                        }).observe(document.getElementById('itineraryImportStatus'),{childList:true,characterData:true,subtree:true});
+                    }''')
                 page.locator("#itinerarySourceFile").set_input_files([
                     {"name": "第一份.txt", "mimeType": "text/plain", "buffer": b"2026-11-10 18:00 dinner TXT_SOURCE_MARKER"},
                     {"name": "第二份.md", "mimeType": "text/markdown", "buffer": b"# 2026-11-10\n12:00 lunch MD_SOURCE_MARKER"},
                     {"name": "行程.pdf", "mimeType": "application/pdf", "buffer": pdf},
-                ] + image_files)
-                page.wait_for_function("!isBusy && document.getElementById('itinerarySourceText').value.includes('PDF_SOURCE_MARKER')", timeout=360000 if args.images else 45000)
+                ] + image_files + scan_files)
+                page.wait_for_function("!isBusy && (document.getElementById('itinerarySourceText').value.includes('PDF_SOURCE_MARKER') || !document.getElementById('itineraryImportError').hidden)", timeout=360000 if args.images or args.scans else 45000)
+                check(label, "all selected files finish without import error", page.locator("#itineraryImportError").is_hidden())
                 text = page.locator("#itinerarySourceText").input_value()
                 check(label, "real PDFJS reads and merges TXT Markdown PDF", all(marker in text for marker in ["TXT_SOURCE_MARKER", "MD_SOURCE_MARKER", "PDF_SOURCE_MARKER"]))
                 check(label, "reading files performs no AI or persistence", not network.ai_requests and page.evaluate("localStorage.tourismTrips_v1") == original_raw)
+                if args.scans:
+                    check(label, "hybrid PDF preserves native text before Codex reads images", "NATIVEPAGE" in text and "HEADERONLY" in text and "HYBRIDSCAN" not in text)
+                    progress = page.evaluate("window.livePdfProgress")
+                    check(label, "multi-page PDF reports page-aware preparation", any(re.search(r"第\s*2\s*/\s*2\s*頁", value) for value in progress))
                 if args.images:
-                    for item in image_files:
-                        section = text.split("【來源檔案：" + item["name"] + "】\n", 1)[1].split("【來源檔案：", 1)[0]
-                        compact = re.sub(r"\s+", "", section)
-                        check(label, "real OCR reads Traditional Chinese English and time from " + item["name"], all(marker in compact for marker in ["台北", "行程", "Taipei", "2026-11-10", "09:00"]))
-                    # Both a failed batch and cancellation must retain the editable source.
                     page.locator("#itinerarySourceFile").set_input_files([
                         {"name": "不應加入.txt", "mimeType": "text/plain", "buffer": b"MUST_NOT_COMMIT"},
                         {"name": "損毀.png", "mimeType": "image/png", "buffer": b"broken image"},
                     ])
                     page.wait_for_function("!isBusy && !document.getElementById('itineraryImportError').hidden")
-                    check(label, "corrupt image rolls back the entire selected batch", page.locator("#itinerarySourceText").input_value() == text)
-                    page.evaluate('''() => {
-                        window.liveOcrCancelObserved=false;
+                    check(label, "corrupt image rolls back the whole batch", page.locator("#itinerarySourceText").input_value() == text)
+                if args.scans:
+                    page.evaluate(r'''() => {
+                        window.livePdfCancelObserved=false;
                         const status=document.getElementById('itineraryImportStatus');
                         const observer=new MutationObserver(() => {
-                            if (isBusy && status.textContent.includes('正在辨識圖片文字')) {
-                                observer.disconnect();window.liveOcrCancelObserved=true;
+                            if(isBusy && /第\s*2\s*\/\s*2\s*頁/.test(status.textContent)) {
+                                observer.disconnect();window.livePdfCancelObserved=true;
                                 document.getElementById('itineraryImportCancel').click();
                             }
                         });
                         observer.observe(status,{childList:true,characterData:true,subtree:true});
                     }''')
-                    page.locator("#itinerarySourceFile").set_input_files([image_files[0]])
-                    page.wait_for_function("window.liveOcrCancelObserved && !isBusy", timeout=120000)
-                    check(label, "cancel image OCR keeps source and does not call AI", page.locator("#itinerarySourceText").input_value() == text and not network.ai_requests)
-                    retry_image = {**image_files[0], "name": "取消後重試.png"}
-                    page.locator("#itinerarySourceFile").set_input_files([retry_image])
-                    page.wait_for_function("!isBusy && document.getElementById('itinerarySourceText').value.includes('【來源檔案：取消後重試.png】')", timeout=120000)
+                    page.locator("#itinerarySourceFile").set_input_files([scan_files[0]])
+                    page.wait_for_function("window.livePdfCancelObserved && !isBusy", timeout=120000)
+                    check(label, "cancel second PDF page retains sources without AI or partial commit", page.locator("#itinerarySourceText").input_value() == text and not network.ai_requests)
+                    page.locator("#itinerarySourceFile").set_input_files([{**scan_files[0], "name": "掃描取消後重試.pdf"}])
+                    page.wait_for_function("!isBusy && document.getElementById('itineraryFileInfo').textContent.includes('掃描取消後重試.pdf')", timeout=120000)
                     text = page.locator("#itinerarySourceText").input_value()
-                    check(label, "OCR cancellation releases the worker and retry adds once", text.count("【來源檔案：取消後重試.png】") == 1 and text.count("【來源檔案：圖片行程.png】") == 1 and "已讀取 7 個檔案" in page.locator("#itineraryFileInfo").text_content())
-                    expected_base = urlsplit(args.url).path.rstrip("/") + "/vendor/tesseract/"
-                    check(label, "OCR assets stay within deployment subpath", bool(network.ocr_responses) and all(item["path"].startswith(expected_base) for item in network.ocr_responses))
-                    for suffix in ["worker.min.js", "chi_tra.traineddata.gz", "eng.traineddata.gz"]:
-                        check(label, "OCR asset is served successfully: " + suffix, any(item["path"].endswith(suffix) and item["status"] == 200 for item in network.ocr_responses))
+                    check(label, "cancelled PDF can retry and append once", page.locator("#itineraryFileInfo").text_content().count("掃描取消後重試.pdf") == 1)
+                check(label, "file preparation downloads no OCR model and calls no AI", not network.ocr_responses and not network.ai_requests)
                 check(label, "real PDF module and worker return JavaScript", all(any(item["path"].endswith("/" + asset) and item["status"] == 200 and ("javascript" in item["mime"] or "ecmascript" in item["mime"]) for item in network.static_responses) for asset in ["pdf.mjs", "pdf.worker.mjs"]))
                 font = page.evaluate("""async () => {const r=await fetch(new URL('vendor/pdfjs/standard_fonts/LiberationSans-Regular.ttf',document.baseURI));return {status:r.status,mime:r.headers.get('content-type'),bytes:(await r.arrayBuffer()).byteLength};}""")
                 check(label, "bundled PDF font is served as font or binary", font["status"] == 200 and font["bytes"] > 1000 and any(mime in (font["mime"] or "") for mime in ["font/", "application/octet-stream", "application/x-font", "application/font"]))
                 page.evaluate("document.getElementById('itineraryImportModal').scrollTop=0")
                 source_shot = report_path.parent / f"{stem}-source-{label}.png"
                 page.screenshot(path=str(source_shot)); screenshots.append(str(source_shot))
+                available = page.evaluate("CodexLocal.importsAvailable()")
                 page.locator("#itineraryParseButton").click()
+                if not available:
+                    page.wait_for_function("!isBusy && !document.getElementById('itineraryImportError').hidden")
+                    check(label, "public site explains Codex availability without AI fallback", not network.ai_requests and not network.blocked_mutations and "Codex" in page.locator("#itineraryImportError").text_content())
+                    check(label, "public site preserves prepared sources", page.locator("#itinerarySourceText").input_value() == text and page.evaluate("localStorage.tourismTrips_v1") == original_raw)
+                    check(label, "public import fits mobile and desktop", page.evaluate("document.documentElement.scrollWidth<=innerWidth+1"))
+                    check(label, "no uncaught page exceptions", not errors)
+                    continue
                 page.wait_for_function("!isBusy && !document.getElementById('itinerarySaveButton').disabled")
-                check(label, "exactly one AI request is locally mocked", len(network.ai_requests) == 1)
-                prompt = network.ai_requests[0]["messages"][-1]["content"]
-                check(label, "all source files reach the mocked parser", all(marker in prompt for marker in ["TXT_SOURCE_MARKER", "MD_SOURCE_MARKER", "PDF_SOURCE_MARKER"]))
+                check(label, "exactly one Codex request is locally mocked", len(network.ai_requests) == 1)
+                request = network.ai_requests[0]
+                prompt = request["prompt"]
+                check(label, "all text sources reach the same Codex request", all(marker in prompt for marker in ["TXT_SOURCE_MARKER", "MD_SOURCE_MARKER", "PDF_SOURCE_MARKER"]))
+                attachments = request.get("images", [])
                 if args.images:
-                    check(label, "recognized images join the same AI merge request", all(item["name"] in prompt for item in image_files) and "台北" in prompt and "Taipei" in prompt)
+                    check(label, "PNG JPEG WebP join the same Codex vision request", all(sum(image["name"] == item["name"] for image in attachments) == 1 for item in image_files))
+                if args.scans:
+                    check(label, "both raster PDF pages reach Codex in order", [image["page"] for image in attachments if image["name"] == scan_files[0]["name"]] == [1, 2])
+                    check(label, "mixed PDF sends scanned and blank pages alongside native text", [image["page"] for image in attachments if image["name"] == scan_files[1]["name"]] == [2, 3] and "NATIVEPAGE" in prompt and "HEADERONLY" in prompt)
+                    check(label, "PDF cancelled midway adds no orphan or duplicate attachments", [image["page"] for image in attachments if image["name"] == "掃描取消後重試.pdf"] == [1, 2] and len(attachments) == len(image_files) + 6)
+                decoded = page.evaluate('''async images => {
+                    const results=[];
+                    for(const item of images){
+                        const response=await fetch(`data:${item.mime};base64,${item.dataBase64}`);
+                        const bitmap=await createImageBitmap(await response.blob());
+                        results.push({width:bitmap.width,height:bitmap.height});bitmap.close();
+                    }
+                    return results;
+                }''', attachments)
+                check(label, "all prepared image attachments decode within bounded dimensions", len(decoded) == len(attachments) and all(0 < item["width"] <= 2400 and 0 < item["height"] <= 2400 and item["width"] * item["height"] <= 4000000 for item in decoded))
                 stops = page.locator("#itineraryImportPreview li > strong").all_text_contents()
                 check(label, "same-date duplicate merges and sorts 09 12 18 unknown", page.locator("#itineraryImportPreview details").count() == 1 and len(stops) == 4 and all(text.startswith(time) for text, time in zip(stops, ["09:00", "12:00", "18:00", "時間待補"])))
                 check(label, "preview keeps complementary descriptions and warnings", all(text in page.locator("#itineraryImportPreview").text_content() for text in ["紅磚街景", "北側入口集合", WARNING, "已合併 1"]))
@@ -265,7 +333,7 @@ def run(args):
                 context.close()
         browser.close()
     parsed = urlsplit(args.url)
-    report = {"passed": not failures and all(item["passed"] for item in checks), "target": f"{parsed.scheme}://{parsed.netloc}{parsed.path}", "image_ocr": args.images, "checks": checks, "failures": failures, "networks": network_reports, "screenshots": screenshots, "scope": "Real deployment static files/PDFJS/worker/font and optional actual PNG/JPEG/WebP OCR; AI responses mocked in browser. All non-GET/HEAD mutations blocked. Isolated browser localStorage only. Desktop/mobile Chromium, not physical-phone verification."}
+    report = {"passed": not failures and all(item["passed"] for item in checks), "target": f"{parsed.scheme}://{parsed.netloc}{parsed.path}", "image_attachments": args.images, "scanned_pdf_attachments": args.scans, "checks": checks, "failures": failures, "networks": network_reports, "screenshots": screenshots, "scope": "Real deployment PDF parsing/rendering and image preparation. Codex vision response mocked in browser; public Pages verifies capability guidance only. All non-GET/HEAD mutations blocked. Isolated browser localStorage only. Desktop/mobile Chromium, not physical-phone verification."}
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({"passed": report["passed"], "checks": len(checks), "failures": len(failures), "report": str(report_path)}, ensure_ascii=False))
     return 0 if report["passed"] else 1
@@ -277,7 +345,8 @@ def main():
     parser.add_argument("--url", required=True)
     parser.add_argument("--credentials")
     parser.add_argument("--report", default="itinerary-import-live-report.json")
-    parser.add_argument("--images", action="store_true", help="Read real PNG/JPEG/WebP with local OCR, then check mixed-file merge and cancellation.")
+    parser.add_argument("--images", action="store_true", help="Prepare real PNG/JPEG/WebP attachments for a single Codex request.")
+    parser.add_argument("--scans", action="store_true", help="Read real raster-only and hybrid PDFs, including second-page cancellation and retry.")
     args = parser.parse_args()
     try:
         return run(args)

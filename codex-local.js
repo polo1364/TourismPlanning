@@ -120,7 +120,7 @@
             return false;
         }
     }
-    async function generate(prompt, signal) {
+    async function generate(prompt, signal, { images, itinerary = false } = {}) {
         if (signal?.aborted) throw Object.assign(new Error('已取消生成。'), { code: 'CANCELLED' });
         if (!token && !await check(signal)) throw new Error($('codexStatus').textContent);
         if (chosenModel && !modelIds.has(chosenModel)) {
@@ -129,10 +129,11 @@
         }
         let recorded = false;
         try {
-            const response = await fetch(BASE + '/generate', {
+            const timeout = 195000;
+            const response = await fetch(BASE + (itinerary ? '/import-itinerary' : '/generate'), {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Roam-Token': token },
-                body: JSON.stringify({ prompt, model: chosenModel }),
-                signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(195000)]) : AbortSignal.timeout(195000)
+                body: JSON.stringify({ prompt, model: chosenModel, ...(itinerary ? { images } : {}) }),
+                signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeout)]) : AbortSignal.timeout(timeout)
             });
             const result = await response.json();
             recordUsage(result.usage); recorded = true;
@@ -151,6 +152,10 @@
             if (!recorded) recordUsage(null);
             void refreshUsage();
         }
+    }
+    async function importItinerary(prompt, images, signal) {
+        if (!localPage && !cloudPage) throw new Error('Codex 圖文讀取與整合需使用私人正式網站或本機版；已準備的來源會保留。');
+        return generate(prompt, signal, { images, itinerary: true });
     }
     async function init() {
         let saved = null;
@@ -182,5 +187,5 @@
         }
         return value;
     }
-    window.CodexLocal = Object.freeze({ selected, update, check, generate, init, refreshUsage, chooseModel, imageRequest, imagesAvailable: () => localPage || cloudPage });
+    window.CodexLocal = Object.freeze({ selected, update, check, generate, importItinerary, importsAvailable: () => localPage || cloudPage, init, refreshUsage, chooseModel, imageRequest, imagesAvailable: () => localPage || cloudPage });
 })();
