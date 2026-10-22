@@ -528,17 +528,14 @@ ${JSON.stringify(text)}`;
         if (value.warnings.length) {
             const notes = addText(panel, 'section', '', 'import-preview-notes');
             addText(notes, 'h5', `需核對事項 · ${value.warnings.length} 則`);
-            for (const warning of value.warnings) {
-                const note = addText(notes, 'div', '', 'import-warning');
-                for (const line of warning.split(/\r?\n+|(?<=[。；！？])\s*/u).filter(line => line.trim())) addText(note, 'p', line);
-            }
+            notes.insertAdjacentHTML('beforeend', root.renderItineraryNoteGroups(value.warnings.join('\n'), { itinerary: [] }));
         }
         value.days.forEach((day, index) => {
             const details = document.createElement('details');
             details.open = index === 0;
             panel.append(details);
             addText(details, 'summary', `${day.date}${value.provisionalDates?.includes(day.date) ? '（暫定）' : ''} · ${day.day_title}`);
-            for (const line of (day.summary || '').split(/\r?\n+|(?<=[。；！？])\s*/u).filter(line => line.trim())) addText(details, 'p', line);
+            details.insertAdjacentHTML('beforeend', root.renderItineraryNoteGroups(day.summary || '', day));
             const list = document.createElement('ol');
             details.append(list);
             for (const item of day.itinerary) {

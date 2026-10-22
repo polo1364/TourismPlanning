@@ -285,7 +285,7 @@ def main():
                     network.result = {**response(), 'sourceReviews': [{'index': 1, 'status': 'uncertain', 'message': '09:00 活動提醒字跡不清'}]}
                     page.locator('#itineraryParseButton').click()
                     page.wait_for_function('!isBusy && !document.getElementById("itinerarySaveButton").disabled')
-                    record_check('uncertain field renders source and page warning without dropping activities', '全空白.pdf」第 1 頁' in page.locator('#itineraryImportPreview').text_content() and '09:00 活動提醒字跡不清' in page.locator('#itineraryImportPreview').text_content() and page.locator('#itineraryImportPreview li').count() == 3)
+                    record_check('uncertain field renders source and page warning without dropping activities', '全空白.pdf」第 1 頁' in page.locator('#itineraryImportPreview').text_content() and '09:00 活動提醒字跡不清' in page.locator('#itineraryImportPreview').text_content() and page.locator('#itineraryImportPreview details > ol > li').count() == 3)
                     page.locator('#itineraryClearFiles').click()
                     source_file('第一份.txt', TEXT.encode('utf-8'))
                     local_request_count = len(network.ai_requests)
@@ -304,7 +304,7 @@ def main():
                     record_check("AI preview does not persist", saved_state() == original_state)
                     record_check("preview renders source values safely", PAYLOAD in page.locator("#itineraryImportPreview").inner_text() and page.locator("#itineraryImportPreview img").count() == 0 and not page.evaluate("Boolean(window.importXss)"))
                     record_check("preview shows activities", "大稻埕" in page.locator("#itineraryImportPreview").inner_text() and "植物園" in page.locator("#itineraryImportPreview").inner_text())
-                    record_check("repeated dates merge into two days and three stops", page.locator("#itineraryImportPreview details").count() == 2 and page.locator("#itineraryImportPreview li").count() == 3)
+                    record_check("repeated dates merge into two days and three stops", page.locator("#itineraryImportPreview details").count() == 2 and page.locator("#itineraryImportPreview details > ol > li").count() == 3)
                     merged_preview = page.locator("#itineraryImportPreview").text_content()
                     record_check("merged stop retains descriptions and notes from both files", all(text in merged_preview for text in ["觀察紅磚建築", "入口處領取地圖", MERGED_NOTE, "第二份來源備註", SOURCE_WARNING]))
                     conflict = response()
@@ -313,7 +313,7 @@ def main():
                         {"title": "大稻埕街區", "time": "09:00", "type": "SPOT", "address": "台北市另一集合地址"},
                     ]})
                     ready_preview(conflict)
-                    record_check("same title at different time or address stays separate", page.locator("#itineraryImportPreview details").count() == 2 and page.locator("#itineraryImportPreview li").count() == 5)
+                    record_check("same title at different time or address stays separate", page.locator("#itineraryImportPreview details").count() == 2 and page.locator("#itineraryImportPreview details > ol > li").count() == 5)
                     record_check("conflicting repeat identifies all source alternatives", all(text in page.locator("#itineraryImportPreview").text_content() for text in ["15:00", "另一集合地址", "09:00"]))
                     page.locator("#itinerarySourceText").fill(TEXT + "補充：帶雨傘")
                     record_check("editing source invalidates stale preview", page.locator("#itinerarySaveButton").is_disabled())

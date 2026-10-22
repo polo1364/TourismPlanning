@@ -110,7 +110,16 @@ a{color:var(--card-blue)}:focus-visible{outline-color:var(--seal)}
 .summary-overview h4,.summary-review h4{font:600 14px/1.6 system-ui,sans-serif;margin:0 0 12px;color:#52634e;break-after:avoid}
 .summary-overview p,.summary-review-copy p{margin:0 0 12px;orphans:2;widows:2}
 .summary-review{margin-top:26px;border-top:1px solid #cfc7b5;padding-top:18px;font:14px/1.95 system-ui,sans-serif;overflow-wrap:anywhere}
-.summary-review-copy p{padding-bottom:12px;border-bottom:1px solid #e7e0d2}
+.summary-category{margin:0 0 18px;padding:12px 14px;border:1px solid #d6d0c2;border-left:3px solid #75816c;background:#fffef9;overflow-wrap:anywhere}
+.summary-category h5{margin:0 0 10px;font:700 16px/1.5 system-ui,sans-serif;color:#43533e;break-after:avoid}
+.summary-category ul{margin:0;padding-left:1.2em}
+.summary-category li{margin:0 0 10px;padding-left:3px;orphans:2;widows:2}
+.summary-category li:last-child{margin-bottom:0}
+.summary-category p{margin:0;orphans:2;widows:2}
+.summary-category-cost{border-left-color:#a16c30}
+.summary-category-transport{border-left-color:#537997}
+.summary-category-attention{border-left-color:#b0654c}
+.summary-category-source{border-left-color:#877693}
 .bound .chapter-facts{display:flex;flex-wrap:wrap;gap:6px 8px;margin:4px 0 10px}.bound .chapter-facts>span,.bound .day-cost-badge,.bound .weather-badge{padding:1px 10px;border:1px dashed var(--card-dash);border-radius:999px;color:var(--card-muted);margin:0 6px 6px 0}.bound .chapter-facts>span .day-cost-badge,.bound .chapter-facts>span .weather-badge{border:0;padding:0;margin:0}
 .schedule{border-top:0;margin:4px 0 18px}.schedule-head{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .schedule-row{grid-template-columns:56px minmax(0,1fr) auto;align-items:baseline;gap:10px;padding:7px 2px;border-bottom:0}
@@ -565,7 +574,7 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
         const review = copy.querySelector('.summary-review');
         let reviewHtml = '';
         if (review) {
-            reviewHtml = `<section class="summary-review"><h4>匯入核對事項 · 日期與來源補充</h4>${review.querySelector('.summary-review-copy').outerHTML}</section>`;
+            reviewHtml = `<section class="summary-review"><h4>匯入核對事項 · 分類補充</h4>${review.querySelector('.summary-review-copy').outerHTML}</section>`;
             review.remove();
         }
         const intro = copy.querySelector('.chapter-intro').outerHTML;
