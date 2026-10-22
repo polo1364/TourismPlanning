@@ -90,7 +90,8 @@ class LiveNetwork:
                 return route.fulfill(status=204, headers=cors)
             if request.method == "POST":
                 self.ai_requests.append(request.post_data_json)
-                return route.fulfill(status=200, headers=cors, content_type="application/json", body=json.dumps({"data": mocked_itinerary(), "usage": {"inputTokens": 10, "outputTokens": 10, "totalTokens": 20}}))
+                result = {**mocked_itinerary(), 'sourceReviews': [{'index': index + 1, 'status': 'clear', 'message': ''} for index, _ in enumerate(request.post_data_json.get('images', []))]}
+                return route.fulfill(status=200, headers=cors, content_type="application/json", body=json.dumps({"data": result, "usage": {"inputTokens": 10, "outputTokens": 10, "totalTokens": 20}}))
         if (local_bridge or same_origin) and parsed.path in {"/status", "/codex/status", "/usage", "/codex/usage"}:
             value = {"service": "roam-codex", "ready": True, "auth": "chatgpt", "token": "mock-import-test-token"} if parsed.path.endswith("status") else {"available": False, "limits": [], "models": []}
             return route.fulfill(status=200, headers=cors, content_type="application/json", body=json.dumps(value))

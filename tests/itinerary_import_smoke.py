@@ -76,7 +76,9 @@ class ImportNetwork(Network):
         if url.path != '/import-itinerary' or route.request.method != 'POST':
             return route.abort()
         self.ai_requests.append(route.request.post_data_json)
-        payload = {'data': self.result, 'usage': {'inputTokens': 10, 'outputTokens': 10, 'totalTokens': 20}}
+        result = {**self.result}
+        result.setdefault('sourceReviews', [{'index': index + 1, 'status': 'clear', 'message': ''} for index, _ in enumerate(route.request.post_data_json.get('images', []))])
+        payload = {'data': result, 'usage': {'inputTokens': 10, 'outputTokens': 10, 'totalTokens': 20}}
         if self.hold_ai:
             self.pending.append((route, payload))
             return
@@ -275,6 +277,15 @@ def main():
                     page.locator('#itineraryParseButton').click()
                     page.wait_for_function("!isBusy && document.getElementById('itineraryImportError').textContent.includes('沒有可讀行程')")
                     record_check('Codex empty-document error preserves source attachment and stored journeys', len(network.ai_requests[-1]['images']) == 1 and '全空白.pdf' in page.locator('#itineraryFileInfo').text_content() and page.locator('#itinerarySaveButton').is_disabled() and saved_state() == original_state)
+                    for reviews, message in [([], '來源核對未完成'), ([{'index': 1, 'status': 'unreadable', 'message': '活動名稱看不清楚'}], '已停止另存')]:
+                        network.result = {**response(), 'sourceReviews': reviews}
+                        page.locator('#itineraryParseButton').click()
+                        page.wait_for_function('!isBusy && document.getElementById("itineraryImportError").textContent.includes(' + json.dumps(message) + ')')
+                        record_check(message + ' blocks saving partial results', page.locator('#itinerarySaveButton').is_disabled() and saved_state() == original_state)
+                    network.result = {**response(), 'sourceReviews': [{'index': 1, 'status': 'uncertain', 'message': '09:00 活動提醒字跡不清'}]}
+                    page.locator('#itineraryParseButton').click()
+                    page.wait_for_function('!isBusy && !document.getElementById("itinerarySaveButton").disabled')
+                    record_check('uncertain field renders source and page warning without dropping activities', '全空白.pdf」第 1 頁' in page.locator('#itineraryImportPreview').text_content() and '09:00 活動提醒字跡不清' in page.locator('#itineraryImportPreview').text_content() and page.locator('#itineraryImportPreview li').count() == 3)
                     page.locator('#itineraryClearFiles').click()
                     source_file('第一份.txt', TEXT.encode('utf-8'))
                     local_request_count = len(network.ai_requests)
