@@ -165,9 +165,7 @@ body[data-scene='town'] #itineraryPanel #tripContainer > details > summary::befo
 #itineraryPanel #tripContainer .stop-meta > span { background: transparent; border: 1px dashed var(--card-dash); border-radius: 999px; }
 #itineraryPanel #tripContainer .stop-description { line-height: 1.95; }
 
-#itineraryPanel #tripContainer { counter-reset: day; }
-#itineraryPanel #tripContainer > details { counter-increment: day; }
-#itineraryPanel #tripContainer > details > .day-content::after { content: '— 第 ' counter(day) ' 天 · 完 —'; display: block; margin: 26px 0 4px; text-align: center; font-family: var(--kai); font-size: .9375rem; letter-spacing: .3em; color: var(--card-muted); }
+#itineraryPanel #tripContainer > details > .day-content > .day-end { margin: 26px 0 4px; text-align: center; font-family: var(--kai); font-size: .9375rem; letter-spacing: .3em; color: var(--card-muted); }
 
 @media (max-width: 760px) {
   #itineraryPanel .day-schedule li { grid-template-columns: 52px minmax(0,1fr) auto; gap: 8px; }
