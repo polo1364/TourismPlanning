@@ -1,0 +1,2 @@
+# Preserve the exact PDF.js bytes checked by the vendor SHA-256 manifest.
+vendor/pdfjs/** -text

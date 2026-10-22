@@ -2,6 +2,22 @@
 
 繁體中文旅遊規劃工具，以純 HTML、CSS、JavaScript 執行。支援一次產生整本旅遊書、AI 微調、地圖連結、費用估算、圖片與文字匯出，以及 JSON 備份。
 
+## 讀取多個行程檔案
+
+在「我的旅程」旁按「讀取行程檔案」，可混選 PDF、TXT、Markdown（`.md`／`.markdown`），也可再次選檔追加。各檔文字會標示來源並合併在可編輯的原文區；也支援直接貼上文字。最多 10 個檔案、每檔 8 MiB、每份 PDF 60 頁，合併含來源標記最多 30,000 字元。新一批有任一檔失敗或合併超限時，整批不加入，先前文字與預覽保留。「清除本次來源」只清除匯入視窗內容，不影響已存旅程。PDF 需透過 HTTP／HTTPS 網站或本機服務開啟（可執行 `啟動Codex旅遊書.vbs`）；直接雙擊 `index.html` 的 `file://` 模式可讀 TXT／Markdown，PDF 會提示改用服務開啟。
+
+核對原文後按「整理成行程」，會把所有來源整合為同一份行程，依日期合併重複活動與互補說明。當日已知時間由早到晚排列；時間未知的活動依原順序列於當日最後，並提示補上時間。不同日期的同名景點不會直接合併；同日同名但時間或地址衝突、無法確定是否同一站時，保留候選站點並提示核對。已確認為同站的費用若有不同版本，會在提醒保留來源費用並留空費用欄，不任選金額。預覽的核對事項也會保存至首日摘要。文件只有「第一天」或缺少年份時，請補充完整開始日期；目的地可選填。整理結果最多 15 天，按「另存為新旅程」才寫入收藏，既有旅程、完成標記、復原紀錄及 JSON 備份入口保留。修改原文或補充資料後須重新整理，取消或儲存失敗不會覆蓋原旅程。
+
+檔案先在瀏覽器本機讀取，不會自動傳送；只有按「整理成行程」才把預覽文字送到目前選用的 Codex／DeepSeek，並使用該服務額度。可先刪除訂位編號或個人資料。AI 仍可能誤讀或合併錯誤，請在另存前核對日期、活動及注意事項。PDF 以本地封裝的 [Mozilla PDF.js](https://mozilla.github.io/pdf.js/) 解析，不依賴第三方 CDN；掃描圖片須先做 OCR，加密檔須先解密，部分頁面無文字會提示。表格、多欄與特殊字型的抽取順序需人工確認。TXT／Markdown 支援 UTF-8、帶 BOM 的 UTF-16，以及 UTF-8 解碼失敗時嘗試 Big5（會提示核對編碼）；未支援 Word 或圖片 OCR。
+
+```powershell
+npm test
+npm run check:pdfjs
+python tests/itinerary_import_smoke.py
+```
+
+`itinerary-file.js` 管理擷取與限制，`itinerary-import.js`／`itinerary-import.css` 管理多檔預覽、整合與另存。`scripts/sync-pdfjs.cjs` 同步鎖定版本的解析器、worker、字元對照及字型資產，`check:pdfjs` 比對 SHA-256。瀏覽器報告見 `artifacts/itinerary-import-report.json`，使用真實檔案讀取與模擬 AI 回覆；不代表已驗證真實 AI 的辨識品質、實體手機或正式站部署。
+
 ## 啟動
 
 公開版：[開啟 ROAM 旅遊書](https://polo1364.github.io/TourismPlanning/)。GitHub Pages 生成需填入自己的 DeepSeek API Key；Codex 額度可使用下方本機版，或自行部署受登入保護的個人 Oracle 版（見 [雲端部署說明](deploy/README.md)）。公開頁面不會連接本機 Codex，也不會自動切換生成服務。不同網址與裝置的行程不共用儲存空間，請先匯出 JSON 再匯入。
@@ -10,7 +26,7 @@
 
 `main` 更新後，`.github/workflows/pages.yml` 會執行 Node 測試，透過 `npm run build:pages` 打包，再發布到 GitHub Pages。儲存庫 Settings → Pages 的 Source 使用 **GitHub Actions**。
 
-建置以明確清單輸出 27 個前端檔案及 `.nojekyll`，共 28 個檔案至 `dist/`，包含前端、插畫與 Motion 授權；不發布本機服務、測試報告、備份或憑證。為避免混入舊檔，`dist/` 已存在時建置會停止；重跑前請先將舊 `dist/` 移至備份位置。GitHub Actions 每次使用新的工作目錄。
+建置以明確清單輸出前端檔案及 `.nojekyll` 至 `dist/`，包含前端、插畫、Motion 與 PDF.js 本地資產及授權；不發布本機服務、測試報告、備份或憑證。PDF 資產由鎖定版本的 manifest 列出。為避免混入舊檔，`dist/` 已存在時建置會停止；重跑前請先將舊 `dist/` 移至備份位置。GitHub Actions 每次使用新的工作目錄。
 
 來源儲存庫保留本機啟動程式及測試，方便下載使用。更新與部署狀態可在儲存庫 Actions 查看；部署方式參考 [GitHub Pages 官方文件](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)。
 

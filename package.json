@@ -8,9 +8,12 @@
     "codex:bridge": "node codex-bridge.cjs",
     "test": "node --test tests/*.test.cjs",
     "sync:motion": "node scripts/sync-motion.cjs",
-    "check:motion": "node scripts/sync-motion.cjs --check"
+    "check:motion": "node scripts/sync-motion.cjs --check",
+    "sync:pdfjs": "node scripts/sync-pdfjs.cjs",
+    "check:pdfjs": "node scripts/sync-pdfjs.cjs --check"
   },
   "dependencies": {
-    "motion": "14.2.0"
+    "motion": "14.2.0",
+    "pdfjs-dist": "6.4.299"
   }
 }

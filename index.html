@@ -1604,6 +1604,9 @@
     <script src="artwork-core.js" defer></script>
     <script src="trip-store.js" defer></script>
     <script src="trip-library.js" defer></script>
+    <link rel="stylesheet" href="itinerary-import.css">
+    <script src="itinerary-file.js" defer></script>
+    <script src="itinerary-import.js" defer></script>
     <script src="scene-ui.js" defer></script>
     <script src="book-ui.js" defer></script>
     <script src="book-export.js" defer></script>
@@ -2506,6 +2509,7 @@
             }
             window.TripMotion?.init();
             window.PlannerUI?.init();
+            window.ItineraryImport?.init();
         };
 
         function handleInput(event) {
@@ -4108,6 +4112,7 @@ Output strictly in Traditional Chinese (Taiwan).
             modal.querySelector('input:not([type="file"]), textarea, button')?.focus();
         }
         function closeModal(id) {
+            if (id === 'itineraryImportModal') window.ItineraryImport?.cancel();
             const modal = document.getElementById(id);
             const returnFocus = modalReturnFocus;
             const finish = () => {

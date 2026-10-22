@@ -161,8 +161,8 @@ function createCloud({ origin, passwordHash, root = __dirname, shareDirectory = 
             }
             const file = pathname === '/' ? 'index.html' : pathname.slice(1);
             if (!assets.has(file)) return json(404, { error: '找不到頁面。' });
-            const types = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.png': 'image/png', '.ico': 'image/x-icon', '.md': 'text/plain' };
-            res.setHeader('Content-Type', (types[path.extname(file)] || 'application/octet-stream') + '; charset=utf-8');
+            const types = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.mjs': 'application/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.ico': 'image/x-icon', '.md': 'text/plain; charset=utf-8', '.json': 'application/json; charset=utf-8', '.wasm': 'application/wasm', '.bcmap': 'application/octet-stream', '.ttf': 'font/ttf', '.pfb': 'application/octet-stream' };
+            res.setHeader('Content-Type', types[path.extname(file)] || 'application/octet-stream');
             let content = await fs.promises.readFile(path.join(root, file));
             if (file === 'index.html') content = Buffer.from(content.toString('utf8').replace('</head>', '<script src="/cloud-config.js"></script></head>'));
             res.end(req.method === 'HEAD' ? undefined : content);

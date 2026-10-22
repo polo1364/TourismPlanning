@@ -178,7 +178,7 @@
     }
     function init() {
         $('tripLibrary').innerHTML = `<div class="library-heading"><div><div class="eyebrow">MY JOURNEYS</div><label for="tripSelect">我的旅程</label></div><span id="libraryCount"></span></div>
-            <div class="library-picker"><select id="tripSelect" onchange="TripLibrary.select(this.value)" aria-label="切換旅程"></select><button type="button" onclick="TripLibrary.openName('new')">＋ 新增旅程</button></div>
+            <div class="library-picker"><select id="tripSelect" onchange="TripLibrary.select(this.value)" aria-label="切換旅程"></select><button type="button" onclick="TripLibrary.openName('new')">＋ 新增旅程</button><button type="button" id="openItineraryImport" onclick="ItineraryImport.open()">讀取行程檔案</button></div>
             <details id="libraryManagement" class="library-management"><summary>管理與備份</summary><div class="library-actions"><button type="button" onclick="TripLibrary.openName('duplicate')">複製</button><button type="button" onclick="TripLibrary.openName('rename')">重新命名</button><button type="button" id="removeTrip" onclick="TripLibrary.remove()">移除</button><button type="button" onclick="TripLibrary.exportAll()">備份全部</button><button type="button" onclick="document.getElementById('importFile').click()">匯入備份</button></div><p class="field-hint">每份旅程各保留一次行程／完成狀態的復原；一般設定輸入不占用復原紀錄。</p></details>
             <div class="library-tools"><button type="button" id="undoTrip" onclick="TripLibrary.undo()" disabled>↶ 沒有可復原的變更</button><button type="button" id="travelModeButton" onclick="TripLibrary.toggleMode()" disabled>開啟旅途中模式</button></div>
             <p id="libraryError" role="alert" hidden></p>`;
