@@ -328,11 +328,11 @@ ${JSON.stringify(text)}`;
         document.body.insertAdjacentHTML('beforeend', `<div id="itineraryImportModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="itineraryImportTitle"><div class="modal-content itinerary-import-content">
             <div class="editor-heading"><div><div class="eyebrow">FROM YOUR FILES</div><h3 id="itineraryImportTitle">讀取行程檔案</h3></div><button type="button" id="itineraryImportClose" class="modal-close" aria-label="關閉行程匯入">×</button></div>
             <p class="field-hint">把多份行程整合成一本旅遊書，依日期合併重複活動，確認後新增一份旅程。原有旅程會保留。</p>
-            <label for="itinerarySourceFile">1. 選擇行程檔案（可多選、繼續加入）</label><input type="file" id="itinerarySourceFile" multiple accept=".pdf,.txt,.md,.markdown,application/pdf,text/plain,text/markdown" aria-describedby="itineraryFileHelp">
-            <p id="itineraryFileHelp" class="field-hint">PDF、TXT、Markdown 可混合選取，合併為同一份旅程。最多 10 個檔案，每檔 8 MiB，合計 30,000 字元；每份 PDF 最多 60 頁。PDF 須有可選取文字；掃描圖片需先轉成文字（OCR），加密檔需先解密。</p>
+            <label for="itinerarySourceFile">1. 選擇行程檔案（可多選、繼續加入）</label><input type="file" id="itinerarySourceFile" multiple accept=".pdf,.txt,.md,.markdown,.png,.jpg,.jpeg,.webp,application/pdf,text/plain,text/markdown,image/png,image/jpeg,image/webp" aria-describedby="itineraryFileHelp">
+            <p id="itineraryFileHelp" class="field-hint">PDF、TXT、Markdown 與 PNG／JPG／JPEG／WebP 圖片可混選，整合為同一份旅程。最多 10 個檔案，每檔 8 MiB，合計 30,000 字元；每份 PDF 最多 60 頁，圖片最多 2400 萬像素。圖片在本機辨識繁體中文及英文，首次下載 OCR 辨識資料可能較久，請核對辨識文字。HEIC 請先轉 JPG；掃描 PDF 請先將需要的頁面匯出為圖片，加密 PDF 須先解密。</p>
             <p id="itineraryFileInfo" class="field-hint"></p>
             <button type="button" id="itineraryClearFiles" class="btn-outline">清除本次來源</button>
-            <label for="itinerarySourceText">2. 核對文字，也可以直接貼上</label><textarea id="itinerarySourceText" rows="8" spellcheck="false" placeholder="讀取後會顯示原文。可修正 PDF 斷行、表格順序，或直接貼上行程。"></textarea>
+            <label for="itinerarySourceText">2. 核對文字，也可以直接貼上</label><textarea id="itinerarySourceText" rows="8" spellcheck="false" placeholder="讀取後會顯示文字。請修正圖片 OCR 誤字、PDF 斷行或表格順序，也可以直接貼上行程。"></textarea>
             <div class="import-fields"><div><label for="itineraryImportCity">目的地（選填）</label><input type="text" id="itineraryImportCity" maxlength="100" placeholder="文件未標示時補充"></div><div><label for="itineraryImportStart">開始日期（缺少完整日期時填寫）</label><input type="date" id="itineraryImportStart"></div></div>
             <p id="itineraryPrivacy" class="field-hint"></p>
             <div class="import-actions"><button type="button" id="itineraryParseButton" class="btn-primary" disabled>整理成行程</button><button type="button" id="itineraryImportSettings" class="btn-outline">AI 服務設定</button><button type="button" id="itineraryImportCancel" class="btn-outline" hidden>取消處理</button></div>

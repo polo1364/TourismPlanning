@@ -10,10 +10,16 @@
     "sync:motion": "node scripts/sync-motion.cjs",
     "check:motion": "node scripts/sync-motion.cjs --check",
     "sync:pdfjs": "node scripts/sync-pdfjs.cjs",
-    "check:pdfjs": "node scripts/sync-pdfjs.cjs --check"
+    "check:pdfjs": "node scripts/sync-pdfjs.cjs --check",
+    "sync:tesseract": "node scripts/sync-tesseract.cjs",
+    "check:tesseract": "node scripts/sync-tesseract.cjs --check"
   },
   "dependencies": {
+    "@tesseract.js-data/chi_tra": "1.0.0",
+    "@tesseract.js-data/eng": "1.0.0",
     "motion": "14.2.0",
-    "pdfjs-dist": "6.4.299"
+    "pdfjs-dist": "6.4.299",
+    "tesseract.js": "7.0.0",
+    "tesseract.js-core": "7.0.0"
   }
 }

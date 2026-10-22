@@ -23,6 +23,7 @@ jobs:
           node-version: '24'
       - run: npm ci
       - run: npm run check:pdfjs
+      - run: npm run check:tesseract
       - run: npm test
       - run: npm run build:pages
       - uses: actions/configure-pages@v5

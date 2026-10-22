@@ -5,11 +5,24 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 const crypto = require('node:crypto');
+const vm = require('node:vm');
 const Reader = require('../itinerary-file.js');
 
 function file(name, content, overrides = {}) {
     const bytes = Buffer.isBuffer(content) ? content : Buffer.from(content);
     return { name, size: bytes.length, arrayBuffer: async () => Uint8Array.from(bytes).buffer, ...overrides };
+}
+function imageReader(image, browser = false) {
+    const sandbox = { Uint8Array, TextDecoder, URL };
+    if (browser) {
+        sandbox.window = { ItineraryImage: image };
+        sandbox.document = { currentScript: { src: 'https://example.test/itinerary-file.js' } };
+    } else {
+        sandbox.module = { exports: {} };
+        sandbox.require = name => { assert.equal(name, './itinerary-image.js'); return image; };
+    }
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../itinerary-file.js'), 'utf8'), sandbox);
+    return browser ? sandbox.window.ItineraryFile : sandbox.module.exports;
 }
 // A complete PDF with xref offsets, ordinary page objects and text streams.
 // Tests exercise the actual vendored parser, not a mock that merely returns text.
@@ -76,6 +89,76 @@ test('unsupported file extensions are rejected before reading', async () => {
     }
 });
 
+test('image formats route through the Node OCR adapter with progress and source bytes', async () => {
+    const calls = [], states = [];
+    const reader = imageReader({ read: async (bytes, options) => {
+        calls.push({ bytes: Array.from(bytes), extension: options.extension, signal: options.signal });
+        options.onProgress?.({ stage: 'ocr', message: '正在辨識圖片文字' });
+        return { text: '\uFEFF台北\r\n09:00 早餐 ', format: 'image', pages: null, warnings: ['請核對辨識文字'] };
+    } });
+    const controller = new AbortController();
+    for (const extension of ['PNG', 'jpg', 'jpeg', 'webp']) {
+        const result = await reader.read(file(`trip.${extension}`, Buffer.from([1, 2, 3])), { signal: controller.signal, onProgress: state => states.push(state.stage) });
+        assert.equal(result.text, '台北\n09:00 早餐');
+        assert.equal(result.format, 'image'); assert.equal(result.pages, null);
+        assert.equal(result.warnings[0], '請核對辨識文字');
+    }
+    assert.deepEqual(calls.map(call => call.extension), ['png', 'jpg', 'jpeg', 'webp']);
+    assert.ok(calls.every(call => call.signal === controller.signal && call.bytes.join(',') === '1,2,3'));
+    assert.deepEqual(states, Array.from({ length: 4 }, () => ['reading', 'ocr', 'done']).flat());
+});
+
+test('browser image routing uses the global adapter and does not load OCR for TXT', async () => {
+    let calls = 0;
+    const reader = imageReader({ read: async () => { calls++; return { text: '圖片行程', warnings: [] }; } }, true);
+    assert.equal((await reader.read(file('trip.txt', '文字行程'))).text, '文字行程');
+    assert.equal(calls, 0);
+    assert.equal((await reader.read(file('trip.png', 'image bytes'))).text, '圖片行程');
+    assert.equal(calls, 1);
+    await assert.rejects(imageReader(undefined, true).read(file('trip.png', 'bytes')), { code: 'IMAGE_ASSET' });
+});
+
+test('HEIC and HEIF receive conversion guidance before their contents are read', async () => {
+    for (const extension of ['HEIC', 'heif']) {
+        await assert.rejects(Reader.read(file(`trip.${extension}`, '', { arrayBuffer: () => { throw new Error('Must not read'); } })), error => error.code === 'FORMAT' && /JPG.*PNG/.test(error.message));
+    }
+});
+
+test('image byte limits prevent OCR and accept the exact 8 MiB boundary', async () => {
+    let calls = 0;
+    const reader = imageReader({ read: async bytes => { calls++; assert.equal(bytes.length, Reader.MAX_BYTES); return { text: '行程', warnings: [] }; } });
+    await assert.rejects(reader.read(file('trip.png', '', { size: Reader.MAX_BYTES + 1, arrayBuffer: () => { throw new Error('Must not read'); } })), { code: 'FILE_LIMIT' });
+    await assert.rejects(reader.read(file('trip.jpg', Buffer.alloc(Reader.MAX_BYTES + 1), { size: 1 })), { code: 'FILE_LIMIT' });
+    assert.equal(calls, 0);
+    assert.equal((await reader.read(file('trip.webp', Buffer.alloc(Reader.MAX_BYTES)))).text, '行程');
+    assert.equal(calls, 1);
+});
+
+test('OCR text length is checked by the file reader without silently truncating', async () => {
+    const reader = imageReader({ read: async bytes => ({ text: '台'.repeat(bytes[0] ? Reader.MAX_CHARACTERS + 1 : Reader.MAX_CHARACTERS), warnings: [] }) });
+    assert.equal((await reader.read(file('trip.png', Buffer.from([0])))).text.length, Reader.MAX_CHARACTERS);
+    await assert.rejects(reader.read(file('trip.png', Buffer.from([1]))), { code: 'TEXT_LIMIT' });
+});
+
+test('empty or invalid OCR output is rejected and OCR error codes propagate', async () => {
+    await assert.rejects(imageReader({ read: async () => ({ text: ' \r\n ', warnings: [] }) }).read(file('trip.png', 'bytes')), { code: 'IMAGE_NO_TEXT' });
+    await assert.rejects(imageReader({ read: async () => ({ text: ['invalid'], warnings: [] }) }).read(file('trip.png', 'bytes')), { code: 'IMAGE_RESULT' });
+    await assert.rejects(imageReader({ read: async () => { throw Object.assign(new Error('辨識逾時'), { code: 'IMAGE_TIMEOUT' }); } }).read(file('trip.png', 'bytes')), { code: 'IMAGE_TIMEOUT' });
+});
+
+test('image cancellation prevents OCR work or discards late OCR results', async () => {
+    let calls = 0;
+    const before = new AbortController(); before.abort();
+    const reader = imageReader({ read: async () => { calls++; return { text: 'should not be used', warnings: [] }; } });
+    await assert.rejects(reader.read(file('trip.png', 'bytes'), { signal: before.signal }), { name: 'AbortError' });
+    const loading = new AbortController();
+    await assert.rejects(reader.read(file('trip.png', '', { arrayBuffer: async () => { loading.abort(); return new ArrayBuffer(1); } }), { signal: loading.signal }), { name: 'AbortError' });
+    assert.equal(calls, 0);
+    const recognizing = new AbortController();
+    const late = imageReader({ read: async () => { recognizing.abort(); return { text: 'late output', warnings: [] }; } });
+    await assert.rejects(late.read(file('trip.png', 'bytes'), { signal: recognizing.signal }), { name: 'AbortError' });
+});
+
 test('size limits are checked before reading and against actual data', async () => {
     await assert.rejects(Reader.read(file('trip.pdf', '', { size: Reader.MAX_BYTES + 1, arrayBuffer: () => { throw new Error('Must not read'); } })), { code: 'FILE_LIMIT' });
     await assert.rejects(Reader.read(file('trip.txt', Buffer.alloc(Reader.MAX_BYTES + 1, 32), { size: 1 })), { code: 'FILE_LIMIT' });
@@ -107,8 +190,8 @@ test('actual PDF parser extracts lines and pages and reports progress', async ()
     assert.deepEqual(states.filter(state => state.stage === 'pdf').map(state => [state.page, state.pages]), [[1, 2], [2, 2]]);
 });
 
-test('PDF without text requests OCR, and mixed blank pages identify the missing pages', async () => {
-    await assert.rejects(Reader.read(file('scan.pdf', pdf([[], []]))), { code: 'PDF_NO_TEXT' });
+test('PDF without text suggests importing exported images, and mixed blank pages identify the missing pages', async () => {
+    await assert.rejects(Reader.read(file('scan.pdf', pdf([[], []]))), error => error.code === 'PDF_NO_TEXT' && /JPG.*PNG.*圖片.*OCR/.test(error.message));
     const result = await Reader.read(file('mixed.pdf', pdf([['Day 1'], [], ['Day 3']])));
     assert.equal(result.text, 'Day 1\n\nDay 3'); assert.match(result.warnings.join('\n'), /第 2 頁/);
 });

@@ -1,9 +1,9 @@
 (function (root, factory) {
     'use strict';
-    const api = factory();
+    const api = factory(root);
     if (typeof module === 'object' && module.exports) module.exports = api;
     else root.ItineraryFile = api;
-}(typeof window === 'object' ? window : globalThis, function () {
+}(typeof window === 'object' ? window : globalThis, function (root) {
     'use strict';
     const MAX_BYTES = 8 * 1024 * 1024;
     const MAX_PAGES = 60;
@@ -145,7 +145,7 @@
                 }
             }
             aborted(signal);
-            if (!text.trim()) throw failure('PDF_NO_TEXT', '這份 PDF 沒有可擷取的文字，可能是掃描或圖片檔。請先進行 OCR 文字辨識，或改用 TXT 檔。');
+            if (!text.trim()) throw failure('PDF_NO_TEXT', '這份 PDF 沒有可擷取的文字，可能是掃描或圖片檔。可將需要的頁面匯出為 JPG／PNG 圖片後匯入進行 OCR，或改用 TXT 檔。');
             const warnings = ['PDF 的欄位、表格或多欄版面可能影響文字順序，請確認預覽內容。'];
             if (emptyPages.length) warnings.push(`第 ${emptyPages.join('、')} 頁沒有可擷取文字，可能是空白頁或圖片，請確認是否遺漏行程。`);
             return { text, format: 'pdf', pages, warnings };
@@ -159,11 +159,24 @@
             await destroy();
         }
     }
+    async function imageFile(bytes, { extension, signal, onProgress }) {
+        const image = node ? require('./itinerary-image.js') : root.ItineraryImage;
+        if (typeof image?.read !== 'function') throw failure('IMAGE_ASSET', '圖片文字辨識元件尚未載入，請重新整理後再試。');
+        const result = await image.read(bytes, { extension, signal, onProgress });
+        aborted(signal);
+        if (!result || typeof result.text !== 'string') throw failure('IMAGE_RESULT', '圖片辨識結果無效，請重新選取圖片後再試。');
+        const text = clean(result.text);
+        checkLength(text);
+        if (!text) throw failure('IMAGE_NO_TEXT', '圖片未辨識出文字，請改用較清晰的行程圖片，或直接貼上文字。');
+        return { ...result, text, format: 'image', pages: null };
+    }
     async function read(file, { onProgress, signal } = {}) {
         aborted(signal);
         if (!file || typeof file.name !== 'string' || typeof file.arrayBuffer !== 'function') throw failure('FILE', '請先選擇行程檔案。');
         const extension = /\.([^.]+)$/.exec(file.name)?.[1].toLowerCase();
-        if (!['pdf', 'txt', 'md', 'markdown'].includes(extension)) throw failure('FORMAT', '目前支援 PDF、TXT 與 Markdown（.md、.markdown）檔案。');
+        if (['heic', 'heif'].includes(extension)) throw failure('FORMAT', '目前不支援 HEIC／HEIF 圖片，請先轉存為 JPG 或 PNG 後匯入。');
+        const image = ['png', 'jpg', 'jpeg', 'webp'].includes(extension);
+        if (!image && !['pdf', 'txt', 'md', 'markdown'].includes(extension)) throw failure('FORMAT', '目前支援 PDF、TXT、Markdown（.md、.markdown）及 PNG、JPG、JPEG、WebP 行程圖片。');
         if (!Number.isFinite(file.size) || file.size < 0 || file.size > MAX_BYTES) throw failure('FILE_LIMIT', '檔案超過 8 MB，請縮小或拆分後再匯入。');
         progress(onProgress, { stage: 'reading', page: 0, pages: null, message: '正在讀取行程檔案…' });
         let buffer;
@@ -172,7 +185,8 @@
         aborted(signal);
         if (buffer.byteLength > MAX_BYTES) throw failure('FILE_LIMIT', '檔案超過 8 MB，請縮小或拆分後再匯入。');
         const bytes = new Uint8Array(buffer);
-        const result = extension === 'pdf' ? await pdfFile(bytes, { onProgress, signal })
+        const result = image ? await imageFile(bytes, { extension, onProgress, signal })
+            : extension === 'pdf' ? await pdfFile(bytes, { onProgress, signal })
             : { ...textFile(bytes), format: extension === 'txt' ? 'txt' : 'md', pages: null };
         aborted(signal);
         progress(onProgress, { stage: 'done', page: result.pages, pages: result.pages, message: '檔案讀取完成，請確認文字。' });

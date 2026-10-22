@@ -122,6 +122,27 @@ test('cloud serves only frontend files and injects a same-origin mode flag', asy
     for (const file of ['/cloud-server.cjs', '/codex-bridge.cjs', '/auth.json', '/.env', '/../README.md', '/%2e%2e/auth.json', '/scripts/login-oracle-codex.ps1']) assert.equal((await request(file)).status, 404, file);
 });
 
+test('OCR worker, core and language assets are same-origin authenticated static files', async t => {
+    const { request, calls } = await fixture(t);
+    const assets = require('../vendor/tesseract/manifest.json').assets;
+    const paths = ['itinerary-image.js', ...['worker.min.js', '.wasm', 'chi_tra.traineddata.gz', 'eng.traineddata.gz'].map(suffix => {
+        const asset = assets.find(item => item.path.endsWith(suffix));
+        assert.ok(asset, `Missing OCR asset ${suffix}`);
+        return asset.path;
+    })];
+    for (const file of paths) {
+        assert.equal((await request('/' + file, { headers: { Authorization: '' } })).status, 401);
+        const response = await request('/' + file);
+        assert.equal(response.status, 200, file);
+        assert.equal(response.headers['x-content-type-options'], 'nosniff');
+        assert.equal(response.headers['content-encoding'], undefined, 'compressed language files must reach the OCR decoder unchanged');
+        if (file.endsWith('.js')) assert.match(response.headers['content-type'], /javascript/);
+        if (file.endsWith('.wasm')) assert.equal(response.headers['content-type'], 'application/wasm');
+    }
+    assert.equal((await request('/vendor/tesseract/not-in-manifest.js')).status, 404);
+    assert.equal(calls(), 0);
+});
+
 test('cloud validates bodies before generating and returns JSON', async t => {
     const { post, calls } = await fixture(t);
     assert.equal((await post('{')).status, 400);
