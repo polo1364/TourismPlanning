@@ -9,7 +9,7 @@ from pathlib import Path
 import re
 from urllib.parse import urlsplit
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Error as PlaywrightError
 import itinerary_scan_quality_live as scans
 from itinerary_mobile_codex_live import ROOT, TARGET
 
@@ -27,7 +27,7 @@ def run(args):
     auth = 'Basic ' + base64.b64encode(f"{credentials['username']}:{credentials['password']}".encode()).decode()
     replay = json.loads(Path(args.replay).read_text(encoding='utf-8'))['responses'] if args.replay else None
     report = {'profile': args.profile, 'physical_device': False, 'candidate': args.candidate,
-              'transport': 'replay' if replay else 'real_codex', 'checks': [], 'calls': [], 'responses': [], 'errors': [], 'blocked': []}
+              'account_usage_mocked': bool(replay), 'transport': 'replay' if replay else 'real_codex', 'checks': [], 'calls': [], 'responses': [], 'errors': [], 'blocked': []}
     def check(name, condition):
         report['checks'].append({'name': name, 'passed': bool(condition)})
         if not condition:
@@ -49,12 +49,25 @@ def run(args):
         engine = p.webkit if args.profile == 'iphone' else p.chromium
         device = dict(p.devices['iPhone 13' if args.profile == 'iphone' else 'Pixel 7']) if args.profile != 'desktop' else {'viewport': {'width': 1440, 'height': 1000}}
         device.pop('default_browser_type', None)
+        closing = False
         def route_request(route):
+            try:
+                return handle_route(route)
+            except PlaywrightError:
+                if not closing:
+                    report["errors"].append("Browser request failed: " + urlsplit(route.request.url).path)
+                try:
+                    route.abort()
+                except PlaywrightError:
+                    pass
+        def handle_route(route):
             request = route.request
             url = urlsplit(request.url)
             same = f'{url.scheme}://{url.netloc}' == origin
             if url.scheme == 'blob' and request.url.startswith('blob:' + origin + '/'):
                 return route.continue_()
+            if same and replay and url.path == '/codex/usage':
+                return route.fulfill(status=200, content_type='application/json', body=json.dumps({'available': False, 'limits': [], 'models': []}))
             if same and args.candidate and url.path == '/itinerary-import.js':
                 return route.fulfill(path=str(ROOT / 'itinerary-import.js'), content_type='application/javascript')
             if same and request.method == 'POST' and url.path == '/codex/import-itinerary' and len(report['calls']) < 3:
@@ -74,7 +87,16 @@ def run(args):
             if url.hostname in {'fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'html2canvas.hertzen.com'}:
                 return route.continue_()
             return route.abort()
+        def close_context(context):
+            nonlocal closing
+            for tab in context.pages:
+                tab.wait_for_load_state('networkidle')
+            closing = True
+            context.unroute_all(behavior='ignoreErrors')
+            context.close()
         def new_context():
+            nonlocal closing
+            closing = False
             context = engine.launch_persistent_context(str(output / 'profile'), **device, service_workers='block', timezone_id='Asia/Taipei')
             context.route('**/*', route_request)
             context.add_init_script("localStorage.setItem('aiProvider','deepseek');localStorage.setItem('roamReadingMode','continuous');")
@@ -128,7 +150,7 @@ def run(args):
             page.locator('#itineraryAddCorrection').click()
             page.locator('#itineraryCorrection-0').fill(MANUAL)
             saved()
-            context.close()
+            close_context(context)
             context = new_context()
             page = new_page(context)
             check('restart restores manual permission and 50 files without AI', len(report['calls']) == 1 and page.locator('#itineraryCorrection-0').input_value() == MANUAL and '50 個檔案' in page.locator('#itineraryFileInfo').text_content())
@@ -172,11 +194,11 @@ def run(args):
             check('no JavaScript error or unrelated mutation', not report['errors'] and not report['blocked'])
             report['passed'] = True
         except Exception as error:
-            report.update(passed=False, failure=str(error))
+            report.update(passed=False, failure=re.sub(r'(?im)(authorization|x-roam-token):[^\r\n]*', r'\1: [redacted]', str(error)).replace(auth, '[redacted]').replace(credentials['password'], '[redacted]'))
         finally:
             report['visible_error'] = page.locator('#itineraryImportError').text_content()
             page.screenshot(path=str(output / 'result.png'))
-            context.close()
+            close_context(context)
     (output / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     print(json.dumps({'passed': report['passed'], 'checks': len(report['checks']), 'report': str(output / 'report.json')}), flush=True)
     return 0 if report['passed'] else 1
