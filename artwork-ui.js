@@ -33,7 +33,7 @@
             $('artworkCount').textContent = `已保存 ${states.filter(item => item.image).length} / ${list.length} 張 · 封面＋每天景點與美食／活動插圖`;
             $('generateArtwork').disabled = isBusy || !list.length || !window.CodexLocal?.imagesAvailable();
             $('artworkHelp').textContent = window.CodexLocal?.imagesAvailable()
-                ? '寫實旅行風格，可將當天多個景點或美食合成一張。手動生成才使用目前服務的額度；下載與分享只使用已存圖片，行程改動後請手動更新。AI 行程示意圖，非景點實拍。'
+                ? '手動生成才使用額度；下載重用已存圖片。行程更動後可重新生成。圖片為 AI 旅行示意，非景點實拍。'
                 : '生成插圖需使用本機或私人雲端版；這裡可以匯入、閱讀及下載已存圖片。';
         } catch (error) { status(error.message); }
     }
@@ -69,7 +69,7 @@
         } catch (error) { status(error.message); return; }
         finally { preparing = false; if (!confirmed) { setBusy(false); void refresh(); } }
         if (active()?.id !== tripId) { setBusy(false); void refresh(); return; }
-        running = true; stopping = false; $('stopArtwork').disabled = false;
+        running = true; stopping = false; $('stopArtwork').disabled = false; $('stopArtwork').hidden = false;
         let completed = 0;
         try {
             for (const target of selected) {
@@ -106,9 +106,9 @@
                 completed++; currentJob = null;
                 await refresh();
             }
-            status(stopping ? `已停止接續新圖片。完成 ${completed} 張，已存圖片保留；下次接續會先查詢已送出的工作。` : `已保存 ${completed} 張圖片。之後下載與分享都會直接重用。`);
+            status(stopping ? `已停止接續新圖片。完成 ${completed} 張，已存圖片保留；下次接續會先查詢已送出的工作。` : `已保存 ${completed} 張圖片，下載時直接重用。`);
         } catch (error) { status(`${error.message} 已完成圖片保留；請按「生成行程插圖」查詢原工作並接續。`); }
-        finally { running = false; currentJob = null; setBusy(false); $('stopArtwork').disabled = true; await refresh(); }
+        finally { running = false; currentJob = null; setBusy(false); $('stopArtwork').disabled = true; $('stopArtwork').hidden = true; await refresh(); }
     }
     async function stop() {
         stopping = true; $('stopArtwork').disabled = true;

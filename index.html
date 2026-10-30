@@ -1676,7 +1676,7 @@
                 <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(this)">
                 <button onclick="document.getElementById('importFile').click()" class="btn-outline">📥 匯入資料</button>
             </div>
-            <button onclick="saveAndCloseModal()" class="btn-primary" style="margin-top:25px;">儲存並關閉</button>
+            <button id="settingsDone" onclick="saveAndCloseModal()" class="btn-primary" style="margin-top:25px;">儲存並關閉</button>
         </div>
     </div>
 
@@ -2110,9 +2110,9 @@
             <p id="bookExportStatus" role="status" hidden></p>
             <details id="artworkPanel" class="artwork-panel">
                 <summary>行程插圖與圖片備份</summary>
-                <p id="artworkHelp">手動生成一次，之後下載與分享直接重用。</p>
+                <p id="artworkHelp">手動生成圖片，下載時重用已存成品。</p>
                 <p id="artworkCount"></p>
-                <div class="artwork-actions"><button type="button" id="generateArtwork">生成行程插圖／補齊缺圖</button><button type="button" id="stopArtwork" disabled>停止生成</button><button type="button" id="backupArtwork">備份目前旅程（含插圖）</button><button type="button" id="backupAllArtwork">備份全部（含插圖）</button></div>
+                <div class="artwork-actions"><button type="button" id="generateArtwork">生成行程插圖／補齊缺圖</button><button type="button" id="stopArtwork" disabled hidden>停止生成</button><button type="button" id="backupArtwork">備份目前旅程（含插圖）</button><button type="button" id="backupAllArtwork">備份全部（含插圖）</button></div>
                 <p id="artworkStatus" role="status" aria-live="polite"></p><div id="artworkList" class="artwork-list"></div>
             </details>
             <details id="bookShares" class="book-shares" hidden>
@@ -4197,6 +4197,11 @@ Output strictly in Traditional Chinese (Taiwan).
             document.getElementById('apiStatus').textContent = document.getElementById('apiKey').value.trim() ? 'DeepSeek 已設定' : '設定 DeepSeek';
         }
         function saveAndCloseModal() {
+            if (window.CodexLocal?.selected() && document.getElementById('openaiApiKey').value.trim()) {
+                document.getElementById('openaiKeyStatus').textContent = `這把 Key 尚未驗證，請先按「${document.getElementById('openaiSaveKey').textContent}」。`;
+                document.getElementById('openaiSaveKey').focus();
+                return;
+            }
             window.CodexLocal?.update(true);
             const key = document.getElementById('apiKey').value.trim();
             try {

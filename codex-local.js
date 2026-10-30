@@ -102,7 +102,7 @@
     }
     async function refreshUsage() {
         if (!$('codexUsageWindows') || (!localPage && !cloudPage && !browserApi)) return;
-        if (!token) { $('codexUsageStatus').textContent = '請先檢查 Codex 連線。'; return; }
+        if (!token) { $('codexUsageStatus').textContent = authMode === 'api' ? '請先驗證 API Key，再更新模型。' : '請先檢查 Codex 連線。'; return; }
         if (usagePending) return usagePending;
         const requestToken = token;
         $('codexUsageRefresh').disabled = true;
@@ -115,7 +115,7 @@
                 if (token === requestToken) renderQuota(info);
             } catch (_) {
                 if (token === requestToken) renderQuota({ available: false, limits: [], models: [] });
-            } finally { $('codexUsageRefresh').disabled = false; usagePending = null; }
+            } finally { $('codexUsageRefresh').disabled = !!browserApi && !browserApi.ready(); usagePending = null; }
         })();
         return usagePending;
     }
@@ -134,13 +134,14 @@
         if (manual) touched = true;
         $('deepseekSettings').hidden = selected();
         $('codexSettings').hidden = !selected();
+        if ($('settingsDone')) $('settingsDone').textContent = selected() && authMode === 'api' ? '完成' : '儲存並關閉';
         summary();
         updateApiStatus();
     }
     async function check(signal) {
         token = '';
         if (!localPage && !cloudPage && !browserApi) { $('codexStatus').textContent = localOnlyMessage; return false; }
-        $('codexStatus').textContent = cloudPage ? '正在檢查雲端 Codex…' : '正在檢查本機 Codex…';
+        $('codexStatus').textContent = browserApi ? '正在檢查 API 設定…' : cloudPage ? '正在檢查雲端 Codex…' : '正在檢查本機 Codex…';
         try {
             const response = browserApi ? null : await fetch(BASE + '/status', { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(12000)]) : AbortSignal.timeout(12000) });
             const data = browserApi ? { auth: 'api', ready: browserApi.ready(), token: browserApi.ready() ? 'browser-api' : '' } : await response.json();
@@ -159,9 +160,11 @@
                 $('aiProvider').querySelector('option[value="codex"]').textContent = 'OpenAI API · 使用 API 額度';
                 $('codexUsageTitle').textContent = 'OpenAI API 用量';
                 $('codexUsageRefresh').textContent = '更新模型';
+                $('codexUsageRefresh').disabled = !!browserApi && !data.ready;
                 $('codexUsageExplanation').textContent = 'Token 為本分頁收到的行程生成用量，費用以 OpenAI 帳單為準；圖片生成及中斷請求可能未計入。';
                 $('codexHelp').textContent = browserApi ? '此頁直接連接 OpenAI 官方 API，不需要私人站或本機服務。勾選記住後，下次可直接使用；原有檔案與手動補充可繼續整合。' : '由目前連接的伺服器呼叫 OpenAI 官方 API。更換 API Key 不會清除旅程或草稿。插圖使用 gpt-image-1.5，只有按下生成時才呼叫。';
                 if (browserApi) {
+                    $('codexHelp').hidden = true;
                     $('openaiSaveKey').textContent = '驗證並使用';
                     $('openaiKeyBrief').hidden = false;
                     $('openaiRememberOption').hidden = false;
@@ -184,7 +187,7 @@
             return true;
         } catch (error) {
             if (signal?.aborted) throw Object.assign(new Error('已取消生成。'), { code: 'CANCELLED' });
-            $('codexStatus').textContent = cloudPage ? '雲端 Codex 目前無法連線，請稍後重新檢查。' : (error instanceof TypeError ? '尚未連接。請執行「啟動Codex旅遊書.vbs」，再按檢查連線。' : error.message);
+            $('codexStatus').textContent = browserApi ? '無法確認 OpenAI API 設定，請檢查網路與 Key 後重試。' : cloudPage ? '雲端 Codex 目前無法連線，請稍後重新檢查。' : (error instanceof TypeError ? '尚未連接。請執行「啟動Codex旅遊書.vbs」，再按檢查連線。' : error.message);
             if ($('codexUsageWindows')) renderQuota({ available: false, limits: [], models: [] });
             return false;
         }
@@ -214,9 +217,9 @@
             if (!result.data || typeof result.data !== 'object' || Array.isArray(result.data)) throw new Error('Codex 回應格式無效，結果未儲存。');
             return result.data;
         } catch (error) {
-            if (signal?.aborted) throw Object.assign(new Error('已取消 Codex 生成，已完成內容保留。'), { code: 'CANCELLED' });
-            if (error.name === 'TimeoutError') throw new Error('Codex 等待逾時，請稍後手動接續。');
-            if (error instanceof TypeError) { token = ''; throw new Error(cloudPage ? '雲端連線中斷，請確認網路後再手動接續。' : '無法連接本機 Codex，請確認啟動程式仍在執行。'); }
+            if (signal?.aborted) throw Object.assign(new Error('已取消生成，已完成內容保留。'), { code: 'CANCELLED' });
+            if (error.name === 'TimeoutError') throw new Error('生成等待逾時，請稍後手動接續。');
+            if (error instanceof TypeError) { token = ''; throw new Error(browserApi ? '無法連接 OpenAI API，請確認網路後重試；原行程與草稿保留。' : cloudPage ? '雲端連線中斷，請確認網路後再手動接續。' : '無法連接本機 Codex，請確認啟動程式仍在執行。'); }
             throw error;
         } finally {
             if (!recorded) recordUsage(null);
@@ -234,7 +237,7 @@
         if (saved === 'codex' || saved === 'deepseek') $('aiProvider').value = saved;
         update();
         $('hostedNotice').hidden = localPage || cloudPage;
-        if (browserApi) $('hostedNotice').textContent = 'GitHub 版可直接使用自己的 OpenAI API Key 讀取檔案與整合行程。不同網址的資料不會自動同步；既有行程可用 JSON 備份搬移。';
+        if (browserApi) $('hostedNotice').textContent = '資料只存在目前網站與瀏覽器，搬移請使用 JSON 備份。';
         if (cloudPage) {
             $('aiProvider').querySelector('option[value="codex"]').textContent = '雲端 Codex · 使用現有額度';
             $('codexConnectionCheck').textContent = '檢查連線';

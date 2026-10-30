@@ -5,6 +5,9 @@
 #itineraryImportModal .itinerary-import-content { width: min(760px, calc(100% - 32px)); max-width: 760px; box-sizing: border-box; color: var(--ink); }
 #itineraryImportModal .editor-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 #itineraryImportTitle { margin: 4px 0 0; }
+#itineraryImportModal .import-help { margin: 8px 0; padding: 0 12px; border: 1px solid var(--line); border-radius: 4px; }
+#itineraryImportModal .import-help > summary { min-height: 44px; padding: 10px 0; box-sizing: border-box; cursor: pointer; font-size: .85rem; }
+#itineraryImportModal .import-help > summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 #itineraryImportModal input, #itineraryImportModal textarea { box-sizing: border-box; max-width: 100%; }
 #itinerarySourceFile { width: 100%; border: 1px dashed var(--line); padding: 16px; background: var(--paper); color: var(--text-dark); font: inherit; }
 #itinerarySourceFile::file-selector-button { border: 1px solid var(--line); background: white; color: var(--primary); padding: 8px 12px; margin-right: 10px; cursor: pointer; }

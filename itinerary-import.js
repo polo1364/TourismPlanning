@@ -355,7 +355,7 @@ ${JSON.stringify(text)}`;
             $('itineraryWorkElapsed').textContent = `已等待 ${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
             $('itineraryWorkHint').textContent = codex
                 ? seconds >= 60 ? '尚未收到 ' + provider + ' 回覆，請保持此頁開啟；也可取消後重試，已準備的來源與補充仍保留。' : '正在等待 ' + provider + ' 回覆，完成後會自動顯示預覽。請保持此頁開啟。'
-                : '正在本機讀取文字與準備圖片／PDF 頁面，尚未傳送至 Codex。';
+                : '正在此裝置準備文字與圖片／PDF 頁面，尚未傳送至 AI。';
         };
         tick();
         task.progressTimer = setInterval(tick, 1000);
@@ -448,7 +448,7 @@ ${JSON.stringify(text)}`;
                 }
                 if (result.text.trim()) combined += `${combined.trim() ? '\n\n' : ''}【來源檔案：${file.name}】\n${result.text}`;
                 if (combined.length > MAX_TEXT) throw new Error('合併後超過 30,000 字元；本次檔案尚未加入，先前內容已保留。請減少檔案或分成多份旅程。');
-                added.push(`${file.name} · ${result.text.length.toLocaleString()} 字元${result.pages ? ` · ${result.pages} 頁` : ''}${result.images?.length ? ` · ${result.images.length} 張待 Codex 讀取圖片` : ''}${result.warnings.length ? '\n' + result.warnings.join('\n') : ''}`);
+                added.push(`${file.name} · ${result.text.length.toLocaleString()} 字元${result.pages ? ` · ${result.pages} 頁` : ''}${result.images?.length ? ` · ${result.images.length} 張待 AI 讀取圖片` : ''}${result.warnings.length ? '\n' + result.warnings.join('\n') : ''}`);
             }
             // ArrayBuffer records avoid Blob-backed IndexedDB failures in WebKit.
             const originals = await Promise.all(files.map(originalRecord));
@@ -511,7 +511,7 @@ ${JSON.stringify(text)}`;
             const card = addText(fields, 'div', '', 'import-correction');
             const label = addText(card, 'label', source ? `「${source.name}」第 ${source.page || 1} 頁` : '綜合補充（請註明檔名、頁碼或活動時間）');
             label.htmlFor = `itineraryCorrection-${index}`;
-            addText(card, 'p', issues.get(index) || (entry.text ? '已填入的補充會一併交給 Codex，可繼續修改。' : entry.message), 'field-hint');
+            addText(card, 'p', issues.get(index) || (entry.text ? '補充會一併整合，可繼續修改。' : entry.message), 'field-hint');
             const input = document.createElement('textarea');
             input.id = label.htmlFor;
             input.rows = 4;
@@ -594,7 +594,8 @@ ${JSON.stringify(text)}`;
         $('itineraryPrivacy').textContent = '選檔只在本機準備附件，不會辨識圖片或呼叫 AI。按「使用 Codex 額度讀取並整合」才會傳送所有圖片、PDF 頁圖與下方文字至 Codex，使用目前登入 ChatGPT 帳號的 Codex 額度。此功能固定使用 Codex；模型可在「連線與模型設定」中調整。請先移除來源中的個人資料；刪除下方文字不會移除圖片內容。';
         const apiBilling = root.CodexLocal?.billing?.() === 'api';
         $('itineraryParseButton').textContent = apiBilling ? '使用 API 額度讀取並整合' : '使用 Codex 額度讀取並整合';
-        if (apiBilling) $('itineraryPrivacy').textContent = '選檔只在本機準備附件。按「使用 API 額度讀取並整合」才會將所有來源、PDF 頁圖和手動補充交給 OpenAI API，使用你的 API 額度計費。讀不清楚的內容仍可手動補上，原附件及草稿會保留。';
+        if (apiBilling) $('itineraryPrivacy').textContent = '按「使用 API 額度讀取並整合」才傳送原檔內容、PDF 頁圖與補充至 OpenAI 並計費；刪除文字不會移除圖片內容，請先確認附件中的個人資料。';
+        $('itineraryImportSettings').textContent = apiBilling ? 'API 與模型設定' : '連線與模型設定';
         $('itineraryCodexNotice').hidden = !!root.CodexLocal?.importsAvailable();
         openModal('itineraryImportModal');
         syncControls();
@@ -606,12 +607,13 @@ ${JSON.stringify(text)}`;
             <div class="editor-heading"><div><div class="eyebrow">FROM YOUR FILES</div><h3 id="itineraryImportTitle">讀取行程檔案</h3></div><button type="button" id="itineraryImportClose" class="modal-close" aria-label="關閉行程匯入">×</button></div>
             <p class="field-hint">把多份行程整合成一本旅遊書，依日期合併重複活動，確認後新增一份旅程。原有旅程會保留。</p>
             <label for="itinerarySourceFile">1. 選擇行程檔案（可多選、繼續加入）</label><input type="file" id="itinerarySourceFile" multiple accept=".pdf,.txt,.md,.markdown,.png,.jpg,.jpeg,.webp,application/pdf,text/plain,text/markdown,image/png,image/jpeg,image/webp" aria-describedby="itineraryFileHelp">
-            <p id="itineraryFileHelp" class="field-hint">PDF、TXT、Markdown 與 PNG／JPG／JPEG／WebP 圖片可混選。最多 ${MAX_FILES} 個檔案，每檔 8 MiB、合計 30,000 字元；每份 PDF 最多 60 頁，圖片最多 2400 萬像素。文字版、掃描版及混合 PDF 都可直接加入；合計最多 60 張圖片／PDF 頁圖、20 MiB 圖片資料。多頁準備或 Codex 讀取可能較久，可取消。HEIC 請先轉 JPG，加密 PDF 須先解密。</p>
-            <p id="itineraryFileInfo" class="field-hint"></p><p id="itineraryDraftStatus" class="field-hint" role="status" aria-live="polite"></p><p class="field-hint">草稿包含原檔與補充，只保存在此裝置、此瀏覽器與此網站。清除網站資料或無痕模式可能使草稿消失；請保留原始檔案。離開前請確認顯示「草稿已儲存」。</p>
+            <p id="itineraryFileHelp" class="field-hint">最多 ${MAX_FILES} 個檔案，可混選 PDF（含掃描版）、文字與圖片。</p>
+            <details id="itineraryFileLimits" class="import-help"><summary>格式與容量限制</summary><p class="field-hint">支援 PDF、TXT、Markdown、PNG／JPG／JPEG／WebP。每檔 8 MiB，文字合計 30,000 字元；每份 PDF 最多 60 頁，圖片最多 2400 萬像素。圖片與 PDF 頁圖合計最多 60 張、20 MiB。HEIC 請先轉 JPG，加密 PDF 須先解密。準備或整合較久時可取消。</p></details>
+            <p id="itineraryFileInfo" class="field-hint"></p><p id="itineraryDraftStatus" class="field-hint" role="status" aria-live="polite"></p><p class="field-hint">原檔與補充自動存於此瀏覽器，離開前請確認「草稿已儲存」。清除網站資料或無痕模式可能使草稿消失，請保留原檔。</p>
             <button type="button" id="itineraryClearFiles" class="btn-outline">清除本次來源</button>
-            <label for="itinerarySourceText">2. 核對文字或補充說明（圖片可直接送讀）</label><textarea id="itinerarySourceText" rows="8" spellcheck="false" placeholder="TXT 與 PDF 原生文字會顯示在這裡。掃描頁與圖片由 Codex 在送出後讀取，不需要先辨識成文字；可補充行程說明。"></textarea>
+            <label for="itinerarySourceText">2. 核對文字或補充說明（圖片可直接送讀）</label><textarea id="itinerarySourceText" rows="6" spellcheck="false" placeholder="文字檔與 PDF 原生文字會顯示於此。掃描頁、圖片可直接整合；也可補上行程說明。"></textarea>
             <div class="import-fields"><div><label for="itineraryImportCity">目的地（選填）</label><input type="text" id="itineraryImportCity" maxlength="100" placeholder="文件未標示時補充"></div><div><label for="itineraryImportStart">開始日期（缺少完整日期時填寫）</label><input type="date" id="itineraryImportStart"></div></div>
-            <p class="field-hint">日期未定時，可在手動補充寫「2027 年 5 月中，6 天含六日，日期先隨意」，由 Codex 選符合條件的暫定日期並標示。要改日期，可填上方開始日期或修改手動條件，再重新整合；草稿、原檔與補充仍保留，確認後另存新旅程。</p>
+            <details id="itineraryDateHelp" class="import-help"><summary>日期未定？可授權選暫定日期</summary><p class="field-hint">在補充寫「2027 年 5 月中，6 天含六日，日期先隨意」，AI 會選符合條件的暫定日期並標示。之後可填開始日期或改補充條件，再重新整合，不必重傳。</p></details>
             <button type="button" id="itineraryAddCorrection" class="btn-outline" disabled>手動補充日期或辨識內容</button>
             <p id="itineraryPrivacy" class="field-hint"></p>
             <p id="itineraryCodexNotice" class="field-hint" hidden>請使用 HTTPS 網址開啟 GitHub 版，在「連線與模型設定」輸入自己的 OpenAI API Key；也可使用原有本機版。不同網站的檔案與草稿不會自動同步。</p>
@@ -622,7 +624,7 @@ ${JSON.stringify(text)}`;
                 <div id="itineraryWorkActivity" hidden><div class="import-work-track" role="progressbar" aria-label="正在處理，完成比例尚未提供"><span></span></div><p id="itineraryWorkHint"></p></div>
                 <button type="button" id="itineraryImportCancel" class="btn-outline" hidden>取消處理</button>
             </div><p id="itineraryImportError" role="alert" hidden></p>
-            <section id="itineraryCorrections" hidden aria-labelledby="itineraryCorrectionTitle"><h4 id="itineraryCorrectionTitle">直接補上看不清楚的內容</h4><p class="field-hint">已選附件仍保留，不必重新選檔。請依下方位置補上正確文字，再交給 Codex 重新整合所有來源。每處最多 4,000 字，合計 10,000 字；補充內容會保留在新旅程的核對事項。</p><div id="itineraryCorrectionFields"></div><button type="button" id="itineraryCorrectionRetry" class="btn-primary" disabled>套用補充，使用 Codex 重新整合</button><p class="field-hint">補充與附件會自動保存；下次開啟此網站可繼續整合，不必重新選檔。另存為旅程後草稿仍保留，可按「清除本次來源」移除。</p></section>
+            <section id="itineraryCorrections" hidden aria-labelledby="itineraryCorrectionTitle"><h4 id="itineraryCorrectionTitle">直接補上看不清楚的內容</h4><p class="field-hint">補上文字後重新整合，不必重傳。每處最多 4,000 字、合計 10,000 字，補充會列入新旅程核對事項。</p><div id="itineraryCorrectionFields"></div><button type="button" id="itineraryCorrectionRetry" class="btn-primary" disabled>套用補充，重新整合</button><p class="field-hint">另存旅程後草稿仍保留；不再需要時，可按「清除本次來源」。</p></section>
             <section id="itineraryPreviewSection" hidden aria-labelledby="itineraryPreviewTitle"><h4 id="itineraryPreviewTitle">3. 確認行程預覽</h4><p class="field-hint">AI 可能誤讀日期或活動，請對照原文核對。要修正內容，可修改上方文字再整理；另存後也能逐站編輯。</p><div id="itineraryImportPreview"></div><label for="itineraryImportName">新旅程名稱</label><input type="text" id="itineraryImportName" maxlength="80" value="匯入的旅程"><button type="button" id="itinerarySaveButton" class="btn-primary" disabled>另存為新旅程</button></section>
         </div></div>`);
         $('itinerarySourceFile').addEventListener('change', readFile);
@@ -631,7 +633,7 @@ ${JSON.stringify(text)}`;
         $('itineraryImportName').addEventListener('input', () => persistDraft());
         $('itineraryParseButton').addEventListener('click', parse);
         $('itineraryCorrectionRetry').addEventListener('click', parse);
-        $('itineraryAddCorrection').addEventListener('click', () => { showCorrections({ error: '請補充日期條件或需更正的內容；允許 Codex 選暫定日期時，請明確寫「日期隨意」。' }); persistDraft(); });
+        $('itineraryAddCorrection').addEventListener('click', () => { showCorrections({ error: '請補充日期條件或更正內容；允許 AI 選暫定日期時，請寫「日期隨意」。' }); persistDraft(); });
         $('itinerarySaveButton').addEventListener('click', save);
         $('itineraryImportCancel').addEventListener('click', cancel);
         $('itineraryImportClose').addEventListener('click', () => closeModal('itineraryImportModal'));
