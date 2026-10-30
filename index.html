@@ -1635,8 +1635,9 @@
                 <section id="openaiKeySettings" hidden aria-label="OpenAI API 設定">
                     <label for="openaiApiKey">OpenAI API Key</label>
                     <input type="password" id="openaiApiKey" autocomplete="off" spellcheck="false" placeholder="sk-…" maxlength="512">
+                    <label id="openaiRememberOption" class="remember-key" hidden><input type="checkbox" id="openaiRememberKey" onchange="CodexLocal.rememberApiKey()"> 在這個瀏覽器記住 API Key</label>
                     <button type="button" id="openaiSaveKey" class="btn-outline" onclick="CodexLocal.saveApiKey()">儲存並檢查 API Key</button>
-                    <button type="button" id="openaiForgetKey" class="btn-outline" onclick="CodexLocal.forgetApiKey()" hidden>清除此分頁的 Key</button>
+                    <button type="button" id="openaiForgetKey" class="btn-outline" onclick="CodexLocal.forgetApiKey()" hidden>清除 API Key（含記住的設定）</button>
                     <p id="openaiKeyPrivacy" class="field-hint">金鑰只儲存在目前連接的伺服器，不會放入瀏覽器儲存、行程備份或下載小冊。儲存時只驗證金鑰，不會生成行程。</p>
                     <p id="openaiKeyStatus" class="field-hint" role="status"></p>
                     <a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">查看 OpenAI API 用量與帳單 ↗</a>

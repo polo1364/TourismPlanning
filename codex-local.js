@@ -127,11 +127,13 @@
                 $('codexUsageTitle').textContent = 'OpenAI API 用量';
                 $('codexUsageRefresh').textContent = '更新可用模型';
                 $('codexUsageExplanation').textContent = 'Token 為本分頁收到的行程生成用量，費用以 OpenAI 帳單為準；圖片生成及中斷請求可能未計入。';
-                $('codexHelp').textContent = browserApi ? '此頁直接連接 OpenAI 官方 API，不需要私人站或本機服務。重新開頁只需再次輸入 Key，原有檔案與手動補充可繼續使用。' : '由目前連接的伺服器呼叫 OpenAI 官方 API。更換 API Key 不會清除旅程或草稿。插圖使用 gpt-image-1.5，只有按下生成時才呼叫。';
+                $('codexHelp').textContent = browserApi ? '此頁直接連接 OpenAI 官方 API，不需要私人站或本機服務。勾選記住後，下次可直接使用；原有檔案與手動補充可繼續整合。' : '由目前連接的伺服器呼叫 OpenAI 官方 API。更換 API Key 不會清除旅程或草稿。插圖使用 gpt-image-1.5，只有按下生成時才呼叫。';
                 if (browserApi) {
-                    $('openaiSaveKey').textContent = '檢查並在本分頁使用';
+                    $('openaiSaveKey').textContent = '檢查並使用 API Key';
+                    $('openaiRememberOption').hidden = false;
+                    $('openaiRememberKey').checked = browserApi.remembered();
                     $('openaiForgetKey').hidden = false;
-                    $('openaiKeyPrivacy').textContent = 'Key 僅留在目前分頁記憶體，直接送至 OpenAI，不上傳 GitHub、不放進草稿或備份。重整或關閉後需重新輸入。瀏覽器擴充套件或惡意程式仍可能讀取 Key，請只在可信任裝置使用。檢查 Key 不會生成行程。';
+                    $('openaiKeyPrivacy').textContent = '預設 Key 僅在本分頁使用；勾選記住後，會保存在這個瀏覽器的網站設定，重整或下次開啟可繼續使用。Key 只傳給 OpenAI，不上傳 GitHub、不放進草稿、備份或小冊。此儲存不是加密保管，請勿在共用裝置勾選；擴充套件或惡意程式仍可能讀取 Key。';
                 }
                 $('codexSettings').querySelector('button').textContent = '檢查 API 連線';
                 document.querySelector('label[for="codexModel"]').textContent = 'OpenAI API 模型';
@@ -191,6 +193,7 @@
         return generate(prompt, signal, { images, itinerary: true });
     }
     async function init() {
+        if (browserApi) $('openaiKeyStatus').textContent = browserApi.restore();
         let saved = null;
         try { saved = localStorage.getItem('aiProvider'); } catch (_) { /* Optional preference. */ }
         if (saved === 'codex' || saved === 'deepseek') $('aiProvider').value = saved;
@@ -213,7 +216,7 @@
         if (!apiKey) { status.textContent = '請輸入 API Key。'; return; }
         button.disabled = true; status.textContent = browserApi ? '正在驗證 API Key…' : '正在驗證並儲存…';
         try {
-            if (browserApi) await browserApi.save(apiKey);
+            if (browserApi) await browserApi.save(apiKey, $('openaiRememberKey').checked);
             else {
                 if (!token) await check();
                 if (!token || authMode !== 'api') throw new Error('請先連接已更新的 API 服務。');
@@ -224,16 +227,28 @@
             chosenModel = '';
             try { localStorage.removeItem('openaiModel'); } catch (_) { /* Optional preference. */ }
             await check();
-            status.textContent = browserApi ? 'API Key 已驗證，僅在本分頁使用；可繼續整合原有草稿。' : 'API Key 已儲存，可直接繼續整合原有草稿。';
+            status.textContent = browserApi ? (browserApi.remembered() ? 'API Key 已驗證並記住在這個瀏覽器，下次開啟不用再填。' : 'API Key 已驗證，僅在本分頁使用；可繼續整合原有草稿。') : 'API Key 已儲存，可直接繼續整合原有草稿。';
             update();
         } catch (error) { status.textContent = error instanceof TypeError ? '連線失敗，請重新檢查。' : error.message; }
         finally { input.value = ''; button.disabled = false; }
     }
+    function rememberApiKey() {
+        if (!browserApi) return;
+        const checkbox = $('openaiRememberKey'), status = $('openaiKeyStatus');
+        if (isBusy || $('openaiSaveKey').disabled) { checkbox.checked = browserApi.remembered(); return; }
+        if (checkbox.checked && !browserApi.ready()) { status.textContent = '輸入 Key 並按「檢查並使用 API Key」後，就會記住在這個瀏覽器。'; return; }
+        try {
+            browserApi.setRemember(checkbox.checked);
+            status.textContent = checkbox.checked ? '已在這個瀏覽器記住 API Key，下次開啟不用再填。' : '已移除記住的 Key，目前分頁仍可使用；重整後需重新輸入。';
+        } catch (error) { checkbox.checked = browserApi.remembered(); status.textContent = error.message; }
+    }
     function forgetApiKey() {
         if (!browserApi || isBusy || $('openaiSaveKey').disabled) return;
-        browserApi.clear(); token = '';
-        $('openaiApiKey').value = '';
-        $('openaiKeyStatus').textContent = '已清除本分頁的 API Key，檔案、補充與草稿保留。';
+        token = ''; $('openaiApiKey').value = '';
+        try {
+            browserApi.clear();
+            $('openaiKeyStatus').textContent = '已清除此分頁與瀏覽器記住的 API Key，檔案、補充與草稿保留。';
+        } catch (_) { $('openaiKeyStatus').textContent = '本分頁的 Key 已清除，但無法移除瀏覽器記住的設定；請檢查網站儲存權限後再按清除。'; }
         void check();
     }
     async function imageRequest(path, body) {
@@ -253,6 +268,9 @@
         }
         return value;
     }
-    if (browserApi) window.addEventListener('pageshow', event => { if (event.persisted) void check().then(update); });
-    window.CodexLocal = Object.freeze({ selected, update, check, generate, saveApiKey, forgetApiKey, billing: () => authMode, importItinerary, importsAvailable: () => localPage || cloudPage || !!browserApi, init, refreshUsage, chooseModel, imageRequest, imagesAvailable: () => localPage || cloudPage || !!browserApi });
+    if (browserApi) {
+        window.addEventListener('pageshow', event => { if (event.persisted) { $('openaiKeyStatus').textContent = browserApi.restore(); void check().then(() => update()); } });
+        window.addEventListener('roam-openai-key-change', () => { $('openaiKeyStatus').textContent = 'API Key 設定已在另一個分頁變更。'; void check().then(() => update()); });
+    }
+    window.CodexLocal = Object.freeze({ selected, update, check, generate, saveApiKey, rememberApiKey, forgetApiKey, billing: () => authMode, importItinerary, importsAvailable: () => localPage || cloudPage || !!browserApi, init, refreshUsage, chooseModel, imageRequest, imagesAvailable: () => localPage || cloudPage || !!browserApi });
 })();

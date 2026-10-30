@@ -5,12 +5,12 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const key = 'sk-fake-unit-test-only-1234567890';
 const completed = { status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: '{"days":[]}' }] }], usage: { input_tokens: 12, output_tokens: 8, total_tokens: 20 } };
-function fixture(reply = () => new Response(JSON.stringify(completed))) {
-    const calls = [];
+function fixture(reply = () => new Response(JSON.stringify(completed)), saved = new Map()) {
+    const calls = [], events = {};
     const context = vm.createContext({
-        window: { TripArtworkStore: { validateImage: async () => ({ width: 10, height: 10 }) } },
+        window: { addEventListener(name, fn) { events[name] = fn; }, TripArtworkStore: { validateImage: async () => ({ width: 10, height: 10 }) } },
         AbortSignal, TextDecoder, atob, btoa,
-        localStorage: { setItem() { throw Error('Keys must not be persisted'); } },
+        localStorage: { getItem: name => saved.get(name) || null, setItem: (name, value) => saved.set(name, value), removeItem: name => saved.delete(name) },
         sessionStorage: { setItem() { throw Error('Keys must not be persisted'); } },
         fetch: async (url, options) => {
             calls.push({ url, options });
@@ -21,7 +21,7 @@ function fixture(reply = () => new Response(JSON.stringify(completed))) {
         }
     });
     vm.runInContext(fs.readFileSync(require.resolve('../openai-browser.js'), 'utf8'), context);
-    return { api: context.window.OpenAIBrowser, calls };
+    return { api: context.window.OpenAIBrowser, calls, saved, events };
 }
 test('browser key stays in memory, only official endpoint receives credentials, clear prevents use', async () => {
     const { api, calls } = fixture();
@@ -78,4 +78,50 @@ test('browser cancellation before send never creates a paid request', async () =
     const controller = new AbortController(); controller.abort();
     await assert.rejects(api.generate('JSON', controller.signal), { code: 'CANCELLED' });
     assert.equal(calls.length, 1);
+});
+
+test('remember is opt-in, survives a new page and can be disabled without losing the current key', async () => {
+    const { api, saved, events } = fixture();
+    await api.save(key);
+    assert.equal(saved.size, 0);
+    api.setRemember(true);
+    assert.equal(saved.get('roamOpenAIKey_v1'), key);
+    events.pagehide();
+    assert.equal(api.ready(), false);
+    assert.equal(saved.size, 1);
+    const reopened = fixture(undefined, saved);
+    assert.equal(reopened.api.restore(), '');
+    assert.equal(reopened.api.ready(), true);
+    assert.equal(reopened.api.remembered(), true);
+    assert.equal(reopened.calls.length, 0);
+    reopened.api.setRemember(false);
+    assert.equal(reopened.api.ready(), true);
+    assert.equal(saved.size, 0);
+    reopened.events.pagehide(); reopened.api.restore();
+    assert.equal(reopened.api.ready(), false);
+});
+
+test('save remembers only after validation and clear removes both memory and browser settings', async () => {
+    const { api, saved } = fixture();
+    await assert.rejects(api.save('invalid', true));
+    assert.equal(saved.size, 0);
+    await api.save(key, true);
+    assert.equal(api.remembered(), true);
+    assert.equal(saved.size, 1);
+    api.clear();
+    assert.equal(api.ready(), false);
+    assert.equal(saved.size, 0);
+});
+
+test('failed storage update is explicit and does not pretend a new key was saved', async () => {
+    const saved = new Map();
+    saved.set = () => { throw Error('quota with secret ' + key); };
+    const { api } = fixture(undefined, saved);
+    await assert.rejects(api.save(key, true), e => e.code === 'KEY_STORAGE' && !e.message.includes(key));
+    assert.equal(api.ready(), false);
+    assert.equal(api.remembered(), false);
+    await api.save(key);
+    await assert.rejects(async () => api.setRemember(true), { code: 'KEY_STORAGE' });
+    assert.equal(api.ready(), true);
+    assert.equal(api.remembered(), false);
 });

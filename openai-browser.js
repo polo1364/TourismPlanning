@@ -1,8 +1,11 @@
 (function () {
     'use strict';
-    // Personal BYOK mode: credentials stay in this closure, never in persistent storage.
+    // Personal BYOK mode: persistence is opt-in and separate from all itinerary data.
     const MODELS = ['gpt-6-sol', 'gpt-5.3-codex'];
+    const KEY_STORAGE = 'roamOpenAIKey_v1';
+    const validKey = key => typeof key === 'string' && /^sk-[A-Za-z0-9_-]{16,500}$/.test(key);
     let apiKey = '', modelList = [], expires = 0;
+    let remembered = false;
     const fail = (message, code = 'API') => Object.assign(new Error(message), { code });
     async function request(endpoint, key, body, signal, timeout = 180000, maxBytes = 4 * 1024 * 1024) {
         if (!key) throw fail('請在「服務與資料設定」輸入 OpenAI API Key，原檔與草稿不用重傳。', 'API_KEY');
@@ -48,14 +51,46 @@
         const available = new Set(result.data.map(item => item.id));
         return MODELS.filter(id => available.has(id)).map((id, i) => ({ id, name: id, isDefault: i === 0 }));
     }
-    async function save(key) {
-        if (typeof key !== 'string' || !/^sk-[A-Za-z0-9_-]{16,500}$/.test(key)) throw fail('請輸入有效的 OpenAI API Key。', 'API_KEY');
+    function persist(key, remember) {
+        try {
+            if (remember) localStorage.setItem(KEY_STORAGE, key);
+            else localStorage.removeItem(KEY_STORAGE);
+        } catch { throw fail('瀏覽器無法更新記住的 Key；請檢查網站儲存權限後重試。原設定尚未更新。', 'KEY_STORAGE'); }
+    }
+    async function save(key, remember = false) {
+        if (!validKey(key)) throw fail('請輸入有效的 OpenAI API Key。', 'API_KEY');
         const list = await models(key);
         if (!list.length) throw fail('此 API Key 尚無本站支援的行程模型權限。', 'MODEL');
+        persist(key, remember);
         apiKey = key; modelList = list; expires = Date.now() + 30000;
+        remembered = remember;
     }
-    function clear() { apiKey = ''; modelList = []; expires = 0; }
-    window.addEventListener?.('pagehide', clear);
+    function resetMemory() { apiKey = ''; modelList = []; expires = 0; remembered = false; }
+    function restore() {
+        resetMemory();
+        try {
+            const key = localStorage.getItem(KEY_STORAGE);
+            if (key && !validKey(key)) return '記住的 API Key 格式無效，請重新輸入或清除。';
+            if (key) { apiKey = key; remembered = true; }
+            return '';
+        } catch { return '瀏覽器無法讀取記住的 Key，請檢查網站儲存權限。'; }
+    }
+    function setRemember(remember) {
+        if (remember && !apiKey) throw fail('請先輸入並檢查 API Key。', 'API_KEY');
+        persist(apiKey, remember);
+        remembered = remember;
+    }
+    function clear() {
+        resetMemory();
+        persist('', false);
+    }
+    window.addEventListener?.('pagehide', resetMemory);
+    window.addEventListener?.('storage', event => {
+        if (event.key === KEY_STORAGE || event.key === null) {
+            restore();
+            window.dispatchEvent(new Event('roam-openai-key-change'));
+        }
+    });
     async function usage() {
         if (apiKey && Date.now() >= expires) { modelList = await models(apiKey); expires = Date.now() + 30000; }
         return { available: false, billing: 'api', limits: [], models: modelList, checkedAt: new Date().toISOString() };
@@ -181,5 +216,5 @@
         });
         return jobView(previous);
     }
-    window.OpenAIBrowser = Object.freeze({ save, clear, usage, generate, imageRequest, ready: () => !!apiKey });
+    window.OpenAIBrowser = Object.freeze({ save, clear, restore, setRemember, remembered: () => remembered, usage, generate, imageRequest, ready: () => !!apiKey });
 })();
