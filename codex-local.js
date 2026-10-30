@@ -40,7 +40,7 @@
         }
         select.value = chosenModel;
         select.disabled = isBusy;
-        if (authMode === 'api') { $('codexModelHint').textContent = modelIds.size ? `已列出 ${modelIds.size} 個支援圖片輸入的行程模型（依此 API Key 的模型清單）。各模型費用不同；實際使用仍依專案權限與額度。` : '尚未取得本站支援的行程模型；請先檢查 API Key，再更新可用模型。'; return; }
+        if (authMode === 'api') { $('codexModelHint').textContent = modelIds.size ? `${modelIds.size} 個可選模型 · 支援圖片／掃描 PDF · 費用依模型計算。` : '驗證 Key 後顯示可用模型。'; return; }
         $('codexModelHint').textContent = modelIds.size ? '依目前登入的 Codex 提供模型；生成期間鎖定選擇。不同模型的速度與額度消耗可能不同。' : '模型清單暫時無法取得；可更新重試，或選擇官方預設模型。';
     }
     function renderQuota(info) {
@@ -68,6 +68,11 @@
         if (authMode === 'api') $('codexUsageStatus').textContent = 'API 依使用量計費；餘額與費用請至 OpenAI 平台查詢。本頁不推算剩餘百分比。';
         renderModels(info.models);
         summary();
+    }
+    function openUsage() {
+        openModal('apiModal');
+        if ($('codexUsageDetails')) $('codexUsageDetails').open = true;
+        void refreshUsage();
     }
     async function refreshUsage() {
         if (!$('codexUsageWindows') || (!localPage && !cloudPage && !browserApi)) return;
@@ -122,22 +127,26 @@
             if (authMode === 'api') {
                 token = data.token;
                 $('openaiKeySettings').hidden = false;
+                $('openaiKeyPrivacy').hidden = false;
+                $('openaiBillingLink').hidden = false;
                 $('codexBillingHint').textContent = '行程生成、檔案整合與插圖使用 OpenAI API 額度，不使用 ChatGPT 訂閱額度。掃描 PDF 會以頁面圖片送出。';
                 $('aiProvider').querySelector('option[value="codex"]').textContent = 'OpenAI API · 使用 API 額度';
                 $('codexUsageTitle').textContent = 'OpenAI API 用量';
-                $('codexUsageRefresh').textContent = '更新可用模型';
+                $('codexUsageRefresh').textContent = '更新模型';
                 $('codexUsageExplanation').textContent = 'Token 為本分頁收到的行程生成用量，費用以 OpenAI 帳單為準；圖片生成及中斷請求可能未計入。';
                 $('codexHelp').textContent = browserApi ? '此頁直接連接 OpenAI 官方 API，不需要私人站或本機服務。勾選記住後，下次可直接使用；原有檔案與手動補充可繼續整合。' : '由目前連接的伺服器呼叫 OpenAI 官方 API。更換 API Key 不會清除旅程或草稿。插圖使用 gpt-image-1.5，只有按下生成時才呼叫。';
                 if (browserApi) {
-                    $('openaiSaveKey').textContent = '檢查並使用 API Key';
+                    $('openaiSaveKey').textContent = '驗證並使用';
+                    $('openaiKeyBrief').hidden = false;
                     $('openaiRememberOption').hidden = false;
                     $('openaiRememberKey').checked = browserApi.remembered();
                     $('openaiForgetKey').hidden = false;
                     $('openaiKeyPrivacy').textContent = '預設 Key 僅在本分頁使用；勾選記住後，會保存在這個瀏覽器的網站設定，重整或下次開啟可繼續使用。Key 只傳給 OpenAI，不上傳 GitHub、不放進草稿、備份或小冊。此儲存不是加密保管，請勿在共用裝置勾選；擴充套件或惡意程式仍可能讀取 Key。';
                 }
-                $('codexSettings').querySelector('button').textContent = '檢查 API 連線';
+                $('codexConnectionCheck').textContent = '檢查連線';
+                $('codexConnectionCheck').hidden = !!browserApi;
                 document.querySelector('label[for="codexModel"]').textContent = 'OpenAI API 模型';
-                $('codexStatus').textContent = data.ready ? '已設定 OpenAI API · 使用 API 額度' : '尚未設定 API Key，請在下方輸入並檢查。';
+                $('codexStatus').textContent = data.ready ? '已設定 Key · API 額度' : '尚未設定 API Key';
                 if (data.ready) await refreshUsage();
                 else renderQuota({ available: false, limits: [], models: [] });
                 return data.ready;
@@ -202,7 +211,7 @@
         if (browserApi) $('hostedNotice').textContent = 'GitHub 版可直接使用自己的 OpenAI API Key 讀取檔案與整合行程。不同網址的資料不會自動同步；既有行程可用 JSON 備份搬移。';
         if (cloudPage) {
             $('aiProvider').querySelector('option[value="codex"]').textContent = '雲端 Codex · 使用現有額度';
-            $('codexSettings').querySelector('button').textContent = '檢查雲端 Codex 連線';
+            $('codexConnectionCheck').textContent = '檢查連線';
             $('codexHelp').textContent = '由你的 Oracle 主機生成，電腦關機也能使用。生成時請保持手機頁面開啟；中斷後可手動接續。';
         }
         const connected = await check();
@@ -227,7 +236,7 @@
             chosenModel = '';
             try { localStorage.removeItem('openaiModel'); } catch (_) { /* Optional preference. */ }
             await check();
-            status.textContent = browserApi ? (browserApi.remembered() ? 'API Key 已驗證並記住在這個瀏覽器，下次開啟不用再填。' : 'API Key 已驗證，僅在本分頁使用；可繼續整合原有草稿。') : 'API Key 已儲存，可直接繼續整合原有草稿。';
+            status.textContent = browserApi ? (browserApi.remembered() ? '已驗證並記住，下次不用再填。' : '已驗證，僅在本分頁使用。') : 'API Key 已儲存，可直接繼續整合原有草稿。';
             update();
         } catch (error) { status.textContent = error instanceof TypeError ? '連線失敗，請重新檢查。' : error.message; }
         finally { input.value = ''; button.disabled = false; }
@@ -236,10 +245,10 @@
         if (!browserApi) return;
         const checkbox = $('openaiRememberKey'), status = $('openaiKeyStatus');
         if (isBusy || $('openaiSaveKey').disabled) { checkbox.checked = browserApi.remembered(); return; }
-        if (checkbox.checked && !browserApi.ready()) { status.textContent = '輸入 Key 並按「檢查並使用 API Key」後，就會記住在這個瀏覽器。'; return; }
+        if (checkbox.checked && !browserApi.ready()) { status.textContent = '按「驗證並使用」後記住 Key。'; return; }
         try {
             browserApi.setRemember(checkbox.checked);
-            status.textContent = checkbox.checked ? '已在這個瀏覽器記住 API Key，下次開啟不用再填。' : '已移除記住的 Key，目前分頁仍可使用；重整後需重新輸入。';
+            status.textContent = checkbox.checked ? '已記住，下次不用再填。' : '已移除記住的 Key，目前分頁仍可使用；重整後需重新輸入。';
         } catch (error) { checkbox.checked = browserApi.remembered(); status.textContent = error.message; }
     }
     function forgetApiKey() {
@@ -272,5 +281,5 @@
         window.addEventListener('pageshow', event => { if (event.persisted) { $('openaiKeyStatus').textContent = browserApi.restore(); void check().then(() => update()); } });
         window.addEventListener('roam-openai-key-change', () => { $('openaiKeyStatus').textContent = 'API Key 設定已在另一個分頁變更。'; void check().then(() => update()); });
     }
-    window.CodexLocal = Object.freeze({ selected, update, check, generate, saveApiKey, rememberApiKey, forgetApiKey, billing: () => authMode, importItinerary, importsAvailable: () => localPage || cloudPage || !!browserApi, init, refreshUsage, chooseModel, imageRequest, imagesAvailable: () => localPage || cloudPage || !!browserApi });
+    window.CodexLocal = Object.freeze({ selected, update, check, generate, saveApiKey, rememberApiKey, forgetApiKey, billing: () => authMode, importItinerary, importsAvailable: () => localPage || cloudPage || !!browserApi, init, openUsage, refreshUsage, chooseModel, imageRequest, imagesAvailable: () => localPage || cloudPage || !!browserApi });
 })();

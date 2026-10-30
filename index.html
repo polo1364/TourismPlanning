@@ -1627,32 +1627,35 @@
             </div>
             <label for="aiProvider">行程生成服務</label>
             <select id="aiProvider" onchange="CodexLocal.update(true)"><option value="deepseek">DeepSeek API</option><option value="codex">本機 Codex · 使用現有額度</option></select>
-            <p id="hostedNotice" class="field-hint" hidden>線上版可使用自己的 DeepSeek API Key。使用 Codex 額度需<a href="https://github.com/polo1364/TourismPlanning#使用-codex-額度本機個人版" target="_blank" rel="noopener noreferrer">下載並啟動本機版 ↗</a>。本機行程請先匯出 JSON，再到此處匯入。</p>
             <div id="codexSettings" hidden>
-                <p id="codexBillingHint" class="field-hint">使用這台電腦已登入的 Codex，不需要 API Key。生成會使用你的 Codex 額度，不會自動切換付費 API。</p>
-                <p id="codexStatus" class="field-hint" role="status">尚未檢查連線。</p>
-                <button type="button" class="btn-outline" onclick="CodexLocal.check()">檢查本機 Codex 連線</button>
+                <div class="settings-status-row"><p id="codexStatus" class="field-hint" role="status">尚未檢查連線。</p><button id="codexConnectionCheck" type="button" class="btn-outline" onclick="CodexLocal.check()">檢查連線</button></div>
                 <section id="openaiKeySettings" hidden aria-label="OpenAI API 設定">
                     <label for="openaiApiKey">OpenAI API Key</label>
-                    <input type="password" id="openaiApiKey" autocomplete="off" spellcheck="false" placeholder="sk-…" maxlength="512">
+                    <input type="password" id="openaiApiKey" autocomplete="off" spellcheck="false" placeholder="輸入 Key；已記住時可留空" maxlength="512">
                     <label id="openaiRememberOption" class="remember-key" hidden><input type="checkbox" id="openaiRememberKey" onchange="CodexLocal.rememberApiKey()"> 在這個瀏覽器記住 API Key</label>
-                    <button type="button" id="openaiSaveKey" class="btn-outline" onclick="CodexLocal.saveApiKey()">儲存並檢查 API Key</button>
-                    <button type="button" id="openaiForgetKey" class="btn-outline" onclick="CodexLocal.forgetApiKey()" hidden>清除 API Key（含記住的設定）</button>
-                    <p id="openaiKeyPrivacy" class="field-hint">金鑰只儲存在目前連接的伺服器，不會放入瀏覽器儲存、行程備份或下載小冊。儲存時只驗證金鑰，不會生成行程。</p>
+                    <p id="openaiKeyBrief" class="field-hint" hidden>只存此瀏覽器，不含在備份中。共用裝置請勿勾選。</p>
+                    <div class="settings-key-actions"><button type="button" id="openaiSaveKey" class="btn-outline" onclick="CodexLocal.saveApiKey()">儲存並檢查 Key</button><button type="button" id="openaiForgetKey" class="btn-outline" onclick="CodexLocal.forgetApiKey()" aria-label="清除 API Key 與瀏覽器記住的設定" hidden>清除 Key</button></div>
                     <p id="openaiKeyStatus" class="field-hint" role="status"></p>
-                    <a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">查看 OpenAI API 用量與帳單 ↗</a>
                 </section>
-                <label for="codexModel">Codex 模型</label>
+                <div class="settings-model-heading"><label for="codexModel">Codex 模型</label><button id="codexUsageRefresh" type="button" class="btn-outline" onclick="CodexLocal.refreshUsage()">更新模型與額度</button></div>
                 <select id="codexModel" onchange="CodexLocal.chooseModel()"><option value="">官方預設模型</option></select>
-                <p id="codexModelHint" class="field-hint">連線後讀取可用模型。模型不同，生成速度與額度消耗也可能不同。</p>
+                <p id="codexModelHint" class="field-hint">連線後顯示可用模型。</p>
+                <details id="codexUsageDetails" class="settings-details"><summary>用量與帳單</summary>
                 <section class="codex-usage" aria-labelledby="codexUsageTitle">
-                    <div class="codex-usage-heading"><strong id="codexUsageTitle">Codex 用量</strong><button id="codexUsageRefresh" type="button" class="btn-outline" onclick="CodexLocal.refreshUsage()">更新額度</button></div>
+                    <strong id="codexUsageTitle">Codex 用量</strong>
                     <p id="codexUsageStatus" class="field-hint" role="status">尚未取得帳戶額度。</p>
                     <div id="codexUsageWindows"></div>
                     <p id="codexTokenUsage" class="field-hint">本分頁尚無生成用量紀錄。</p>
                     <p id="codexUsageExplanation" class="field-hint">百分比是登入帳戶的共用額度，包含其他 Codex 工作；Token 是本分頁收到的生成用量，不能直接換算成額度百分比或費用。中斷或未回報的用量可能未計入。</p>
                 </section>
-                <p id="codexHelp" class="field-hint">請用「啟動Codex旅遊書.vbs」開啟本機服務。若尚未登入，先在 PowerShell 執行 <code>codex login</code>。此模式供本機個人使用。</p>
+                    <a id="openaiBillingLink" href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer" hidden>OpenAI API 帳單 ↗</a>
+                </details>
+                <details id="apiSafetyDetails" class="settings-details"><summary>安全與計費說明</summary>
+                    <p id="hostedNotice" class="field-hint" hidden>線上版可使用自己的 DeepSeek API Key。使用 Codex 額度需<a href="https://github.com/polo1364/TourismPlanning#使用-codex-額度本機個人版" target="_blank" rel="noopener noreferrer">下載並啟動本機版 ↗</a>。本機行程請先匯出 JSON，再到此處匯入。</p>
+                    <p id="codexBillingHint" class="field-hint">使用這台電腦已登入的 Codex，不需要 API Key。生成會使用你的 Codex 額度，不會自動切換付費 API。</p>
+                    <p id="openaiKeyPrivacy" class="field-hint" hidden>金鑰只儲存在目前連接的伺服器，不會放入瀏覽器儲存、行程備份或下載小冊。儲存時只驗證金鑰，不會生成行程。</p>
+                    <p id="codexHelp" class="field-hint">請用「啟動Codex旅遊書.vbs」開啟本機服務。若尚未登入，先在 PowerShell 執行 <code>codex login</code>。此模式供本機個人使用。</p>
+                </details>
             </div>
             <div id="deepseekSettings">
             <label for="apiKey">DeepSeek API Key</label><input type="password" id="apiKey" placeholder="輸入你的 DeepSeek API Key" autocomplete="off" spellcheck="false">
@@ -1691,7 +1694,7 @@
         <div class="flight-trail" aria-hidden="true"><svg viewBox="0 0 260 80" fill="none"><path d="M10 66Q120 -10 242 26" stroke="currentColor" stroke-dasharray="3 6"/><circle cx="10" cy="66" r="4" fill="currentColor"/></svg><span class="flight-plane">✈</span></div>
         <a class="brand-mark" href="#" aria-label="漫遊首頁">漫<span>ROAM</span></a>
         <div class="header-copy"><div class="eyebrow">ROAM / DIGITAL TRAVEL ATLAS</div><h1>漫遊 · 電子旅遊書</h1><p>把你的旅行想法，編成逐頁展開的世界。</p></div>
-        <div class="header-actions"><button type="button" class="library-jump" onclick="TripBook.openLibrary()">旅程收藏 ↓</button><button id="codexUsageSummary" type="button" class="library-jump" onclick="openModal('apiModal'); CodexLocal.refreshUsage()" hidden>Codex 額度 ↗</button><button class="header-status" onclick="openModal('apiModal')"><span id="apiStatus">設定 DeepSeek</span> ↗</button></div>
+        <div class="header-actions"><button type="button" class="library-jump" onclick="TripBook.openLibrary()">旅程收藏 ↓</button><button id="codexUsageSummary" type="button" class="library-jump" onclick="CodexLocal.openUsage()" hidden>Codex 額度 ↗</button><button class="header-status" onclick="openModal('apiModal')"><span id="apiStatus">設定 DeepSeek</span> ↗</button></div>
         <div class="scene-controls" id="sceneControls" hidden><div class="scene-switch" role="group" aria-label="封面風格"><button type="button" data-scene-choice="coast" aria-pressed="true"><span class="scene-swatch coast-swatch" aria-hidden="true"></span>海岸日光</button><button type="button" data-scene-choice="town" aria-pressed="false"><span class="scene-swatch town-swatch" aria-hidden="true"></span>街巷夜色</button></div><button type="button" id="sceneEffects" aria-pressed="true">封面動態：開</button><span class="scene-caption">原創旅行意象插畫</span></div>
     </header>
 
@@ -4215,7 +4218,7 @@ Output strictly in Traditional Chinese (Taiwan).
             if (!modal) return;
             if (event.key === 'Escape') closeModal(modal.id);
             if (event.key === 'Tab') {
-                const focusable = Array.from(modal.querySelectorAll('button, input, select, textarea, a[href]')).filter(el => !el.disabled && el.offsetParent !== null);
+                const focusable = Array.from(modal.querySelectorAll('button, input, select, textarea, a[href], summary')).filter(el => !el.disabled && el.offsetParent !== null);
                 const first = focusable[0], last = focusable.at(-1);
                 if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
                 else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }

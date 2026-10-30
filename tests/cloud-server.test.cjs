@@ -192,7 +192,7 @@ test('cloud frontend probes same-origin endpoint and preserves selected provider
     const fs = require('node:fs');
     const path = require('node:path');
     for (const saved of [null, 'deepseek']) {
-        const elements = Object.fromEntries(['aiProvider', 'deepseekSettings', 'codexSettings', 'codexStatus', 'hostedNotice', 'codexHelp'].map(id => [id, { value: id === 'aiProvider' ? 'deepseek' : '', querySelector: () => ({}), hidden: true }]));
+        const elements = Object.fromEntries(['aiProvider', 'deepseekSettings', 'codexSettings', 'codexStatus', 'hostedNotice', 'codexHelp', 'codexConnectionCheck'].map(id => [id, { value: id === 'aiProvider' ? 'deepseek' : '', querySelector: () => ({}), hidden: true }]));
         const urls = [];
         const context = vm.createContext({ location: { protocol: 'https:', hostname: 'travel.example.test' }, document: { getElementById: id => elements[id] }, window: { ROAM_CLOUD: true }, localStorage: { getItem: key => key === 'aiProvider' ? saved : null }, updateApiStatus() {}, isBusy: false, AbortSignal,
             fetch: async url => { urls.push(url); return { ok: true, json: async () => ({ ready: true, auth: 'chatgpt', token: 'mock', data: { ok: true } }) }; } });

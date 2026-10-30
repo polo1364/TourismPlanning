@@ -418,6 +418,24 @@ summary::after { font-size: 0.64rem; color: #7c8c70; }
 .field-hint a { color: var(--primary); text-underline-offset: 3px; }
 .remember-key { display: flex; align-items: center; gap: 8px; margin-top: -6px; font-size: 0.76rem; }
 .remember-key input { width: 16px; height: 16px; }
+
+/* Keep the service settings focused on the next action; details remain available. */
+#apiModal .settings-status-row, #apiModal .settings-model-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+#apiModal .settings-status-row { margin: 4px 0 14px; }
+#apiModal .settings-status-row p, #apiModal .settings-model-heading label { margin: 0; }
+#apiModal .settings-model-heading { margin-top: 18px; margin-bottom: 8px; }
+#apiModal .settings-status-row button, #apiModal .settings-model-heading button { width: auto; flex-shrink: 0; min-height: 44px; padding: 8px 12px; margin: 0; }
+#apiModal .settings-key-actions { display: flex; gap: 10px; margin-top: 10px; }
+#apiModal .settings-key-actions button { min-height: 44px; margin: 0; padding: 10px 12px; }
+#apiModal #openaiSaveKey { flex: 1; }
+#apiModal #openaiForgetKey { width: auto; background: transparent; }
+#apiModal #openaiKeyStatus:empty { display: none; }
+#apiModal #openaiKeyStatus, #apiModal #openaiKeyBrief, #apiModal #codexModelHint { margin: 8px 0; line-height: 1.6; }
+#apiModal .settings-details { border-top: 1px solid #d6d5cd; margin-top: 12px; padding-top: 2px; }
+#apiModal .settings-details > summary { padding: 12px 0; min-height: 44px; box-sizing: border-box; cursor: pointer; font-size: .85rem; color: #46536b; }
+#apiModal .settings-details > summary:focus-visible { outline: 2px solid #46536b; outline-offset: 3px; }
+#apiModal .settings-details .codex-usage { margin: 0 0 12px; }
+#apiModal .settings-details p { line-height: 1.7; }
 .settings-note { padding: 11px 13px; border: 1px solid #e8e1c9; border-radius: 8px; background: #faf7ec; color: #8b794e; font-size: 0.74rem; line-height: 1.8; margin-bottom: 18px; }
 
 /* At intermediate widths the itinerary is easier to read as activity cards. */

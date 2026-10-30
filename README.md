@@ -4,9 +4,10 @@
 
 ## OpenAI 官方 API 額度（GitHub Pages 可直接使用）
 
-開啟 [GitHub 旅遊書](https://polo1364.github.io/TourismPlanning/)，在「服務與資料設定」輸入自己的 OpenAI API Key，按「檢查並使用 API Key」。不需要私人站、電腦背景服務或 Codex CLI 登入。
+開啟 [GitHub 旅遊書](https://polo1364.github.io/TourismPlanning/)，在「服務與資料設定」輸入自己的 OpenAI API Key，按「驗證並使用」。不需要私人站、電腦背景服務或 Codex CLI 登入。
 
-- GitHub 版由瀏覽器直接呼叫 OpenAI 官方 API。預設 Key 僅放在目前分頁；勾選「在這個瀏覽器記住 API Key」並驗證成功後，會存入此網站的 `localStorage` 獨立設定 `roamOpenAIKey_v1`，重新整理或下次開啟可直接使用。已驗證的 Key 也可直接勾選記住。取消勾選會移除記住的 Key、保留本分頁使用；「清除 API Key（含記住的設定）」會清除兩者。其他已開啟分頁會同步設定變更。
+- GitHub 版由瀏覽器直接呼叫 OpenAI 官方 API。預設 Key 僅放在目前分頁；勾選「在這個瀏覽器記住 API Key」並驗證成功後，會存入此網站的 `localStorage` 獨立設定 `roamOpenAIKey_v1`，重新整理或下次開啟可直接使用。已驗證的 Key 也可直接勾選記住。取消勾選會移除記住的 Key、保留本分頁使用；「清除 Key」會清除兩者。其他已開啟分頁會同步設定變更。
+- 設定視窗優先顯示 Key、記住選項與模型；詳細用量、帳單及安全／計費說明可展開閱讀。
 - Key 不寫入 GitHub、行程草稿、任何行程備份或下載小冊，只在 API 請求時送給 OpenAI。記住功能不是加密保管；只適合自己的可信任瀏覽器，勿在共用裝置勾選。清除網站資料或瀏覽器限制可能使設定消失；儲存失敗會顯示錯誤，不會宣稱已記住。
 - 檔案、手動補充和整理結果仍保存在原有 IndexedDB 草稿，不用重傳。不同網站／瀏覽器的資料不共用，私人站的草稿不會自動搬到 GitHub。
 - 這是個人自備 Key 模式；瀏覽器擴充套件或被竄改的頁面仍可能取得 Key。只在可信任裝置使用，不要將共用金鑰硬編碼進公開網站。OpenAI 官方建議正式服務把金鑰放在後端；原有受保護的後端模式仍保留。
@@ -14,7 +15,7 @@
 - 行程生成與整合呼叫 `/v1/responses`，文字、圖片及掃描 PDF 頁圖一起送出，使用 `store:false`、JSON 格式、不開工具。失敗、取消、逾時或不完整回覆不自動重送，不改用訂閱額度或其他供應商；已送出的請求仍可能計費。
 - 手動生成插圖使用 `gpt-image-1.5` 的 Images API。GitHub 版把工作狀態與成品存於瀏覽器，跨分頁鎖定避免同一工作重送；離開中的工作若無法確認結果，需再次確認才建立新工作。下載小冊重用已存圖片，不呼叫 API。請使用支援 Web Locks 的現代瀏覽器。
 
-本機 `node codex-bridge.cjs` 與私人 `node cloud-server.cjs` 保留伺服器金鑰模式：設定按鈕仍為「儲存並檢查 API Key」。金鑰存於本機使用者家目錄 `.roam/openai.json`；現有 Oracle 為 `/var/lib/roam/openai.json`。可用 `ROAM_OPENAI_KEY_FILE` 指定位置，無設定檔時才從 `OPENAI_API_KEY` 讀取；Linux 經頁面儲存的檔案權限為 0600。登入、Origin 與請求權杖驗證不變。
+本機 `node codex-bridge.cjs` 與私人 `node cloud-server.cjs` 保留伺服器金鑰模式：設定按鈕為「儲存並檢查 Key」。金鑰存於本機使用者家目錄 `.roam/openai.json`；現有 Oracle 為 `/var/lib/roam/openai.json`。可用 `ROAM_OPENAI_KEY_FILE` 指定位置，無設定檔時才從 `OPENAI_API_KEY` 讀取；Linux 經頁面儲存的檔案權限為 0600。登入、Origin 與請求權杖驗證不變。
 
 驗證：`npm test`、`python tests/openai_remember_smoke.py`、`python tests/openai_pages_smoke.py`、`python tests/openai_api_smoke.py`、`python tests/itinerary_import_smoke.py`。生成回覆使用模擬 API；手機採 Chromium／WebKit 裝置模擬，非實體手機或真實付費 API 驗收。官方文件：[認證](https://developers.openai.com/api/reference/overview)、[圖片輸入](https://developers.openai.com/api/docs/guides/images-vision)。
 
