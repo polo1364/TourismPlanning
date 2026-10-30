@@ -337,19 +337,20 @@ ${JSON.stringify(text)}`;
         if (typeof encoded !== 'string' || !encoded.length || encoded.length % 4) throw new Error('圖片附件格式無效，請重新選取檔案。');
         return encoded.length / 4 * 3 - (encoded.endsWith('==') ? 2 : encoded.endsWith('=') ? 1 : 0);
     }
-    function status(text) { $('itineraryImportStatus').textContent = text; }
+    function status(text) { $('itineraryImportStatus').textContent = root.CodexLocal?.billing?.() === 'api' ? text.replaceAll('Codex', 'OpenAI API') : text; }
     function startProgress(task, phase) {
         const codex = phase === 'codex';
+        const provider = root.CodexLocal?.billing?.() === 'api' ? 'OpenAI API' : 'Codex';
         const started = performance.now();
         $('itineraryWorkPanel').classList.add('is-running');
         $('itineraryWorkHeading').hidden = false;
         $('itineraryWorkActivity').hidden = false;
-        $('itineraryWorkTitle').textContent = codex ? 'Codex 正在讀取並整合' : '正在準備行程檔案';
+        $('itineraryWorkTitle').textContent = codex ? provider + ' 正在讀取並整合' : '正在準備行程檔案';
         const tick = () => {
             const seconds = Math.floor((performance.now() - started) / 1000);
             $('itineraryWorkElapsed').textContent = `已等待 ${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
             $('itineraryWorkHint').textContent = codex
-                ? seconds >= 60 ? '尚未收到 Codex 回覆，請保持此頁開啟；也可取消後重試，已準備的來源與補充仍保留。' : '正在等待 Codex 回覆，完成後會自動顯示預覽。請保持此頁開啟。'
+                ? seconds >= 60 ? '尚未收到 ' + provider + ' 回覆，請保持此頁開啟；也可取消後重試，已準備的來源與補充仍保留。' : '正在等待 ' + provider + ' 回覆，完成後會自動顯示預覽。請保持此頁開啟。'
                 : '正在本機讀取文字與準備圖片／PDF 頁面，尚未傳送至 Codex。';
         };
         tick();
@@ -556,7 +557,7 @@ ${JSON.stringify(text)}`;
             const prompt = makePrompt($('itinerarySourceText').value, { ...options, images: sourceImages });
             // Match the dedicated import endpoint's prompt-character limit.
             if (prompt.length > 60000) throw new Error('文字與附件來源說明過長，請縮短行程文字或檔名再整理。');
-            status('正在使用 Codex 登入帳號額度，讀取所有來源並整合行程，請稍候…');
+            status(root.CodexLocal?.billing?.() === 'api' ? '正在使用 OpenAI API 額度，讀取所有來源並整合行程，請稍候…' : '正在使用 Codex 登入帳號額度，讀取所有來源並整合行程，請稍候…');
             const inputSignature = signature();
             const result = await root.CodexLocal.importItinerary(prompt, sourceImages, signal);
             if (!current()) return;
@@ -584,6 +585,9 @@ ${JSON.stringify(text)}`;
         if (isBusy) return;
         if (!root.TripLibrary?.active()) { showSaveStatus('旅程收藏無法讀取，請先備份並重新載入。'); return; }
         $('itineraryPrivacy').textContent = '選檔只在本機準備附件，不會辨識圖片或呼叫 AI。按「使用 Codex 額度讀取並整合」才會傳送所有圖片、PDF 頁圖與下方文字至 Codex，使用目前登入 ChatGPT 帳號的 Codex 額度。此功能固定使用 Codex；模型可在「連線與模型設定」中調整。請先移除來源中的個人資料；刪除下方文字不會移除圖片內容。';
+        const apiBilling = root.CodexLocal?.billing?.() === 'api';
+        $('itineraryParseButton').textContent = apiBilling ? '使用 API 額度讀取並整合' : '使用 Codex 額度讀取並整合';
+        if (apiBilling) $('itineraryPrivacy').textContent = '選檔只在本機準備附件。按「使用 API 額度讀取並整合」才會將所有來源、PDF 頁圖和手動補充交給 OpenAI API，使用你的 API 額度計費。讀不清楚的內容仍可手動補上，原附件及草稿會保留。';
         $('itineraryCodexNotice').hidden = !!root.CodexLocal?.importsAvailable();
         openModal('itineraryImportModal');
         syncControls();

@@ -1628,9 +1628,17 @@
             <select id="aiProvider" onchange="CodexLocal.update(true)"><option value="deepseek">DeepSeek API</option><option value="codex">本機 Codex · 使用現有額度</option></select>
             <p id="hostedNotice" class="field-hint" hidden>線上版可使用自己的 DeepSeek API Key。使用 Codex 額度需<a href="https://github.com/polo1364/TourismPlanning#使用-codex-額度本機個人版" target="_blank" rel="noopener noreferrer">下載並啟動本機版 ↗</a>。本機行程請先匯出 JSON，再到此處匯入。</p>
             <div id="codexSettings" hidden>
-                <p class="field-hint">使用這台電腦已登入的 Codex，不需要 API Key。生成會使用你的 Codex 額度，不會自動切換付費 API。</p>
+                <p id="codexBillingHint" class="field-hint">使用這台電腦已登入的 Codex，不需要 API Key。生成會使用你的 Codex 額度，不會自動切換付費 API。</p>
                 <p id="codexStatus" class="field-hint" role="status">尚未檢查連線。</p>
                 <button type="button" class="btn-outline" onclick="CodexLocal.check()">檢查本機 Codex 連線</button>
+                <section id="openaiKeySettings" hidden aria-label="OpenAI API 設定">
+                    <label for="openaiApiKey">OpenAI API Key</label>
+                    <input type="password" id="openaiApiKey" autocomplete="off" spellcheck="false" placeholder="sk-…" maxlength="512">
+                    <button type="button" id="openaiSaveKey" class="btn-outline" onclick="CodexLocal.saveApiKey()">儲存並檢查 API Key</button>
+                    <p class="field-hint">金鑰只儲存在目前連接的伺服器，不會放入瀏覽器儲存、行程備份或下載小冊。儲存時只驗證金鑰，不會生成行程。</p>
+                    <p id="openaiKeyStatus" class="field-hint" role="status"></p>
+                    <a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">查看 OpenAI API 用量與帳單 ↗</a>
+                </section>
                 <label for="codexModel">Codex 模型</label>
                 <select id="codexModel" onchange="CodexLocal.chooseModel()"><option value="">官方預設模型</option></select>
                 <p id="codexModelHint" class="field-hint">連線後讀取可用模型。模型不同，生成速度與額度消耗也可能不同。</p>
@@ -1639,7 +1647,7 @@
                     <p id="codexUsageStatus" class="field-hint" role="status">尚未取得帳戶額度。</p>
                     <div id="codexUsageWindows"></div>
                     <p id="codexTokenUsage" class="field-hint">本分頁尚無生成用量紀錄。</p>
-                    <p class="field-hint">百分比是登入帳戶的共用額度，包含其他 Codex 工作；Token 是本分頁收到的生成用量，不能直接換算成額度百分比或費用。中斷或未回報的用量可能未計入。</p>
+                    <p id="codexUsageExplanation" class="field-hint">百分比是登入帳戶的共用額度，包含其他 Codex 工作；Token 是本分頁收到的生成用量，不能直接換算成額度百分比或費用。中斷或未回報的用量可能未計入。</p>
                 </section>
                 <p id="codexHelp" class="field-hint">請用「啟動Codex旅遊書.vbs」開啟本機服務。若尚未登入，先在 PowerShell 執行 <code>codex login</code>。此模式供本機個人使用。</p>
             </div>
@@ -4177,7 +4185,7 @@ Output strictly in Traditional Chinese (Taiwan).
             else finish();
         }
         function updateApiStatus() {
-            if (window.CodexLocal?.selected()) { document.getElementById('apiStatus').textContent = window.ROAM_CLOUD === true ? '雲端 Codex · 額度模式' : '本機 Codex · 額度模式'; return; }
+            if (window.CodexLocal?.selected()) { document.getElementById('apiStatus').textContent = window.CodexLocal?.billing?.() === 'api' ? 'OpenAI API · API 額度' : window.ROAM_CLOUD === true ? '雲端 Codex · 額度模式' : '本機 Codex · 額度模式'; return; }
             document.getElementById('apiStatus').textContent = document.getElementById('apiKey').value.trim() ? 'DeepSeek 已設定' : '設定 DeepSeek';
         }
         function saveAndCloseModal() {
@@ -4221,7 +4229,7 @@ Output strictly in Traditional Chinese (Taiwan).
         async function callDeepSeek(key, prompt) {
             window.PlannerUI?.throwIfCancelled();
             const codex = window.CodexLocal?.selected();
-            window.PlannerUI?.stage(`正在等待 ${codex ? 'Codex' : 'DeepSeek'} 回覆`, true);
+            window.PlannerUI?.stage(`正在等待 ${codex ? (window.CodexLocal?.billing?.() === 'api' ? 'OpenAI API' : 'Codex') : 'DeepSeek'} 回覆`, true);
             const result = codex
                 ? await CodexLocal.generate(prompt, window.PlannerUI?.signal())
                 : await DeepSeekClient.generate({ key, model: document.getElementById('modelSelect').value, prompt, signal: window.PlannerUI?.signal() });

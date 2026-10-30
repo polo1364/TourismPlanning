@@ -6,6 +6,7 @@
     const localOnlyMessage = 'Codex 額度僅供本機版使用。請下載專案並執行「啟動Codex旅遊書.vbs」；線上版可手動選用自己的 DeepSeek API Key。';
     const $ = id => document.getElementById(id);
     let token = '';
+    let authMode = 'chatgpt';
     let touched = false;
     let usagePending = null, quota = null, chosenModel = '', modelIds = new Set();
     let totalTokens = 0, measuredCalls = 0, missingCalls = 0;
@@ -18,18 +19,19 @@
         button.hidden = !selected() || (!localPage && !cloudPage);
         const bucket = quota?.limits?.find(item => item.id === 'codex') || quota?.limits?.[0];
         const remaining = bucket?.windows?.map(item => item.remainingPercent);
+        if (authMode === 'api') { button.textContent = 'OpenAI API 用量 ↗'; return; }
         button.textContent = quota?.available && remaining?.length ? `Codex 剩餘 ${number(Math.min(...remaining))}% ↗` : 'Codex 額度待查 ↗';
     }
     function chooseModel() {
         if (isBusy) { $('codexModel').value = chosenModel; return; }
         chosenModel = $('codexModel').value;
-        try { localStorage.setItem('codexModel', chosenModel); } catch (_) { /* Optional preference. */ }
+        try { localStorage.setItem(authMode === 'api' ? 'openaiModel' : 'codexModel', chosenModel); } catch (_) { /* Optional preference. */ }
     }
     function renderModels(models) {
         const select = $('codexModel');
         if (!select) return;
         modelIds = new Set((models || []).map(model => model.id));
-        select.replaceChildren(new Option('官方預設模型', ''));
+        select.replaceChildren(new Option(authMode === 'api' ? '伺服器預設可用模型' : '官方預設模型', ''));
         for (const model of models || []) select.add(new Option(model.name + (model.isDefault ? ' · 預設' : ''), model.id));
         if (chosenModel && !modelIds.has(chosenModel)) {
             const missing = new Option(chosenModel + ' · 目前無法確認，請重選', chosenModel);
@@ -37,6 +39,7 @@
         }
         select.value = chosenModel;
         select.disabled = isBusy;
+        if (authMode === 'api') { $('codexModelHint').textContent = '依此 API Key 的權限列出已支援圖片輸入的行程模型；使用 API 額度計費。'; return; }
         $('codexModelHint').textContent = modelIds.size ? '依目前登入的 Codex 提供模型；生成期間鎖定選擇。不同模型的速度與額度消耗可能不同。' : '模型清單暫時無法取得；可更新重試，或選擇官方預設模型。';
     }
     function renderQuota(info) {
@@ -61,6 +64,7 @@
             row.append(heading, bar, detail); area.append(row);
         }
         $('codexUsageStatus').textContent = info.available ? `帳戶共用額度 · 更新於 ${new Date(info.checkedAt).toLocaleTimeString('zh-TW')} · 最多快取 30 秒` : '暫時無法取得額度，不代表剩餘 0；可以稍後更新。';
+        if (authMode === 'api') $('codexUsageStatus').textContent = 'API 依使用量計費；餘額與費用請至 OpenAI 平台查詢。本頁不推算剩餘百分比。';
         renderModels(info.models);
         summary();
     }
@@ -108,7 +112,29 @@
         try {
             const response = await fetch(BASE + '/status', { signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(12000)]) : AbortSignal.timeout(12000) });
             const data = await response.json();
-            if (!response.ok || !data.ready || data.auth !== 'chatgpt' || typeof data.token !== 'string') throw new Error(data.error || '請使用 ChatGPT 帳號登入 Codex。');
+            if (!response.ok || !['chatgpt', 'api'].includes(data.auth) || typeof data.token !== 'string') throw new Error(data.error || '無法確認生成服務。');
+            if (authMode !== data.auth) {
+                authMode = data.auth;
+                try { chosenModel = localStorage.getItem(authMode === 'api' ? 'openaiModel' : 'codexModel') || ''; } catch (_) { chosenModel = ''; }
+                quota = null; modelIds = new Set();
+            }
+            if (authMode === 'api') {
+                token = data.token;
+                $('openaiKeySettings').hidden = false;
+                $('codexBillingHint').textContent = '行程生成、檔案整合與插圖使用 OpenAI API 額度，不使用 ChatGPT 訂閱額度。掃描 PDF 會以頁面圖片送出。';
+                $('aiProvider').querySelector('option[value="codex"]').textContent = 'OpenAI API · 使用 API 額度';
+                $('codexUsageTitle').textContent = 'OpenAI API 用量';
+                $('codexUsageRefresh').textContent = '更新可用模型';
+                $('codexUsageExplanation').textContent = 'Token 為本分頁收到的行程生成用量，費用以 OpenAI 帳單為準；圖片生成及中斷請求可能未計入。';
+                $('codexHelp').textContent = '由目前連接的伺服器呼叫 OpenAI 官方 API。更換 API Key 不會清除旅程或草稿。插圖使用 gpt-image-1.5，只有按下生成時才呼叫。';
+                $('codexSettings').querySelector('button').textContent = '檢查 API 連線';
+                document.querySelector('label[for="codexModel"]').textContent = 'OpenAI API 模型';
+                $('codexStatus').textContent = data.ready ? '已設定 OpenAI API · 使用 API 額度' : '尚未設定 API Key，請在下方輸入並儲存。';
+                if (data.ready) await refreshUsage();
+                else renderQuota({ available: false, limits: [], models: [] });
+                return data.ready;
+            }
+            if (!data.ready) throw new Error(data.error || '請使用 ChatGPT 帳號登入 Codex。');
             token = data.token;
             $('codexStatus').textContent = cloudPage ? '已連接雲端 Codex · 使用 ChatGPT 登入額度' : '已連接本機 Codex · 使用 ChatGPT 登入額度';
             void refreshUsage();
@@ -169,7 +195,27 @@
             $('codexHelp').textContent = '由你的 Oracle 主機生成，電腦關機也能使用。生成時請保持手機頁面開啟；中斷後可手動接續。';
         }
         const connected = await check();
-        if (!saved && !touched && connected && !isBusy) { $('aiProvider').value = 'codex'; update(); }
+        if ((authMode === 'api' || !saved) && !touched && (connected || authMode === 'api') && !isBusy) { $('aiProvider').value = 'codex'; update(); }
+    }
+    async function saveApiKey() {
+        if (isBusy || $('openaiSaveKey').disabled) return;
+        const input = $('openaiApiKey'), button = $('openaiSaveKey'), status = $('openaiKeyStatus');
+        const apiKey = input.value.trim();
+        input.value = '';
+        if (!apiKey) { status.textContent = '請輸入 API Key。'; return; }
+        button.disabled = true; status.textContent = '正在驗證並儲存…';
+        try {
+            if (!token) await check();
+            if (!token || authMode !== 'api') throw new Error('請先連接已更新的 API 服務。');
+            const response = await fetch(BASE + '/settings', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Roam-Token': token }, body: JSON.stringify({ apiKey }), signal: AbortSignal.timeout(20000) });
+            const result = await response.json();
+            if (!response.ok || !result.saved) throw new Error(result.error || 'API Key 未儲存。');
+            chosenModel = '';
+            try { localStorage.removeItem('openaiModel'); } catch (_) { /* Optional preference. */ }
+            await check();
+            status.textContent = 'API Key 已儲存，可直接繼續整合原有草稿。';
+        } catch (error) { status.textContent = error instanceof TypeError ? '連線失敗，請重新檢查。' : error.message; }
+        finally { input.value = ''; button.disabled = false; }
     }
     async function imageRequest(path, body) {
         if (!localPage && !cloudPage) throw new Error('生成插圖需使用本機或私人雲端版；此版本可匯入、閱讀與下載已存圖片。');
@@ -187,5 +233,5 @@
         }
         return value;
     }
-    window.CodexLocal = Object.freeze({ selected, update, check, generate, importItinerary, importsAvailable: () => localPage || cloudPage, init, refreshUsage, chooseModel, imageRequest, imagesAvailable: () => localPage || cloudPage });
+    window.CodexLocal = Object.freeze({ selected, update, check, generate, saveApiKey, billing: () => authMode, importItinerary, importsAvailable: () => localPage || cloudPage, init, refreshUsage, chooseModel, imageRequest, imagesAvailable: () => localPage || cloudPage });
 })();

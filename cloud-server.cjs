@@ -1,4 +1,5 @@
 'use strict';
+const { createOpenAI, settingsRoute } = require('./openai-api.cjs');
 // Personal, authenticated HTTPS deployment. Caddy is the only public listener.
 const http = require('node:http');
 const fs = require('node:fs');
@@ -12,12 +13,13 @@ const { validateImport, MAX_BODY: MAX_IMPORT_BODY, TIMEOUT: IMPORT_TIMEOUT } = r
 const digest = value => crypto.createHash('sha256').update(value).digest();
 const fail = (message, status, code) => Object.assign(new Error(message), { status, code });
 
-function createCloud({ origin, passwordHash, root = __dirname, shareDirectory = path.join(root, '.roam-shares'), login = checkLogin, generate = runCodex, usage = readUsage, imageGenerate, imageDirectory = process.env.ROAM_IMAGE_DIR || path.join(root, '.roam-images') } = {}) {
+function createCloud({ api, origin, passwordHash, root = __dirname, shareDirectory = path.join(root, '.roam-shares'), login = checkLogin, generate = runCodex, usage = readUsage, imageGenerate, imageDirectory = process.env.ROAM_IMAGE_DIR || path.join(root, '.roam-images') } = {}) {
     const publicURL = new URL(origin);
     if (publicURL.protocol !== 'https:' || publicURL.origin !== origin || publicURL.username || publicURL.password) throw new Error('A canonical HTTPS origin is required.');
     // Hash a generated >= 192-bit random password, not a human-chosen password.
     if (!/^[a-f0-9]{64}$/.test(passwordHash || '')) throw new Error('ROAM_PASSWORD_SHA256 is required.');
     const expectedPassword = Buffer.from(passwordHash, 'hex');
+    if (api) ({ login, generate, usage, imageGenerate } = api);
     const token = crypto.randomBytes(32).toString('hex');
     const assets = new Set(files);
     const failures = new Map();
@@ -112,6 +114,13 @@ function createCloud({ origin, passwordHash, root = __dirname, shareDirectory = 
                 }
                 return json(405, { error: '不支援此分享操作。' });
             }
+            if (req.url === '/codex/settings') {
+                if (req.headers.origin !== origin) return json(403, { error: '不接受其他網站的設定請求。' });
+                if (busy) return json(409, { error: '請等待目前工作完成後再設定。', code: 'BUSY' });
+                busy = true;
+                try { return await settingsRoute(req, json, api, token, false); }
+                finally { busy = false; }
+            }
             if (req.method === 'GET' && req.url === '/codex/status') {
                 const state = await login();
                 return json(200, { service: 'roam-cloud', ready: state.ready, auth: state.auth, token });
@@ -181,7 +190,7 @@ function createCloud({ origin, passwordHash, root = __dirname, shareDirectory = 
 }
 
 if (require.main === module) {
-    const server = createCloud({ origin: process.env.ROAM_ORIGIN, passwordHash: process.env.ROAM_PASSWORD_SHA256, shareDirectory: process.env.ROAM_SHARE_DIR || path.join(__dirname, '.roam-shares') });
+    const server = createCloud({ api: createOpenAI(), origin: process.env.ROAM_ORIGIN, passwordHash: process.env.ROAM_PASSWORD_SHA256, shareDirectory: process.env.ROAM_SHARE_DIR || path.join(__dirname, '.roam-shares') });
     server.listen(8090, '127.0.0.1', () => console.log('ROAM private cloud backend ready on loopback port 8090.'));
 }
 module.exports = { createCloud, digest };

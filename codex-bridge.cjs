@@ -1,4 +1,5 @@
 'use strict';
+const { createOpenAI, settingsRoute } = require('./openai-api.cjs');
 // Personal loopback bridge. Credentials stay in the official Codex CLI.
 const http = require('node:http');
 const fs = require('node:fs');
@@ -141,7 +142,8 @@ async function runCodex(prompt, signal, { model = '', onUsage = () => {}, images
     }
 }
 
-function createBridge({ login = checkLogin, generate = runCodex, usage = readUsage, imageGenerate, imageDirectory = process.env.ROAM_IMAGE_DIR || path.join(__dirname, '.roam-images') } = {}) {
+function createBridge({ api, login = checkLogin, generate = runCodex, usage = readUsage, imageGenerate, imageDirectory = process.env.ROAM_IMAGE_DIR || path.join(__dirname, '.roam-images') } = {}) {
+    if (api) ({ login, generate, usage, imageGenerate } = api);
     const token = crypto.randomBytes(32).toString('hex');
     let busy = false;
     let imageStarts = [];
@@ -170,6 +172,12 @@ function createBridge({ login = checkLogin, generate = runCodex, usage = readUsa
         let measuredUsage;
         try {
             if (await imageRoute(req, json, images, '/images', token)) return;
+            if (req.url === '/settings') {
+                if (busy) return json(409, { error: '請等待目前工作完成後再設定。', code: 'BUSY' });
+                busy = true;
+                try { return await settingsRoute(req, json, api, token, false); }
+                finally { busy = false; }
+            }
             if (req.method === 'GET' && req.url === '/status') {
                 const state = await login();
                 return json(200, { service: 'roam-codex', ready: state.ready, auth: state.auth, token });
@@ -200,7 +208,7 @@ function createBridge({ login = checkLogin, generate = runCodex, usage = readUsa
                 try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw fail('JSON 格式錯誤。', 'BODY', 400); }
                 if (typeof body?.prompt !== 'string' || !body.prompt.trim() || body.prompt.length > 60000) throw fail('請提供有效旅行需求。', 'PROMPT', 400);
                 const images = importing ? validateImport(body) : undefined;
-                await login(); // Require ChatGPT auth for every request; never fall back to API billing.
+                await login(); // The configured backend controls billing; no automatic provider fallback.
                 const model = await validateModel(body.model, usage);
                 if (controller.signal.aborted) throw fail('已取消。', 'CANCELLED', 499);
                 const data = await generate(body.prompt, controller.signal, { model, onUsage: value => { measuredUsage = value; }, ...(importing ? { images, timeout: IMPORT_TIMEOUT } : {}) });
@@ -219,7 +227,7 @@ function createBridge({ login = checkLogin, generate = runCodex, usage = readUsa
 }
 
 if (require.main === module) {
-    const server = createBridge();
+    const server = createBridge({ api: createOpenAI() });
     server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? 'Codex bridge port 8081 is already in use.' : 'Codex bridge could not start.'); process.exitCode = 1; });
     server.listen(PORT, '127.0.0.1', () => console.log('Codex bridge ready at http://127.0.0.1:8081 (personal local use only).'));
 }

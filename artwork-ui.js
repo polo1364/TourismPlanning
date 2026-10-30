@@ -33,7 +33,7 @@
             $('artworkCount').textContent = `已保存 ${states.filter(item => item.image).length} / ${list.length} 張 · 封面＋每天景點與美食／活動插圖`;
             $('generateArtwork').disabled = isBusy || !list.length || !window.CodexLocal?.imagesAvailable();
             $('artworkHelp').textContent = window.CodexLocal?.imagesAvailable()
-                ? '寫實旅行風格，可將當天多個景點或美食合成一張。手動生成才使用 Codex 額度；下載與分享只使用已存圖片，行程改動後請手動更新。AI 行程示意圖，非景點實拍。'
+                ? '寫實旅行風格，可將當天多個景點或美食合成一張。手動生成才使用目前服務的額度；下載與分享只使用已存圖片，行程改動後請手動更新。AI 行程示意圖，非景點實拍。'
                 : '生成插圖需使用本機或私人雲端版；這裡可以匯入、閱讀及下載已存圖片。';
         } catch (error) { status(error.message); }
     }
