@@ -1638,7 +1638,8 @@
                     <p id="openaiKeyStatus" class="field-hint" role="status"></p>
                 </section>
                 <div class="settings-model-heading"><label for="codexModel">Codex 模型</label><button id="codexUsageRefresh" type="button" class="btn-outline" onclick="CodexLocal.refreshUsage()">更新模型與額度</button></div>
-                <select id="codexModel" onchange="CodexLocal.chooseModel()"><option value="">官方預設模型</option></select>
+                <select id="codexModel" aria-describedby="codexModelAdvice codexModelHint" onchange="CodexLocal.chooseModel()"><option value="">官方預設模型</option></select>
+                <div id="codexModelAdvice" class="model-advice" role="status" aria-live="polite" aria-atomic="true" hidden><strong id="codexModelAdviceTitle"></strong><p id="codexModelAdviceText"></p></div>
                 <p id="codexModelHint" class="field-hint">連線後顯示可用模型。</p>
                 <details id="codexUsageDetails" class="settings-details"><summary>用量與帳單</summary>
                 <section class="codex-usage" aria-labelledby="codexUsageTitle">
@@ -1655,6 +1656,7 @@
                     <p id="codexBillingHint" class="field-hint">使用這台電腦已登入的 Codex，不需要 API Key。生成會使用你的 Codex 額度，不會自動切換付費 API。</p>
                     <p id="openaiKeyPrivacy" class="field-hint" hidden>金鑰只儲存在目前連接的伺服器，不會放入瀏覽器儲存、行程備份或下載小冊。儲存時只驗證金鑰，不會生成行程。</p>
                     <p id="codexHelp" class="field-hint">請用「啟動Codex旅遊書.vbs」開啟本機服務。若尚未登入，先在 PowerShell 執行 <code>codex login</code>。此模式供本機個人使用。</p>
+                    <p class="field-hint">選型建議依 <a href="https://developers.openai.com/api/docs/guides/latest-model" target="_blank" rel="noopener noreferrer">OpenAI 官方模型定位 ↗</a>整理（2026-10-30），未做掃描辨識排名。速度與費用取決於頁數、圖片和輸出量；省費不代表較少 Token。讀不清楚的內容仍需手動補充。</p>
                 </details>
             </div>
             <div id="deepseekSettings">

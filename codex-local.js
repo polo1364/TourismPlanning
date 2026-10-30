@@ -6,6 +6,17 @@
     const localPage = location.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(location.hostname);
     const localOnlyMessage = 'Codex 額度僅供本機版使用。請下載專案並執行「啟動Codex旅遊書.vbs」；線上版可手動選用自己的 DeepSeek API Key。';
     const $ = id => document.getElementById(id);
+    // Selection advice inferred from OpenAI model roles, checked 2026-10-30.
+    // https://developers.openai.com/api/docs/guides/latest-model
+    // Older models: /api/docs/models/gpt-6-sol and /api/docs/models/gpt-5.3-codex.
+    const API_MODEL_ADVICE = Object.freeze({
+        'gpt-6-sol': { label: '原有模型', detail: '保留原本使用習慣；新掃描檔可考慮 Terra，多檔交叉比對可考慮 6.1 Sol。' },
+        'gpt-5.3-codex': { label: '舊版程式', detail: '偏程式工作，官方已標示棄用；行程整合建議改選其他可用模型。' },
+        'gpt-6.1-sol': { label: '多檔整合', detail: '建議用於多份行程交叉比對、合併重複內容，兼顧能力與費用。' },
+        'gpt-6.1-terra': { label: '掃描圖像', detail: '圖像理解取向；建議用於掃描 PDF、照片與表格整合，速度快、費用較低。' },
+        'gpt-6-luna': { label: '快速省費', detail: '速度與低費用優先；建議用於清楚掃描、純文字及簡單整合，複雜內容宜再核對。' },
+        'gpt-6-astra': { label: '複雜比對', detail: '建議用於矛盾資料、複雜條件與深入比對；費用較高，處理可能較久。' }
+    });
     let token = '';
     let authMode = browserApi ? 'api' : 'chatgpt';
     let touched = false;
@@ -27,19 +38,34 @@
         if (isBusy) { $('codexModel').value = chosenModel; return; }
         chosenModel = $('codexModel').value;
         try { localStorage.setItem(authMode === 'api' ? 'openaiModel' : 'codexModel', chosenModel); } catch (_) { /* Optional preference. */ }
+        renderModelAdvice();
+    }
+    function renderModelAdvice() {
+        const panel = $('codexModelAdvice');
+        if (!panel) return;
+        panel.hidden = authMode !== 'api' || (!modelIds.size && !chosenModel);
+        if (panel.hidden) return;
+        const id = chosenModel || quota?.models?.find(model => model.isDefault)?.id || modelIds.values().next().value;
+        const advice = Object.hasOwn(API_MODEL_ADVICE, id) ? API_MODEL_ADVICE[id] : null;
+        $('codexModelAdviceTitle').textContent = `${chosenModel ? '' : '預設：'}${id}` + (modelIds.has(id) && advice ? ` · ${advice.label}` : '');
+        $('codexModelAdviceText').textContent = !modelIds.has(id) ? '此模型目前無法確認，請更新模型或重選；不會自動改用其他模型。' : advice?.detail || '尚無此模型的選型建議，請查看官方模型說明。';
     }
     function renderModels(models) {
         const select = $('codexModel');
         if (!select) return;
         modelIds = new Set((models || []).map(model => model.id));
         select.replaceChildren(new Option(authMode === 'api' ? '預設可用模型' : '官方預設模型', ''));
-        for (const model of models || []) select.add(new Option(model.name + (model.isDefault ? ' · 預設' : ''), model.id));
+        for (const model of models || []) {
+            const advice = authMode === 'api' && Object.hasOwn(API_MODEL_ADVICE, model.id) ? API_MODEL_ADVICE[model.id] : null;
+            select.add(new Option(model.name + (advice ? ` · ${advice.label}` : '') + (model.isDefault ? ' · 預設' : ''), model.id));
+        }
         if (chosenModel && !modelIds.has(chosenModel)) {
             const missing = new Option(chosenModel + ' · 目前無法確認，請重選', chosenModel);
             missing.disabled = true; select.add(missing);
         }
         select.value = chosenModel;
         select.disabled = isBusy;
+        renderModelAdvice();
         if (authMode === 'api') { $('codexModelHint').textContent = modelIds.size ? `${modelIds.size} 個可選模型 · 支援圖片／掃描 PDF · 費用依模型計算。` : '驗證 Key 後顯示可用模型。'; return; }
         $('codexModelHint').textContent = modelIds.size ? '依目前登入的 Codex 提供模型；生成期間鎖定選擇。不同模型的速度與額度消耗可能不同。' : '模型清單暫時無法取得；可更新重試，或選擇官方預設模型。';
     }

@@ -431,6 +431,9 @@ summary::after { font-size: 0.64rem; color: #7c8c70; }
 #apiModal #openaiForgetKey { width: auto; background: transparent; }
 #apiModal #openaiKeyStatus:empty { display: none; }
 #apiModal #openaiKeyStatus, #apiModal #openaiKeyBrief, #apiModal #codexModelHint { margin: 8px 0; line-height: 1.6; }
+#apiModal .model-advice { margin-top: 10px; padding: 10px 12px; border-left: 3px solid #7c8c70; background: #f0f2e9; color: #46536b; font-size: .85rem; line-height: 1.6; overflow-wrap: anywhere; }
+#apiModal .model-advice strong { font-size: inherit; }
+#apiModal .model-advice p { margin: 4px 0 0; font-size: inherit; line-height: inherit; }
 #apiModal .settings-details { border-top: 1px solid #d6d5cd; margin-top: 12px; padding-top: 2px; }
 #apiModal .settings-details > summary { padding: 12px 0; min-height: 44px; box-sizing: border-box; cursor: pointer; font-size: .85rem; color: #46536b; }
 #apiModal .settings-details > summary:focus-visible { outline: 2px solid #46536b; outline-offset: 3px; }
