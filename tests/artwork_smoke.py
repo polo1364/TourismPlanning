@@ -206,7 +206,7 @@ def main():
         check('import preserves compressed image bytes without another lossy encode', imported.evaluate('''async expected=>{
             const image=await TripArtworkStore.get(TripLibrary.active().data.a[0].assetId);return image.dataUrl===expected;
         }''', data['assets'][0]['dataUrl']))
-        check('public site disables generation but permits reading', imported.locator('#generateArtwork').is_disabled())
+        check('public site offers API generation and permits reading', not imported.locator('#generateArtwork').is_disabled() and imported.evaluate("CodexLocal.billing()==='api'"))
         # Malformed image import cannot replace current data.
         check('bad imported image preserves trip', imported.evaluate('''async()=>{
             const before=JSON.stringify(TripLibrary.active());

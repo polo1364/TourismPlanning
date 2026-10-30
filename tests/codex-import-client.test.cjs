@@ -38,10 +38,10 @@ for (const local of [false, true]) test(`import sends all attachments once to Co
     assert.ok(timeouts.includes(195000));
 });
 
-test('public Pages refuses Codex import without probing localhost or another provider', async () => {
+test('public Pages with missing API module refuses import without probing localhost or another provider', async () => {
     const { api, requests } = client({ cloud: false });
     assert.equal(api.importsAvailable(), false);
-    await assert.rejects(api.importItinerary('text', [], new AbortController().signal), /私人正式網站或本機版/);
+    await assert.rejects(api.importItinerary('text', [], new AbortController().signal), /HTTPS.*GitHub.*API Key/);
     assert.equal(requests.length, 0);
 });
 

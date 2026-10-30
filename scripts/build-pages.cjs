@@ -9,7 +9,7 @@ if (ocrAssets.some(file => !/^vendor\/tesseract\/(?:[A-Za-z0-9_.-]+\/)*[A-Za-z0-
 // An explicit list keeps local services, test reports and credentials out of Pages.
 const files = [
     'index.html', 'favicon.ico', 'styles.css', 'editorial.css', 'scenes.css', 'book.css', 'boarding.css', 'postcard.css',
-    'deepseek.js', 'codex-local.js', 'motion-ui.js', 'planner-checks.js',
+    'deepseek.js', 'openai-browser.js', 'codex-local.js', 'motion-ui.js', 'planner-checks.js',
     'itinerary-image.js', 'itinerary-file.js', 'itinerary-import.js', 'itinerary-import.css',
     'planner-ui.js', 'trip-store.js', 'trip-library.js', 'scene-ui.js', 'book-ui.js', 'book-export.js', 'boarding-ui.js',
     'artwork-core.js', 'artwork-store.js', 'artwork-ui.js', 'artwork.css',

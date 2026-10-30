@@ -2,21 +2,20 @@
 
 繁體中文旅遊規劃工具，以純 HTML、CSS、JavaScript 執行。支援一次產生整本旅遊書、AI 微調、地圖連結、費用估算、圖片與文字匯出，以及 JSON 備份。
 
-## OpenAI 官方 API 額度（目前版本）
+## OpenAI 官方 API 額度（GitHub Pages 可直接使用）
 
-目前 `node codex-bridge.cjs` 與 `node cloud-server.cjs` 預設使用 OpenAI 官方 API；不需要 Codex CLI 登入，也不會改用 ChatGPT 訂閱額度。既有旅程、附件草稿、手動補充與備份格式不變。
+開啟 [GitHub 旅遊書](https://polo1364.github.io/TourismPlanning/)，在「服務與資料設定」輸入自己的 OpenAI API Key，按「檢查並在本分頁使用」。不需要私人站、電腦背景服務或 Codex CLI 登入。
 
-1. 開啟私人正式站，或以 `啟動Codex旅遊書.vbs` 啟動本機版（需要 Node.js 與 Python）。已有舊版 8081 服務時，先關閉該服務再重新啟動。
-2. 在「服務與資料設定」的 OpenAI API Key 欄位填入自己的金鑰，按「儲存並檢查 API Key」。請勿把金鑰貼到聊天或提交至 Git。
-3. 儲存只向官方 `/v1/models` 驗證，不生成付費內容。行程模型依金鑰權限提供 `gpt-6-sol`、`gpt-5.3-codex`（舊模型）；預設使用清單中的第一個，無權限時不替代生成。
-4. 按「使用 API 額度讀取並整合」後，文字、圖片及掃描 PDF 頁圖送至 `/v1/responses`，使用 `store:false`、JSON 輸出，不開啟工具。錯誤、取消、逾時或不完整回覆不自動重送，已送出的請求仍可能計費。
-5. 手動生成行程插圖使用 `gpt-image-1.5` 的 Images API；下載與分享重用已存圖片。實際權限與費用以 OpenAI 平台為準。
+- GitHub 版由瀏覽器直接呼叫 OpenAI 官方 API；Key 只放在目前分頁記憶體，不寫入 GitHub、瀏覽器持久儲存、行程備份或下載小冊。重整、離開或關閉分頁後需重新輸入 Key；可按「清除此分頁的 Key」立即清除。
+- 檔案、手動補充和整理結果仍保存在原有 IndexedDB 草稿，不用重傳。不同網站／瀏覽器的資料不共用，私人站的草稿不會自動搬到 GitHub。
+- 這是個人自備 Key 模式；瀏覽器擴充套件或被竄改的頁面仍可能取得 Key。只在可信任裝置使用，不要將共用金鑰硬編碼進公開網站。OpenAI 官方建議正式服務把金鑰放在後端；原有受保護的後端模式仍保留。
+- 驗證 Key 只查詢可用模型，不生成付費內容。模型是本站支援清單與 `/v1/models` 的交集；目前支援 `gpt-6-sol`，以及帳戶仍可用的舊 `gpt-5.3-codex`。模型權限、API 費用及餘額以 OpenAI 平台為準。
+- 行程生成與整合呼叫 `/v1/responses`，文字、圖片及掃描 PDF 頁圖一起送出，使用 `store:false`、JSON 格式、不開工具。失敗、取消、逾時或不完整回覆不自動重送，不改用訂閱額度或其他供應商；已送出的請求仍可能計費。
+- 手動生成插圖使用 `gpt-image-1.5` 的 Images API。GitHub 版把工作狀態與成品存於瀏覽器，跨分頁鎖定避免同一工作重送；離開中的工作若無法確認結果，需再次確認才建立新工作。下載小冊重用已存圖片，不呼叫 API。請使用支援 Web Locks 的現代瀏覽器。
 
-金鑰由伺服器儲存：本機為使用者家目錄 `.roam/openai.json`；現有 Oracle 部署為 `/var/lib/roam/openai.json`。可用 `ROAM_OPENAI_KEY_FILE` 指定伺服器檔案位置；尚無設定檔時可從 `OPENAI_API_KEY` 讀取。儲存後以檔案中的金鑰為準。檔案不在網站公開清單內；透過頁面儲存的 Linux 檔案權限為 0600（自行建立的檔案請自行限制權限），瀏覽器不保存或回讀金鑰。API 設定修改保留原有網站登入、Origin 與請求權杖驗證。
+本機 `node codex-bridge.cjs` 與私人 `node cloud-server.cjs` 保留伺服器金鑰模式：設定按鈕仍為「儲存並檢查 API Key」。金鑰存於本機使用者家目錄 `.roam/openai.json`；現有 Oracle 為 `/var/lib/roam/openai.json`。可用 `ROAM_OPENAI_KEY_FILE` 指定位置，無設定檔時才從 `OPENAI_API_KEY` 讀取；Linux 經頁面儲存的檔案權限為 0600。登入、Origin 與請求權杖驗證不變。
 
-本頁顯示行程生成回報的 Token，不估算剩餘金額或訂閱百分比；圖片、取消及未回報的使用量可能不在分頁統計中，請至 [OpenAI 用量頁](https://platform.openai.com/usage) 核對。GitHub Pages 沒有此伺服器，仍需開啟私人站或本機版。
-
-驗證：`npm test`、`python tests/openai_api_smoke.py`、`python tests/itinerary_import_smoke.py`。測試使用模擬 API，不消耗真實 API 額度。官方文件：[認證](https://developers.openai.com/api/reference/overview)、[圖片輸入](https://developers.openai.com/api/docs/guides/images-vision)。
+驗證：`npm test`、`python tests/openai_pages_smoke.py`、`python tests/openai_api_smoke.py`、`python tests/itinerary_import_smoke.py`。生成回覆使用模擬 API；手機採 Chromium／WebKit 裝置模擬，非實體手機或真實付費 API 驗收。官方文件：[認證](https://developers.openai.com/api/reference/overview)、[圖片輸入](https://developers.openai.com/api/docs/guides/images-vision)。
 
 ## 讀取多個行程檔案
 
@@ -28,7 +27,7 @@
 
 整合結果依日期合併重複活動與互補說明。當日已知時間由早到晚排列；時間未知的活動依原順序列於當日最後，並提示補上時間。不同日期的同名景點不會直接合併；同日同名但時間或地址衝突、無法確定是否同一站時，保留候選站點並提示核對。已確認為同站的費用若有不同版本，會在提醒保留來源費用並留空費用欄，不任選金額。預覽的核對事項也會保存至首日摘要。文件只有「第一天」或缺少年份時，請補充完整開始日期；目的地可選填。看不清或缺漏的資訊會標示待確認，請核對日期、時間、地址與費用。整理結果最多 15 天，按「另存為新旅程」才寫入收藏，既有旅程、完成標記、復原紀錄及 JSON 備份入口保留。修改來源或補充資料後須重新整理，取消或儲存失敗不會覆蓋原旅程。
 
-本功能需使用 [私人正式站（需登入）](https://roam-161-33-192-81.sslip.io/) 或執行 `啟動Codex旅遊書.vbs` 的本機版，並在服務設定儲存 OpenAI API Key。GitHub Pages 可在本機準備來源，但無 Codex 後端，會提示改開私人站或本機版；已選檔案不會跨網站自動帶入。按送出後，圖片及 PDF 頁圖內容也會傳送至 OpenAI API；請先在原始檔移除訂位編號或個人資料，僅刪除文字區內容不會修改附件。AI 仍可能誤讀或合併錯誤，請在另存前核對。
+本功能可直接在 GitHub Pages 使用，先在服務設定輸入 OpenAI API Key；也保留本機版與私人站模式。已選檔案不會跨網站自動帶入。按送出後，圖片及 PDF 頁圖內容也會傳送至 OpenAI API；請先在原始檔移除訂位編號或個人資料，僅刪除文字區內容不會修改附件。AI 仍可能誤讀或合併錯誤，請在另存前核對。
 
 文字版、掃描版及文字圖片混合的 PDF 都可直接加入，以本地封裝的 [Mozilla PDF.js](https://mozilla.github.io/pdf.js/) 準備原生文字與必要頁圖；頁首有文字而內文為掃描圖片的頁面也會保留圖片。準備時顯示頁碼，多頁處理或 Codex 讀取可能較久，可隨時取消。加密 PDF 須先解密。圖片原圖最多 2400 萬像素、單邊 12,000 像素，會在本機縮小為適合傳送的附件；請使用清晰、端正的來源。HEIC／HEIF 尚未支援，請先轉存為 JPG 或 PNG；Word 仍未支援。TXT／Markdown 支援 UTF-8、帶 BOM 的 UTF-16，以及 UTF-8 解碼失敗時嘗試 Big5（會提示核對編碼）。
 
@@ -39,7 +38,7 @@ npm run check:tesseract
 python tests/itinerary_import_smoke.py
 ```
 
-`itinerary-file.js`／`itinerary-image.js` 準備文字及圖片附件，匯入使用 `prepareImages` 模式，不執行本機 OCR。`itinerary-import.js`／`itinerary-import.css` 管理多檔預覽、整合與另存；`codex-local.js` 使用專用匯入端點，一次交給 Codex 讀取與整合。`scripts/sync-pdfjs.cjs` 同步鎖定版本的解析器、worker、字元對照及字型資產，`check:pdfjs` 比對 SHA-256。保留的 OCR 元件由 `scripts/sync-tesseract.cjs` 同步鎖定版本，`npm run check:tesseract` 核對各資產 SHA-256。
+`itinerary-file.js`／`itinerary-image.js` 準備文字及圖片附件，匯入使用 `prepareImages` 模式，不執行本機 OCR。`itinerary-import.js`／`itinerary-import.css` 管理多檔預覽、整合與另存；`codex-local.js` 在 GitHub 版透過 `openai-browser.js` 直接呼叫 Responses API，本機／私人站則使用專用匯入端點；所有來源一次讀取與整合。`scripts/sync-pdfjs.cjs` 同步鎖定版本的解析器、worker、字元對照及字型資產，`check:pdfjs` 比對 SHA-256。保留的 OCR 元件由 `scripts/sync-tesseract.cjs` 同步鎖定版本，`npm run check:tesseract` 核對各資產 SHA-256。
 
 先依下方「本機啟動」開啟服務，再於另一個終端執行圖片整合驗證：
 
@@ -51,7 +50,7 @@ PDF／TXT 回歸報告為 `artifacts/itinerary-import-report.json`；圖片整�
 
 ## 啟動
 
-公開版：[開啟 ROAM 旅遊書](https://polo1364.github.io/TourismPlanning/)。GitHub Pages 生成需填入自己的 DeepSeek API Key；OpenAI API 額度可使用本機版，或自行部署受登入保護的個人 Oracle 版（見 [雲端部署說明](deploy/README.md)）。公開頁面不會連接本機 Codex，也不會自動切換生成服務。不同網址與裝置的行程不共用儲存空間，請先匯出 JSON 再匯入。
+公開版：[開啟 ROAM 旅遊書](https://polo1364.github.io/TourismPlanning/)。GitHub Pages 可填入自己的 OpenAI API Key，直接生成行程與匯入附件；也保留手動選擇 DeepSeek。需要伺服器保管金鑰時，可使用本機版或受登入保護的 Oracle 版（見 [雲端部署說明](deploy/README.md)）。公開頁面不會連接本機 Codex，也不會自動切換生成服務。不同網址與裝置的行程不共用儲存空間，請先匯出 JSON 再匯入。
 
 ## GitHub Pages 部署
 
@@ -117,11 +116,11 @@ python tests/codex_smoke.py
 
 生成只在按下生成按鈕並確認後開始；下載、分享、重新整理、切換旅程不會生圖。修改對應景點或地址後，舊圖片標記待更新且不放入新版小冊；改時間、費用或便利貼不影響圖片。可單張重新生成，失敗或取消保留原圖。連線中斷後再次按生成會先查原工作；失敗或服務重啟中斷的工作須手動確認重新送出，不會自動切換計費來源。
 
-圖片保存在目前網址的 IndexedDB，旅程收藏僅保存索引。生成圖片下載到瀏覽器時會轉成最寬 1440 px、品質 0.82 的 JPEG；含圖備份攜帶這些壓縮成品，匯入不再次壓縮，原始生成檔另留在後端。清除網站資料會失去瀏覽器圖片；換瀏覽器或裝置請使用「備份目前旅程（含插圖）」或「備份全部（含插圖）」。含圖 JSON 上限 100 MiB，從原有「匯入備份」入口匯入，會新增旅程，保留既有收藏。純文字備份與舊格式繼續支援；純文字備份不攜帶圖片成品。若目前行程的索引缺少成品，需先補齊或改用純文字備份；已不屬於目前行程、且缺少成品的歷史索引會從備份副本排除並提示筆數，原旅程索引不變。
+圖片保存在目前網址的 IndexedDB，旅程收藏僅保存索引。生成圖片下載到瀏覽器時會轉成最寬 1440 px、品質 0.82 的 JPEG；含圖備份攜帶這些壓縮成品，匯入不再次壓縮。本機／私人站的原始生成檔另留在後端；GitHub 版只持久保存壓縮 JPEG。清除網站資料會失去瀏覽器圖片；換瀏覽器或裝置請使用「備份目前旅程（含插圖）」或「備份全部（含插圖）」。含圖 JSON 上限 100 MiB，從原有「匯入備份」入口匯入，會新增旅程，保留既有收藏。純文字備份與舊格式繼續支援；純文字備份不攜帶圖片成品。若目前行程的索引缺少成品，需先補齊或改用純文字備份；已不屬於目前行程、且缺少成品的歷史索引會從備份副本排除並提示筆數，原旅程索引不變。
 
-HTML 小冊會嵌入已存圖片，可離線閱讀。分享仍限制 5 MiB，必要時只壓縮匯出副本；瀏覽器中已存的成品不變，仍超限會提示改用本機下載。GitHub Pages 可匯入圖片與下載小冊，但生成需使用本機或私人雲端版。
+HTML 小冊會嵌入已存圖片，可離線閱讀。分享仍限制 5 MiB，必要時只壓縮匯出副本；瀏覽器中已存的成品不變，仍超限會提示改用本機下載。GitHub Pages 可直接使用自己的 OpenAI API Key 生成插圖、匯入圖片與下載小冊。
 
-圖片後端使用 `openai-api.cjs` 與 `image-jobs.cjs`，透過 OpenAI Images API 取得成品，單張上限 10 分鐘；使用伺服器儲存的 API Key，不再需要 CLI 登入。此改版以模擬 API 驗證，真實帳戶權限及生圖仍需填入金鑰後確認。
+GitHub 版插圖由 `openai-browser.js` 直接呼叫 OpenAI Images API；本機及私人站使用 `openai-api.cjs` 與 `image-jobs.cjs`。單張上限 10 分鐘，不需要 CLI 登入。此改版以模擬 API 驗證，真實帳戶權限及生圖仍需填入金鑰後確認。
 
 後端工作與成品預設在 `.roam-images/`，可用 `ROAM_IMAGE_DIR` 指定；此目錄不可發布至靜態網站或納入 Git。已送出的單張工作可在頁面斷線後繼續，但整批尚未送出的圖片需回到頁面手動接續。後端保存成品便於接續，並非旅程或圖片的自動跨裝置同步。
 

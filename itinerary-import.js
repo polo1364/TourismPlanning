@@ -242,6 +242,10 @@ ${JSON.stringify(text)}`;
     let draftUnsaved = false;
     const corrections = new Map();
     const draftFields = ['itinerarySourceText', 'itineraryImportCity', 'itineraryImportStart', 'itineraryImportName'];
+    const validOriginal = file => file instanceof Blob || (file && typeof file.name === 'string' && typeof file.type === 'string' && file.bytes instanceof ArrayBuffer && file.bytes.byteLength <= 8 * 1024 * 1024);
+    async function originalRecord(file) {
+        return file instanceof Blob ? { name: file.name || '', type: file.type, lastModified: file.lastModified || 0, bytes: await file.arrayBuffer() } : file;
+    }
     function draftStatus(text) { $('itineraryDraftStatus').textContent = text; }
     function persistDraft(sourcesChanged = false, remove = false) {
         if (!draftReady) return;
@@ -308,10 +312,10 @@ ${JSON.stringify(text)}`;
                 const files = sources?.files || [], images = sources?.images || [], originals = sources?.originals || [];
                 if (!Array.isArray(files) || files.length > MAX_FILES || files.some(file => typeof file !== 'string')
                     || !Array.isArray(images) || images.length > MAX_IMAGES || images.reduce((sum, image) => sum + imageBytes(image), 0) > MAX_IMAGE_BYTES
-                    || !Array.isArray(originals) || originals.length !== files.length || originals.some(file => !(file instanceof Blob))) throw new Error('Invalid sources');
+                    || !Array.isArray(originals) || originals.length !== files.length || originals.some(file => !validOriginal(file))) throw new Error('Invalid sources');
                 correctionData(form.corrections.map(([index, entry]) => ({ index, text: entry.text })), images);
                 draftVersion = form.version;
-                sourceFiles = files; sourceImages = images; originalFiles = originals; sourceRevision = form.sourceRevision;
+                sourceFiles = files; sourceImages = images; originalFiles = await Promise.all(originals.map(originalRecord)); sourceRevision = form.sourceRevision;
                 draftFields.forEach((id, index) => { $(id).value = form.fields[index]; });
                 for (const [index, entry] of form.corrections) corrections.set(index, { text: entry.text, message: typeof entry.message === 'string' ? entry.message : '' });
                 $('itineraryFileInfo').textContent = sourceFiles.length ? `已準備 ${sourceFiles.length} 個檔案 · ${sourceImages.length} 張圖片／PDF 頁圖\n${sourceFiles.join('\n')}` : '';
@@ -446,10 +450,13 @@ ${JSON.stringify(text)}`;
                 if (combined.length > MAX_TEXT) throw new Error('合併後超過 30,000 字元；本次檔案尚未加入，先前內容已保留。請減少檔案或分成多份旅程。');
                 added.push(`${file.name} · ${result.text.length.toLocaleString()} 字元${result.pages ? ` · ${result.pages} 頁` : ''}${result.images?.length ? ` · ${result.images.length} 張待 Codex 讀取圖片` : ''}${result.warnings.length ? '\n' + result.warnings.join('\n') : ''}`);
             }
+            // ArrayBuffer records avoid Blob-backed IndexedDB failures in WebKit.
+            const originals = await Promise.all(files.map(originalRecord));
+            if (!current()) return;
             const first = sourceFiles.length === 0;
             sourceFiles = sourceFiles.concat(added);
             sourceImages = sourceImages.concat(addedImages);
-            originalFiles = originalFiles.concat(files);
+            originalFiles = originalFiles.concat(originals);
             sourceRevision++;
             invalidate();
             $('itinerarySourceText').value = combined;
@@ -553,7 +560,7 @@ ${JSON.stringify(text)}`;
         invalidate();
         await run(async (signal, current) => {
             const options = { city: $('itineraryImportCity').value.trim(), start: $('itineraryImportStart').value, images: sourceImages, corrections: manualValues() };
-            if (!root.CodexLocal?.importsAvailable()) throw new Error('Codex 讀取與整合需使用私人正式站或本機版，請依下方連結開啟。此處不會改用 DeepSeek；已選檔案與文字仍保留。');
+            if (!root.CodexLocal?.importsAvailable()) throw new Error('請使用 HTTPS 網址開啟 GitHub 版並設定 OpenAI API Key；已選檔案與文字仍保留。');
             const prompt = makePrompt($('itinerarySourceText').value, { ...options, images: sourceImages });
             // Match the dedicated import endpoint's prompt-character limit.
             if (prompt.length > 60000) throw new Error('文字與附件來源說明過長，請縮短行程文字或檔名再整理。');
@@ -607,7 +614,7 @@ ${JSON.stringify(text)}`;
             <p class="field-hint">日期未定時，可在手動補充寫「2027 年 5 月中，6 天含六日，日期先隨意」，由 Codex 選符合條件的暫定日期並標示。要改日期，可填上方開始日期或修改手動條件，再重新整合；草稿、原檔與補充仍保留，確認後另存新旅程。</p>
             <button type="button" id="itineraryAddCorrection" class="btn-outline" disabled>手動補充日期或辨識內容</button>
             <p id="itineraryPrivacy" class="field-hint"></p>
-            <p id="itineraryCodexNotice" class="field-hint" hidden>公開版無法直接使用 Codex 額度。請開啟<a href="https://roam-161-33-192-81.sslip.io/" target="_blank" rel="noopener noreferrer">私人正式站（需登入）</a>，或依<a href="https://github.com/polo1364/TourismPlanning#使用-codex-額度本機個人版" target="_blank" rel="noopener noreferrer">本機啟動說明</a>開啟。不同網站的已選檔案不會自動帶入。</p>
+            <p id="itineraryCodexNotice" class="field-hint" hidden>請使用 HTTPS 網址開啟 GitHub 版，在「連線與模型設定」輸入自己的 OpenAI API Key；也可使用原有本機版。不同網站的檔案與草稿不會自動同步。</p>
             <div class="import-actions"><button type="button" id="itineraryParseButton" class="btn-primary" disabled>使用 Codex 額度讀取並整合</button><button type="button" id="itineraryImportSettings" class="btn-outline">連線與模型設定</button></div>
             <div id="itineraryWorkPanel">
                 <div id="itineraryWorkHeading" hidden><span class="import-work-spinner" aria-hidden="true"></span><strong id="itineraryWorkTitle"></strong><span id="itineraryWorkElapsed" aria-live="off"></span></div>

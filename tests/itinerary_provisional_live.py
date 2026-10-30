@@ -154,7 +154,7 @@ def run(args):
             context = new_context()
             page = new_page(context)
             check('restart restores manual permission and 50 files without AI', len(report['calls']) == 1 and page.locator('#itineraryCorrection-0').input_value() == MANUAL and '50 個檔案' in page.locator('#itineraryFileInfo').text_content())
-            originals = page.evaluate("""async()=>{const db=await new Promise(r=>{const q=indexedDB.open('roamItineraryDraft_v1',1);q.onsuccess=()=>r(q.result)});const s=await new Promise(r=>{const q=db.transaction('draft').objectStore('draft').get('sources');q.onsuccess=()=>r(q.result)});db.close();return Promise.all(s.originals.map(async f=>({name:f.name,hash:Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await f.arrayBuffer()))).map(x=>x.toString(16).padStart(2,'0')).join('')})))}""")
+            originals = page.evaluate("""async()=>{const db=await new Promise(r=>{const q=indexedDB.open('roamItineraryDraft_v1',1);q.onsuccess=()=>r(q.result)});const s=await new Promise(r=>{const q=db.transaction('draft').objectStore('draft').get('sources');q.onsuccess=()=>r(q.result)});db.close();return Promise.all(s.originals.map(async f=>({name:f.name,hash:Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',(f.bytes || await f.arrayBuffer())))).map(x=>x.toString(16).padStart(2,'0')).join('')})))}""")
             check('all 50 original file hashes survive restart', originals == [{'name': f.name, 'hash': hashlib.sha256(f.read_bytes()).hexdigest()} for f in files])
             submit()
             dates = preview(True)

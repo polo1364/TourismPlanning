@@ -1595,6 +1595,7 @@
     <link rel="stylesheet" href="boarding.css">
     <link rel="stylesheet" href="postcard.css">
     <script src="deepseek.js" defer></script>
+    <script src="openai-browser.js" defer></script>
     <script src="codex-local.js" defer></script>
     <script src="vendor/motion.js" defer></script>
     <script src="motion-ui.js" defer></script>
@@ -1635,7 +1636,8 @@
                     <label for="openaiApiKey">OpenAI API Key</label>
                     <input type="password" id="openaiApiKey" autocomplete="off" spellcheck="false" placeholder="sk-…" maxlength="512">
                     <button type="button" id="openaiSaveKey" class="btn-outline" onclick="CodexLocal.saveApiKey()">儲存並檢查 API Key</button>
-                    <p class="field-hint">金鑰只儲存在目前連接的伺服器，不會放入瀏覽器儲存、行程備份或下載小冊。儲存時只驗證金鑰，不會生成行程。</p>
+                    <button type="button" id="openaiForgetKey" class="btn-outline" onclick="CodexLocal.forgetApiKey()" hidden>清除此分頁的 Key</button>
+                    <p id="openaiKeyPrivacy" class="field-hint">金鑰只儲存在目前連接的伺服器，不會放入瀏覽器儲存、行程備份或下載小冊。儲存時只驗證金鑰，不會生成行程。</p>
                     <p id="openaiKeyStatus" class="field-hint" role="status"></p>
                     <a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">查看 OpenAI API 用量與帳單 ↗</a>
                 </section>

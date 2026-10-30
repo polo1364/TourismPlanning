@@ -64,7 +64,7 @@
                 selected = missing.filter(item => !item.image || item.pending).map(item => item.target);
             }
             if (!selected.length) { status('圖片已齊全。下載小冊會直接重用，不需要重新生成。'); return; }
-            confirmed = confirm(`將${force ? '重新生成' : '生成或接續'} ${selected.length} 張寫實旅行示意圖，可合併當天多個景點或美食，使用 Codex 共用額度。\n主題：${selected.map(item => item.caption).join('、')}\n下載小冊不會消耗生圖額度。`);
+            confirmed = confirm(`將${force ? '重新生成' : '生成或接續'} ${selected.length} 張寫實旅行示意圖，可合併當天多個景點或美食，使用${CodexLocal.billing?.() === 'api' ? ' OpenAI API 額度' : ' Codex 共用額度'}。\n主題：${selected.map(item => item.caption).join('、')}\n下載小冊不會消耗生圖額度。`);
             if (!confirmed) return;
         } catch (error) { status(error.message); return; }
         finally { preparing = false; if (!confirmed) { setBusy(false); void refresh(); } }
