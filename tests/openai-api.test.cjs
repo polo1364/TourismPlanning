@@ -9,7 +9,8 @@ const { createCloud, digest } = require('../cloud-server.cjs');
 const key = 'sk-testing-only-not-a-real-api-key';
 const ok = body => new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } });
 const completed = { status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: '{"days":[]}' }] }], usage: { input_tokens: 12, output_tokens: 8, total_tokens: 20, input_tokens_details: { cached_tokens: 3 } } };
-async function fixture(t, response = () => ok(completed)) {
+const supported = ['gpt-6-sol', 'gpt-5.3-codex', 'gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-luna', 'gpt-6-astra'];
+async function fixture(t, response = () => ok(completed), available = ['gpt-6-sol', 'gpt-image-1.5', 'unrecognized']) {
     const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'roam-api-test-'));
     t.after(() => fs.rm(directory, { recursive: true, force: true }));
     const file = path.join(directory, 'openai.json');
@@ -18,7 +19,7 @@ async function fixture(t, response = () => ok(completed)) {
         calls.push({ url, options });
         assert.equal(options.headers.Authorization, 'Bearer ' + key);
         assert.equal(options.redirect, 'error');
-        return url.endsWith('/models') ? ok({ data: [{ id: 'gpt-6-sol' }, { id: 'gpt-image-1.5' }, { id: 'unrecognized' }] }) : response(url, options);
+        return url.endsWith('/models') ? ok({ data: available.map(id => ({ id })) }) : response(url, options);
     } });
     return { api, file, directory, calls };
 }
@@ -37,6 +38,18 @@ test('API key validation persists only on server and does not generate billable 
     if (process.platform !== 'win32') assert.equal((await fs.stat(file)).mode & 0o777, 0o600);
     assert.equal((await createOpenAI({ file }).login()).ready, true);
     await assert.rejects(api.save({ apiKey: key, baseURL: 'https://elsewhere.example' }), /有效/);
+});
+
+test('server and browser support the same expanded model list with exact selected IDs', async t => {
+    const { api, calls } = await fixture(t, undefined, [...supported].reverse().concat(['gpt-image-1.5', 'gpt-realtime', 'text-embedding-3-small', 'unknown']));
+    await api.save({ apiKey: key });
+    const models = (await api.usage()).models;
+    assert.deepEqual(models.map(m => m.id), supported);
+    assert.equal(models.filter(m => m.isDefault).length, 1);
+    for (const model of supported) {
+        await api.generate('JSON itinerary', undefined, { model });
+        assert.equal(JSON.parse(calls.at(-1).options.body).model, model);
+    }
 });
 test('all imported images retain source order, JSON completion and real token usage', async t => {
     const { api, calls } = await fixture(t);

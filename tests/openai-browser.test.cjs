@@ -5,7 +5,8 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const key = 'sk-fake-unit-test-only-1234567890';
 const completed = { status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: '{"days":[]}' }] }], usage: { input_tokens: 12, output_tokens: 8, total_tokens: 20 } };
-function fixture(reply = () => new Response(JSON.stringify(completed)), saved = new Map()) {
+const supported = ['gpt-6-sol', 'gpt-5.3-codex', 'gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-luna', 'gpt-6-astra'];
+function fixture(reply = () => new Response(JSON.stringify(completed)), saved = new Map(), available = ['gpt-6-sol', 'unknown']) {
     const calls = [], events = {};
     const context = vm.createContext({
         window: { addEventListener(name, fn) { events[name] = fn; }, TripArtworkStore: { validateImage: async () => ({ width: 10, height: 10 }) } },
@@ -17,7 +18,7 @@ function fixture(reply = () => new Response(JSON.stringify(completed)), saved = 
             assert.equal(options.headers.Authorization, 'Bearer ' + key);
             assert.equal(options.credentials, 'omit'); assert.equal(options.redirect, 'error');
             assert.equal(options.referrerPolicy, 'no-referrer'); assert.equal(options.cache, 'no-store');
-            return url.endsWith('/models') ? new Response(JSON.stringify({ data: [{ id: 'gpt-6-sol' }, { id: 'unknown' }] })) : reply(url, options);
+            return url.endsWith('/models') ? new Response(JSON.stringify({ data: available.map(id => ({ id })) })) : reply(url, options);
         }
     });
     vm.runInContext(fs.readFileSync(require.resolve('../openai-browser.js'), 'utf8'), context);
@@ -124,4 +125,31 @@ test('failed storage update is explicit and does not pretend a new key was saved
     await assert.rejects(async () => api.setRemember(true), { code: 'KEY_STORAGE' });
     assert.equal(api.ready(), true);
     assert.equal(api.remembered(), false);
+});
+
+test('browser exposes compatible account models and sends the exact selected ID for every model', async () => {
+    const { api, calls } = fixture(undefined, new Map(), [...supported].reverse().concat(['gpt-image-1.5', 'gpt-realtime', 'text-embedding-3-small', 'unknown']));
+    await api.save(key);
+    const models = (await api.usage()).models;
+    assert.deepEqual(Array.from(models, m => m.id), supported);
+    assert.equal(models.filter(m => m.isDefault).length, 1);
+    assert.equal(models[0].id, 'gpt-6-sol');
+    for (const model of supported) {
+        await api.generate('JSON itinerary', undefined, { model, images: [{ name: 'scan.png', mime: 'image/png', dataBase64: btoa('image') }] });
+        const body = JSON.parse(calls.at(-1).options.body);
+        assert.equal(body.model, model);
+        assert.equal(body.input[0].content[2].type, 'input_image');
+        assert.equal(body.text.format.type, 'json_object');
+    }
+});
+
+test('browser supports an account with only a newly added model without inventing inaccessible options', async () => {
+    const { api, calls } = fixture(undefined, new Map(), ['gpt-6.1-terra', 'gpt-image-1.5']);
+    await api.save(key);
+    assert.deepEqual(Array.from((await api.usage()).models, m => m.id), ['gpt-6.1-terra']);
+    await api.generate('JSON itinerary');
+    assert.equal(JSON.parse(calls.at(-1).options.body).model, 'gpt-6.1-terra');
+    const count = calls.length;
+    await assert.rejects(api.generate('JSON itinerary', undefined, { model: 'gpt-6-astra' }), { code: 'MODEL' });
+    assert.equal(calls.length, count);
 });

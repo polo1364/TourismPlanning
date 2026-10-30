@@ -40,7 +40,7 @@
         }
         select.value = chosenModel;
         select.disabled = isBusy;
-        if (authMode === 'api') { $('codexModelHint').textContent = '依此 API Key 的權限列出已支援圖片輸入的行程模型；使用 API 額度計費。'; return; }
+        if (authMode === 'api') { $('codexModelHint').textContent = modelIds.size ? `已列出 ${modelIds.size} 個支援圖片輸入的行程模型（依此 API Key 的模型清單）。各模型費用不同；實際使用仍依專案權限與額度。` : '尚未取得本站支援的行程模型；請先檢查 API Key，再更新可用模型。'; return; }
         $('codexModelHint').textContent = modelIds.size ? '依目前登入的 Codex 提供模型；生成期間鎖定選擇。不同模型的速度與額度消耗可能不同。' : '模型清單暫時無法取得；可更新重試，或選擇官方預設模型。';
     }
     function renderQuota(info) {

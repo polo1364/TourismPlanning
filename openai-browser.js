@@ -1,7 +1,8 @@
 (function () {
     'use strict';
     // Personal BYOK mode: persistence is opt-in and separate from all itinerary data.
-    const MODELS = ['gpt-6-sol', 'gpt-5.3-codex'];
+    // Keep the existing default first; only expose IDs also returned by this API key.
+    const MODELS = ['gpt-6-sol', 'gpt-5.3-codex', 'gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-luna', 'gpt-6-astra'];
     const KEY_STORAGE = 'roamOpenAIKey_v1';
     const validKey = key => typeof key === 'string' && /^sk-[A-Za-z0-9_-]{16,500}$/.test(key);
     let apiKey = '', modelList = [], expires = 0;

@@ -5,7 +5,8 @@ const path = require('node:path');
 const os = require('node:os');
 const crypto = require('node:crypto');
 const { imageType } = require('./codex-images.cjs');
-const MODELS = ['gpt-6-sol', 'gpt-5.3-codex'];
+// Keep the existing default first; only expose IDs also returned by this API key.
+const MODELS = ['gpt-6-sol', 'gpt-5.3-codex', 'gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-luna', 'gpt-6-astra'];
 const fail = (message, code = 'API', status = 502) => Object.assign(new Error(message), { code, status });
 
 function createOpenAI({ file = process.env.ROAM_OPENAI_KEY_FILE || path.join(process.env.ROAM_SHARE_DIR ? path.dirname(process.env.ROAM_SHARE_DIR) : path.join(os.homedir(), '.roam'), 'openai.json'), fetcher = fetch } = {}) {
