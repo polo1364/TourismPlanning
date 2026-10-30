@@ -663,6 +663,8 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
         }
     }
     const cloudSharing = window.ROAM_CLOUD === true && location.protocol === 'https:';
+    document.getElementById('createBookShare').hidden = !cloudSharing;
+    document.getElementById('bookShares').hidden = !cloudSharing;
     let sharing = false;
     let shareToken = '';
     const shareStatus = message => { document.getElementById('bookShareStatus').textContent = message; };

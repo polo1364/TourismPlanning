@@ -2102,7 +2102,7 @@
             
             <div class="export-bar" id="exportBar">
                 <button id="downloadBook" onclick="TripBookExport.download()" class="btn-export btn-img">📖 下載可翻閱小冊</button>
-                <button id="createBookShare" onclick="TripBookExport.share()" class="btn-export btn-img">🔗 建立分享網址</button>
+                <button id="createBookShare" onclick="TripBookExport.share()" class="btn-export btn-img" hidden>🔗 建立分享網址</button>
                 <button onclick="exportToA4Image()" class="btn-export btn-img">📸 下載 A4 手冊圖</button>
                 <button onclick="exportToMobileImages()" class="btn-export btn-img">📱 下載手機版行程圖</button>
                 <button onclick="exportToText()" class="btn-export btn-txt">📋 複製 LINE 筆記格式</button>
@@ -2115,7 +2115,7 @@
                 <div class="artwork-actions"><button type="button" id="generateArtwork">生成行程插圖／補齊缺圖</button><button type="button" id="stopArtwork" disabled>停止生成</button><button type="button" id="backupArtwork">備份目前旅程（含插圖）</button><button type="button" id="backupAllArtwork">備份全部（含插圖）</button></div>
                 <p id="artworkStatus" role="status" aria-live="polite"></p><div id="artworkList" class="artwork-list"></div>
             </details>
-            <details id="bookShares" class="book-shares">
+            <details id="bookShares" class="book-shares" hidden>
                 <summary>分享小冊管理</summary>
                 <p id="bookShareHelp">分享當下的行程與便利貼，旅伴免登入即可翻閱。任何取得網址的人都能閱讀；修改行程後需建立新分享。</p>
                 <button id="refreshBookShares" type="button" onclick="TripBookExport.refreshShares()" class="btn-export btn-txt">重新整理分享清單</button>
