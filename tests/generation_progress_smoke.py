@@ -5,7 +5,7 @@ from functools import partial
 from http.server import ThreadingHTTPServer
 from urllib.parse import urlparse
 from playwright.sync_api import sync_playwright
-from browser_smoke import ROOT, ARTIFACTS, Handler, Network, sample_day, overflow
+from browser_smoke import ROOT, ARTIFACTS, Handler, Network, sample_day, overflow, is_outline_prompt, outline_reply, follow_day_rules
 
 
 class ProgressNetwork(Network):
@@ -26,7 +26,9 @@ class ProgressNetwork(Network):
             if route.request.method == 'OPTIONS':
                 return route.fulfill(status=204)
             self.calls += 1
-            payload = {'data': sample_day()} if codex else {"id": "msg_mock", "type": "message", "role": "assistant", "model": "claude-opus-5-5", "stop_reason": "end_turn", "stop_sequence": None, "content": [{"type": "text", "text": json.dumps(sample_day())}], "usage": {"input_tokens": 1, "output_tokens": 1}}
+            prompt = (route.request.post_data_json or {}).get('prompt') if codex else (route.request.post_data_json or {}).get('messages', [{}])[-1].get('content', '')
+            day = follow_day_rules(sample_day(), prompt or '')
+            payload = {'data': day} if codex else {"id": "msg_mock", "type": "message", "role": "assistant", "model": "claude-opus-5-5", "stop_reason": "end_turn", "stop_sequence": None, "content": [{"type": "text", "text": json.dumps(day)}], "usage": {"input_tokens": 1, "output_tokens": 1}}
             self.pending_responses.append((route, payload))
             return
         return super().route(route)

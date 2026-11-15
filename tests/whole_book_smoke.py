@@ -6,7 +6,7 @@ from functools import partial
 from http.server import ThreadingHTTPServer
 from urllib.parse import urlparse
 from playwright.sync_api import sync_playwright
-from browser_smoke import ROOT, ARTIFACTS, Handler, Network, START, sample_day, overflow
+from browser_smoke import ROOT, ARTIFACTS, Handler, Network, START, sample_day, overflow, is_outline_prompt, outline_reply, follow_day_rules
 
 
 class BookNetwork(Network):
@@ -23,12 +23,16 @@ class BookNetwork(Network):
             return super().route(route)
         body = route.request.post_data_json
         prompt = body['messages'][-1]['content']
+        if is_outline_prompt(prompt):
+            text = json.dumps(outline_reply(prompt), ensure_ascii=False)
+            return route.fulfill(status=200, content_type='application/json', body=json.dumps({"id": "msg_mock", "type": "message", "role": "assistant", "model": "claude-opus-5-5", "stop_reason": "end_turn", "stop_sequence": None, "content": [{"type": "text", "text": text}], "usage": {"input_tokens": 1, "output_tokens": 1}}))
         day = int(re.search(r'第\s*(\d+)\s*天', prompt).group(1))
         self.days.append(day)
         self.prompts.append(prompt)
         result = sample_day(title=f'第 {day} 天的旅程')
         result['itinerary'][0]['title'] = f'第{day}天獨有景點'
         result['itinerary'][1]['title'] = f'第{day}天特色餐廳'
+        follow_day_rules(result, prompt)
         payload = {"id": "msg_mock", "type": "message", "role": "assistant", "model": "claude-opus-5-5", "stop_reason": "end_turn", "stop_sequence": None, "content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}], "usage": {"input_tokens": 1, "output_tokens": 1}}
         if self.fail_day == day:
             return route.fulfill(status=503,content_type='application/json',body='{"error":{"message":"Mock unavailable"}}')

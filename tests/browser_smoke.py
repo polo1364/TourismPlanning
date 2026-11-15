@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import threading
 import traceback
 from functools import partial
@@ -33,6 +34,28 @@ def sample_day(date=START, title="台北散步與在地風味", modified=False):
             {"time": "12:00", "type": "FOOD", "title": "在地小吃午餐", "desc": "選擇一間在地餐館，體驗街區的日常風味。", "address": "台北市大同區", "cost": "NT$250", "booking": False, "tips": "避開尖峰用餐時段。", "transit": []},
         ],
     }
+
+
+def is_outline_prompt(prompt):
+    """The whole-trip outline request, sent once before the first day of a multi-day trip."""
+    return 'days 必須剛好' in prompt
+
+
+def outline_reply(prompt):
+    dates = re.search(r'日期依序為：([0-9、-]+)', prompt).group(1).split('、')
+    return {"days": [{"date": date, "area": "台北", "theme": f"測試主題 {index + 1}", "plan": "測試安排"} for index, date in enumerate(dates)], "note": ""}
+
+
+def follow_day_rules(day, prompt):
+    """Real replies start from the stay, return to it and reach the airport on the last day when the prompt asks."""
+    items = day["itinerary"]
+    if "今天從住宿" in prompt:
+        items.insert(0, {"time": "08:00", "type": "TRANSPORT", "title": "從住宿出發", "desc": "搭捷運前往第一站。", "cost": "NT$30"})
+    if "今天結束時回到住宿" in prompt:
+        items.append({"time": "20:00", "type": "TRANSPORT", "title": "返回住宿", "desc": "搭捷運回到住宿。", "cost": "NT$30"})
+    if re.search(r"- 最後一天", prompt):
+        items.append({"time": "17:00", "type": "TRANSPORT", "title": "前往機場", "desc": "搭機場捷運前往機場。", "cost": "NT$160"})
+    return day
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -78,10 +101,12 @@ class Network:
             prompt = body["messages"][-1]["content"] if "messages" in body else body["contents"][0]["parts"][0]["text"]
             if self.result_override is not None:
                 result = self.result_override
+            elif is_outline_prompt(prompt):
+                result = outline_reply(prompt)
             elif "必去景點與必吃美食" in prompt:
                 result = {"spots": ["測試推薦景點一", "測試推薦景點二"], "food": ["測試推薦餐點"]}
             else:
-                result = sample_day(END if "第 2 天" in prompt else START, modified="微調" in prompt)
+                result = follow_day_rules(sample_day(END if "第 2 天" in prompt else START, modified="微調" in prompt), prompt)
             content = json.dumps(result, ensure_ascii=False)
             payload = {"id": "msg_mock", "type": "message", "role": "assistant", "model": "claude-opus-5-5", "stop_reason": "end_turn", "stop_sequence": None, "content": [{"type": "text", "text": content}], "usage": {"input_tokens": 1, "output_tokens": 1}} if "messages" in body else {"candidates": [{"content": {"parts": [{"text": content}]}}]}
             if self.hold_ai:

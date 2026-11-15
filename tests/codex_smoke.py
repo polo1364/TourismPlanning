@@ -6,7 +6,7 @@ from functools import partial
 from http.server import ThreadingHTTPServer
 from urllib.parse import urlparse
 from playwright.sync_api import sync_playwright
-from browser_smoke import ROOT, ARTIFACTS, Handler, Network, START, END, sample_day, overflow
+from browser_smoke import ROOT, ARTIFACTS, Handler, Network, START, END, sample_day, overflow, is_outline_prompt, outline_reply, follow_day_rules
 
 
 class LocalNetwork(Network):
@@ -38,8 +38,10 @@ class LocalNetwork(Network):
         self.calls.append(body)
         if self.fail:
             return route.fulfill(status=502,content_type='application/json',headers=headers,body=json.dumps({'error':'Codex 額度測試失敗','code':'PROVIDER'}))
+        if is_outline_prompt(body['prompt']):
+            return route.fulfill(status=200,content_type='application/json',headers=headers,body=json.dumps({'data':outline_reply(body['prompt'])}))
         day=int(re.search(r'第\s*(\d+)\s*天',body['prompt']).group(1))
-        payload={'data':sample_day(START if day==1 else END,title=f'Codex 第 {day} 天')}
+        payload={'data':follow_day_rules(sample_day(START if day==1 else END,title=f'Codex 第 {day} 天'),body['prompt'])}
         if self.hold:
             self.pending_local.append((route,headers,payload));return
         route.fulfill(status=200,content_type='application/json',headers=headers,body=json.dumps(payload))
@@ -93,7 +95,7 @@ def main():
             page.locator('#flightDeparture').fill(END+'T20:00')
             page.locator('#lodgingSection > summary').click();page.locator('#hasHotel').uncheck()
             page.locator('#planBtn').click();page.wait_for_function('!isBusy && tripData.length===2')
-            check(label+' whole book generates through Codex only',len(net.calls)==2 and not net.ai_requests and all(set(body)=={'prompt','model'} and body['model']=='' for body in net.calls))
+            check(label+' whole book generates through Codex only',sum(is_outline_prompt(body['prompt']) for body in net.calls)==1 and len(net.calls)==3 and not net.ai_requests and all(set(body)=={'prompt','model'} and body['model']=='' for body in net.calls))
             check(label+' book opens first page and completes progress',page.locator('#tripContainer > details:visible').get_attribute('data-date')==START and '100%' in page.locator('#operationText').inner_text())
             check(label+' API credentials never stored for Codex',page.evaluate("!localStorage.claudeApiKey && !sessionStorage.claudeApiKey && localStorage.aiProvider==='codex'"))
             page.locator('#undoTrip').click();page.wait_for_function('!isBusy && tripData.length===0')
@@ -116,7 +118,7 @@ def main():
             page.locator('#apiKey').fill('mock-not-a-real-key')
             page.locator('button[onclick="saveAndCloseModal()"]').click();page.locator('#apiModal').wait_for(state='hidden')
             calls=len(net.calls);page.locator('#planBtn').click();page.wait_for_function('!isBusy && tripData.length===2')
-            check(label+' explicit Claude selection routes only to Claude',len(net.ai_requests)==2 and len(net.calls)==calls)
+            check(label+' explicit Claude selection routes only to Claude',len(net.ai_requests)==3 and sum(is_outline_prompt(body['messages'][-1]['content']) for body in net.ai_requests)==1 and len(net.calls)==calls)
             page.reload(wait_until='networkidle')
             check(label+' available Codex never overrides saved Claude selection',not page.evaluate('CodexLocal.selected()'))
             page.locator('#settingsTab').click();page.locator('#apiStatus').click()
@@ -125,7 +127,7 @@ def main():
             net.ready=False;page.reload(wait_until='networkidle')
             page.locator('#settingsTab').click();saved=page.evaluate('JSON.stringify(tripData)');calls=len(net.calls)
             page.locator('#planBtn').click();page.wait_for_function('!isBusy')
-            check(label+' missing login preserves trip and calls neither provider',page.evaluate('JSON.stringify(tripData)')==saved and len(net.calls)==calls and len(net.ai_requests)==2 and '請登入 ChatGPT' in page.locator('#operationText').inner_text())
+            check(label+' missing login preserves trip and calls neither provider',page.evaluate('JSON.stringify(tripData)')==saved and len(net.calls)==calls and len(net.ai_requests)==3 and '請登入 ChatGPT' in page.locator('#operationText').inner_text())
             check(label+' responsive layout fits viewport',not overflow(page)['overflow'])
             check(label+' no uncaught errors',not errors)
             context.close()

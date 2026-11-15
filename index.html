@@ -2364,8 +2364,8 @@
             state.budget = value.budget ?? 0;
             state.weatherInfo = normalizeWeatherInfo(value.weatherInfo);
             state.allVisitedSpots = days.flatMap(day => day.itinerary.filter(item => item.type === 'SPOT' || item.type === 'FOOD').map(item => item.title));
-            const last = days.at(-1)?.itinerary.at(-1);
-            if (last) state.previousLocation = last.title;
+            if (days.length) state.previousLocation = dayStartLocation(state, days.at(-1));
+            state.outline = value.outline == null ? null : normalizeOutline(value.outline, tripDates(state));
             return state;
         }
 
@@ -2764,13 +2764,103 @@
 
         // 輔助：生成單日 Prompt (防重複版 v3.0)
         // 輔助：生成單日 Prompt (防錯升級版 v4.0)
+        // Days are planned one at a time, so the stay - not yesterday's last stop - is where each day starts.
+        // Yesterday's last stop is usually the ride back to the stay, which used to mislead the next day.
+        function dayStartLocation(state, previousDay) {
+            if (state?.hotel) return state.hotel;
+            return previousDay?.itinerary?.at(-1)?.title || `${state?.city || ''}市區`;
+        }
+
+        function tripDates(state) {
+            const start = new Date(state.startDate || state.flightArr);
+            return Array.from({ length: state.totalDays }, (_, index) => {
+                const date = new Date(start);
+                date.setDate(start.getDate() + index);
+                return formatLocalDate(date);
+            });
+        }
+
+        // A whole-trip outline decides which area each day covers before any day is detailed,
+        // so requested places are all used once and days follow a sensible order.
+        function tripOutlinePrompt(state, dates) {
+            const day = index => dates[index];
+            return `你是旅遊規劃師。請先為整趟旅程排出每天的大綱，之後會依照大綱逐日安排細節。
+
+【旅程】
+- 目的地：${state.city}；共 ${dates.length} 天，${day(0)} 到 ${day(dates.length - 1)}
+- 住宿：${state.hotel || '無（一日遊）'}
+- 往返：${state.entryName || '交通'}，首日 ${state.flightArr} 從出發地出發（抵達後才開始行程），末日 ${state.flightDep} 回程出發
+- 當地交通：${state.transport}；步調：${state.pace}
+- 旅遊元素：${(state.tags || []).join('、') || '未指定'}
+- 必去景點：${state.spots || '無'}；必吃美食：${state.foodList || '無'}
+- 特殊需求與限制：${state.combinedPrefs || '無'}
+
+【規則】
+1. 旅人提到的每個地點、城市與活動都要分配到最合適的一天；明確要求「一整天」的活動獨佔一天。旅人列為可以去的城市，天數允許時每個都安排；真的排不下才捨棄，並在 note 說明原因。
+2. 同一區域集中在同一天，不要把同一個遠方城市拆成兩天往返；有住宿時每天都從住宿出發、回到住宿，當天往返的城市要考慮來回車程。
+3. 抵達日與回程日只安排住宿或機場附近的輕鬆行程。
+4. 熱門主題樂園盡量排在平日；依步調控制每天的份量，天數不足時寧可少排。
+5. area 寫當天主要區域，theme 寫當天主題，plan 寫 2 到 4 個主要景點或活動（不寫時間）。
+
+只回傳 JSON：{"days":[{"date":"YYYY-MM-DD","area":"主要區域","theme":"主題","plan":"主要安排"}],"note":"取捨說明，沒有則為空字串"}
+days 必須剛好 ${dates.length} 筆，日期依序為：${dates.join('、')}。`;
+        }
+
+        function normalizeOutline(value, dates) {
+            const days = Array.isArray(value) ? value : value?.days;
+            if (!Array.isArray(days) || days.length !== dates.length) return null;
+            const text = (item, key) => (typeof item?.[key] === 'string' ? item[key].trim().slice(0, 300) : '');
+            const outline = days.map((item, index) => ({ date: dates[index], area: text(item, 'area'), theme: text(item, 'theme'), plan: text(item, 'plan') }));
+            return outline.every(item => item.area || item.theme) ? outline : null;
+        }
+
+        async function planTripOutline(apiKey, state) {
+            const dates = tripDates(state);
+            if (dates.length < 2) return null;
+            window.PlannerUI?.stage('正在規劃全程大綱', true);
+            return normalizeOutline(await callModel(apiKey, tripOutlinePrompt(state, dates)), dates);
+        }
+
+        // Checks that a generated day starts and ends where the trip really is.
+        function dayFlowProblems(day, { hotel, isFirstDay, isLastDay, entryType } = {}) {
+            const items = Array.isArray(day?.itinerary) ? day.itinerary : [];
+            const text = item => `${item?.title || ''} ${item?.desc || ''}`;
+            const stayWords = /住宿|飯店|酒店|旅館|民宿|hotel/i;
+            const hotelName = hotel ? hotel.replace(/附近|周邊|一帶/g, '').trim() : '';
+            const atStay = item => !!item && (stayWords.test(text(item)) || (!!hotelName && text(item).includes(hotelName)));
+            const problems = [];
+            if (hotel && !isFirstDay && !atStay(items[0])) problems.push(`第一站要從住宿「${hotel}」出發，寫出從住宿到第一個地點的交通。`);
+            if (hotel && !isLastDay && !atStay(items.at(-1))) problems.push(`最後一站要回到住宿「${hotel}」。`);
+            const driving = entryType === 'car' || entryType === 'motorcycle';
+            if (isLastDay && !driving && !items.slice(-3).some(item => /機場|車站|碼頭|港|搭機|登機/.test(text(item)))) problems.push('最後一天要在回程出發前抵達機場、車站或碼頭。');
+            for (let index = 1; index < items.length; index++) {
+                if (items[index].time && items[index - 1].time && items[index].time < items[index - 1].time) { problems.push('各站時間要由早到晚排列。'); break; }
+            }
+            return problems;
+        }
+
+        // Generate one day; if it does not start or end at the stay, ask once more with the problems listed.
+        async function generateCheckedDay(apiKey, prompt, dateStr, context) {
+            const first = normalizeDay(await callModel(apiKey, prompt), dateStr);
+            const problems = dayFlowProblems(first, context);
+            if (!problems.length) return first;
+            window.PlannerUI?.stage('正在修正當天路線順序', true);
+            try {
+                const retry = normalizeDay(await callModel(apiKey, `${prompt}\n\n【上一版需要修正】\n${problems.map(problem => '- ' + problem).join('\n')}\n請修正以上問題，重新輸出完整的當日 JSON。`), dateStr);
+                return dayFlowProblems(retry, context).length < problems.length ? retry : first;
+            } catch (error) {
+                if (window.PlannerUI?.signal()?.aborted) throw error;
+                return first;
+            }
+        }
+
         function generateSingleDayPrompt(params) {
             const { city, hotel, dateStr, dayIndex, totalDays, isFirstDay, isLastDay,
                     flightArr, flightDep, transport, pace, tags, previousLocation,
                     spots, foodList, combinedPrefs, guideRole, entryName, transportInstruction,
                     dailySpotCount, foodInstruction, 
                     weatherDesc, weekDay, isWeekend, 
-                    visitedSpots, origin, entryType, budget, spent = 0 } = params;
+                    visitedSpots, origin, entryType, budget, spent = 0, outline = null } = params;
 
             let weatherInstruction = "";
             if (weatherDesc && (weatherDesc.includes("雨") || weatherDesc.includes("雷"))) {
@@ -2810,7 +2900,10 @@ ${Number.isFinite(budget) && budget > 0 ? `- 全旅程預算：${budget}（目�
 - 餐飲安排：${foodInstruction || '依旅人飲食需求安排'}
 - 完整旅程共 ${totalDays} 天，請將必去與必吃合理分配，避免全部擠入同一天。
 
-【⛔ 避開名單】
+${Array.isArray(outline) && outline.length ? `【全程大綱：今天只安排標示 ▶ 的區域與主題，不要排進其他天的內容】
+${outline.map((item, index) => `${index + 1 === dayIndex ? '▶' : '・'} 第 ${index + 1} 天 ${item.date}：${item.area}｜${item.theme}｜${item.plan}`).join('\n')}
+
+` : ''}【⛔ 避開名單】
 - 已安排過：${visitedStr} (禁止重複)
 
 【今日特殊條件】
@@ -2821,6 +2914,9 @@ ${isLastDay ? (entryType === 'car' || entryType === 'motorcycle') && origin && o
     `- 最後一天，從「${city}」返回「${origin}」。請務必安排提前出發，確保能順利返回出發地。${transportInstruction}` : 
     `- 最後一天，${entryName} ${flightDep} **出發**（這是從目的地的回程出發時間）。請務必安排提前抵達機場/車站/碼頭。${transportInstruction}` : ''}
 ${!isFirstDay && !isLastDay ? `- 完整的一天，請安排順路行程。` : ''}
+${hotel && !isFirstDay ? `- 今天從住宿「${hotel}」出發：第一站必須是從住宿前往第一個地點的交通（type 為 TRANSPORT）。` : ''}
+${hotel && !isLastDay ? `- 今天結束時回到住宿「${hotel}」：最後一站是返回住宿的交通。` : ''}
+${hotel && isLastDay && !isFirstDay ? `- 早上在住宿退房並寄放行李；之後的行程要順路，最後回住宿取行李再前往機場／車站。` : ''}
 ${transport === '機車' ? `- ⚠️ **機車路線限制**：交通方式為機車，請務必只規劃機車可通行的路線。禁止規劃高速公路、快速道路或任何禁止機車通行的路段。所有景點之間的移動路線必須是機車可合法行駛的道路。` : ''}
 ${(entryType === 'car' || entryType === 'motorcycle') && origin && origin.trim() && origin !== "出發地" && isFirstDay ? `- ⚠️ **重要**：請從「${origin}」開始規劃完整路線，包含從出發地到目的地的所有路段。` : ''}
 
@@ -2983,14 +3079,11 @@ Output strictly in Traditional Chinese (Taiwan).
                     isWeekend: isWeekend,
                     visitedSpots: generationState.allVisitedSpots,
                     origin: generationState.origin,
-                    entryType: generationState.entryType
+                    entryType: generationState.entryType,
+                    outline: generationState.outline
                 });
-                
-                // 4. 呼叫 AI
-                const dayResult = await callModel(apiKey, dayPrompt);
-                
-                // 5. 格式校正
-                let finalDayData = normalizeDay(dayResult, dateStr);
+                // 4. 呼叫 AI，並檢查當天是否從住宿出發、回到住宿
+                let finalDayData = await generateCheckedDay(apiKey, dayPrompt, dateStr, { hotel: generationState.hotel, isFirstDay, isLastDay, entryType: generationState.entryType });
                 
                 // 強制寫入正確日期 (防止 AI 寫錯)
                 finalDayData.date = dateStr;
@@ -3018,11 +3111,8 @@ Output strictly in Traditional Chinese (Taiwan).
                     });
                 }
                 
-                // 更新上一地點
-                if(finalDayData.itinerary && finalDayData.itinerary.length > 0) {
-                    const lastItem = finalDayData.itinerary[finalDayData.itinerary.length - 1];
-                    generationState.previousLocation = lastItem.title || generationState.hotel || `${generationState.city}市區`;
-                }
+                // 明天的起點：有住宿就是住宿，否則是今天最後一站
+                generationState.previousLocation = dayStartLocation(generationState, finalDayData);
                 
                 // 8. 保存到 localStorage
                 
@@ -3260,6 +3350,8 @@ Output strictly in Traditional Chinese (Taiwan).
             if (autoContinue) window.PlannerUI?.bookProgress();
             
             try {
+                // A whole-trip outline first, so every day knows its own area. Without one, days are planned as before.
+                generationState.outline = await planTripOutline(apiKey, generationState);
                 // 5. 先生成第一天作為可復原、可接續的儲存點（i=0）
                 const i = 0;
                     // 計算當天日期（使用本地時間，避免時區問題）
@@ -3321,15 +3413,12 @@ Output strictly in Traditional Chinese (Taiwan).
                         // 👇 關鍵：把目前為止去過的所有景點傳進去
                         visitedSpots: allVisitedSpots,
                         origin: generationState.origin,
-                        entryType: generationState.entryType
+                        entryType: generationState.entryType,
+                        outline: generationState.outline
                     });
 
-                    // 7. 呼叫 AI
-                    // 注意：這裡我們預期 AI 只回傳「這一天」的 JSON 物件，不是陣列
-                    const dayResult = await callModel(apiKey, dayPrompt);
-                    
-                    // 8. 格式校正 (如果 AI 回傳陣列，取第一個；如果是物件，直接用)
-                    let finalDayData = normalizeDay(dayResult, dateStr);
+                    // 7. 呼叫 AI，並檢查當天是否從住宿出發、回到住宿
+                    let finalDayData = await generateCheckedDay(apiKey, dayPrompt, dateStr, { hotel: generationState.hotel, isFirstDay, isLastDay, entryType: generationState.entryType });
                     
                     // 強制寫入正確日期 (防止 AI 寫錯)
                     finalDayData.date = dateStr;
@@ -3357,11 +3446,8 @@ Output strictly in Traditional Chinese (Taiwan).
                         });
                     }
                     
-                    // 嘗試抓取當天最後一個景點作為明天的起點 (簡單邏輯)
-                    if(finalDayData.itinerary && finalDayData.itinerary.length > 0) {
-                        const lastItem = finalDayData.itinerary[finalDayData.itinerary.length - 1];
-                        previousLocation = lastItem.title || generationState.hotel || `${generationState.city}市區`;
-                    }
+                    // 明天的起點：有住宿就是住宿，否則是今天最後一站
+                    previousLocation = dayStartLocation(generationState, finalDayData);
                     
                     // ✨ 更新全局狀態
                     generationState.allVisitedSpots = allVisitedSpots;
