@@ -153,6 +153,10 @@ test('SVG drawing streams, passes place names as data and returns only the svg e
     const svg = await client.drawSvg({ key: 'test-key', subject: { city: '花蓮', role: 'scene', places: [{ title: '瑞穗牧場', address: '瑞穗鄉' }] } });
     assert.equal(svg, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1536 1024"><rect width="1536" height="1024" fill="#fbf6ea"/></svg>');
     assert.equal(body.stream, true);
+    // Thinking counts toward max_tokens: drawings think less and get a larger ceiling than itinerary days.
+    assert.deepEqual(body.output_config, { effort: 'low' });
+    assert.equal(body.max_tokens, 32000);
+    assert.match(body.messages[0].content, /120 個圖形元素/);
     assert.match(body.messages[0].content, /"title":"瑞穗牧場"/);
     assert.match(body.messages[0].content, /禁止 <script>/);
 });

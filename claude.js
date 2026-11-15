@@ -9,6 +9,8 @@
     const DEFAULT_TIMEOUT_MS = 300000;
     const IMPORT_TIMEOUT_MS = 600000;
     const MAX_TOKENS = 16000;
+    // Thinking also counts toward max_tokens, so a drawing gets more room and thinks less.
+    const SVG_MAX_TOKENS = 32000;
     const IMPORT_MAX_TOKENS = 32000;
     const MAX_IMPORT_IMAGES = 60;
     const SYSTEM = '請依使用者指定的 JSON 欄位與範例，只回傳一個有效的 JSON 物件，不要 Markdown 程式碼框或額外說明。旅遊內容使用臺灣繁體中文。';
@@ -62,7 +64,7 @@
     }
 
     // One request, no automatic retry (an interrupted request may already have been billed). Long outputs stream.
-    async function send({ key, model, system, content, maxTokens, timeoutMs, signal, stream = false, feature }) {
+    async function send({ key, model, system, content, maxTokens, timeoutMs, signal, stream = false, feature, effort = 'medium' }) {
         const Anthropic = sdk();
         if (typeof Anthropic !== 'function') throw new ClaudeError('Claude 元件未載入，請重新整理頁面後再試。', 'SDK');
         // The per-browser monthly budget (claude-usage.js) is checked before anything is sent.
@@ -70,7 +72,7 @@
         // The key is the visitor's own; this page has no backend, so the browser calls the API directly.
         const client = new Anthropic({ apiKey: key.trim(), dangerouslyAllowBrowser: true, maxRetries: 0, timeout: timeoutMs });
         const fallback = FALLBACK_MODELS.has(model) ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' } : {};
-        const params = { model, max_tokens: maxTokens, ...fallback, output_config: { effort: 'medium' }, system, messages: [{ role: 'user', content }] };
+        const params = { model, max_tokens: maxTokens, ...fallback, output_config: { effort }, system, messages: [{ role: 'user', content }] };
         let message;
         try {
             message = stream
@@ -137,8 +139,8 @@
 2. 扁平向量插畫風，像復古旅行明信片：米白底色 #fbf6ea，主色可用藍綠 #2f6f73、陶土紅 #c45a3c、芥末黃 #e2b84a、深棕 #3a2f25；以幾何形狀、層次和簡單光影表現地點特色，畫面飽滿、構圖完整。
 3. 不要任何文字、數字、標誌或真實人物肖像；看不出是哪個地點時，畫該城市一般的街景或自然風景，不要捏造具體建築細節。
 4. 只用基本圖形（path、rect、circle、ellipse、polygon、polyline、line、g、linearGradient、radialGradient、defs）。禁止 <script>、<foreignObject>、<image>、<a>、<style>、事件屬性（on…）、外部連結或 url(http…)。
-5. 控制在約 300 個圖形元素以內。`;
-        const text = await send({ key, model, system: SVG_SYSTEM, content: prompt, maxTokens: MAX_TOKENS, timeoutMs, signal, stream: true, feature: 'artwork' });
+5. 保持精簡：約 120 個圖形元素以內，座標與尺寸用整數，不要註解、不要重複的裝飾細節，整個 SVG 約 12,000 字元以內。`;
+        const text = await send({ key, model, system: SVG_SYSTEM, content: prompt, maxTokens: SVG_MAX_TOKENS, timeoutMs, signal, stream: true, feature: 'artwork', effort: 'low' });
         const match = text.match(/<svg[\s\S]*<\/svg>/i);
         if (!match) throw new ClaudeError('Claude 未回傳有效的 SVG 插圖，這張未儲存。', 'SVG');
         return match[0];
