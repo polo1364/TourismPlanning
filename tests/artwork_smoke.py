@@ -266,7 +266,8 @@ def main():
             while not view.locator('#next').is_disabled():
                 view.locator('#next').click();turns+=1
                 assert turns < 100
-            check(f'offline {width}px all pages reachable', turns > 2 and not overflow(view)['overflow'])
+            # A two-day sample now fits each day on one spread at desktop width (cover + 2 spreads = 2 turns).
+            check(f'offline {width}px all pages reachable', turns >= 2 and not overflow(view)['overflow'])
             view.emulate_media(media='print')
             check(f'print {width}px images remain loaded', view.evaluate('[...document.images].every(i=>i.naturalWidth>0)'))
             view.emulate_media(media='screen')

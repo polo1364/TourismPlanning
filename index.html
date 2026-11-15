@@ -1018,12 +1018,18 @@
         
         .table-address {
             font-size: 0.8rem;
-            color: #94a3b8;
+            color: #475569;
             margin-top: 6px;
             display: flex;
-            align-items: center;
+            align-items: baseline;
             gap: 4px;
         }
+        .table-cost, .table-address, .table-tips { display: flex; align-items: baseline; gap: 8px; }
+        .fact-label { flex: none; padding: 0 6px; border-radius: 4px; background: #00000010; font-size: 0.72rem; font-weight: 700; letter-spacing: .05em; }
+        .fact-value { min-width: 0; overflow-wrap: anywhere; }
+        .address-line { display: block; }
+        .address-line b { margin-right: 6px; font-weight: 700; }
+        .address-line b::after { content: '・'; margin-left: 2px; font-weight: 400; opacity: .6; }
         
         .table-map-link {
             display: inline-flex;
@@ -2928,6 +2934,11 @@ ${(entryType === 'car' || entryType === 'motorcycle') && origin && origin.trim()
    - **內容描述(desc, tips)內部若有引號，一律使用單引號 ( ' )**。
    - 範例： "desc": "這裡被稱為 '小京都'，非常美麗" (O)
    - 禁止： "desc": "這裡被稱為 "小京都"，非常美麗" (X) -> 這會導致解析錯誤！
+4. **讓台灣旅人一看就懂**：
+   - 地名、車站、車種、店名一律先寫台灣常用的中文名稱；外文原名只在第一次出現時放在括號內，例如「南海特急 Rapi:t（ラピート）」、「機場急行（空港急行）」。
+   - 不要整段使用日文假名、韓文或外文縮寫；車種與票券要說明是什麼，例如「全車指定席的特急，需另購特急券」。
+   - address 只寫一個地點的地址；若列出多家店，用「；」分隔並寫成「店名：地址」。
+   - cost 寫清楚金額與幣別，必要時附台幣概算，例如「約 ¥970（約 NT$210）」。
 
 【JSON 輸出格式】
 請回傳一個 JSON 物件（type 限 SPOT、FOOD 或 TRANSPORT）:
@@ -4024,10 +4035,15 @@ Output strictly in Traditional Chinese (Taiwan).
                                     const typeIcon = Object.hasOwn(typeIcons, item.type) ? typeIcons[item.type] : '<path d="m12 3 9 9-9 9-9-9Z"/>';
                                     const iconSvg = paths => `<svg class="sticker-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${paths}</svg>`;
                                     let tagHtml = `<span class="table-tag place-sticker ${typeClass}">${iconSvg(typeIcon)}<span>${escapeHtml(typeLabel)}</span></span>`;
-                                    let costHtml = item.cost ? `<div class="table-cost">${isSharedCost(item.cost) ? '<span class="shared-cost-label">每車／共用費用</span> ' : '費用：'}${escapeHtml(item.cost)}</div>` : '';
+                                    let costHtml = item.cost ? `<div class="table-cost"><span class="fact-label${isSharedCost(item.cost) ? ' shared-cost-label' : ''}">${isSharedCost(item.cost) ? '每車／共用費用' : '費用'}</span><span class="fact-value">${escapeHtml(item.cost)}</span></div>` : '';
                                     let ticketHtml = item.booking ? `<span class="table-badge place-sticker booking">${iconSvg('<path d="M4 5h16v5a2 2 0 0 0 0 4v5H4v-5a2 2 0 0 0 0-4Z"/><path d="M14 5v3m0 3v2m0 3v3"/>')}<span>需預約</span></span>` : '';
                                     
-                                    const addressHtml = item.address ? `<div class="table-address">📍 ${escapeHtml(item.address)}</div>` : '';
+                                    // Several shops in one address field read as one long line; give each its own line, name first.
+                                    const addressLines = String(item.address || '').split(/\s*[；;]\s*/).filter(Boolean);
+                                    const addressHtml = addressLines.length ? `<div class="table-address"><span class="fact-label">地點</span><span class="fact-value">${addressLines.map(line => {
+                                        const named = line.match(/^([^：:]{1,24})[：:]\s*(\D.*)$/);
+                                        return `<span class="address-line">${named ? `<b>${escapeHtml(named[1])}</b>${escapeHtml(named[2])}` : escapeHtml(line)}</span>`;
+                                    }).join('')}</span></div>` : '';
                                     const mapQuery = item.title + " " + (item.address || city);
                                     const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeQuery(mapQuery)}`;
 
@@ -4040,7 +4056,7 @@ Output strictly in Traditional Chinese (Taiwan).
                                         transitHtml = `<details class="table-transit transit-details"><summary><span>前往本站：${escapeHtml(primary.mode)} · ${escapeHtml(primary.time)}${item.transit.length > 1 ? `（${item.transit.length} 種方式）` : ''}</span><span class="transit-toggle">詳細路線</span></summary>${transitOptions}</details>`;
                                     }
 
-                                    const tipsHtml = item.tips ? `<div class="table-tips">💡 ${escapeHtml(item.tips)}</div>` : '';
+                                    const tipsHtml = item.tips ? `<div class="table-tips"><span class="fact-label">小撇步</span><span class="fact-value">${escapeHtml(item.tips)}</span></div>` : '';
                                     
                                     return `
                                     <tr data-item="${itemIndex}">

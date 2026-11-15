@@ -185,3 +185,10 @@ body[data-scene='town'] #itineraryPanel #tripContainer > details > summary::befo
 
 /* Until the saved book has rendered, keep the reading panel blank instead of showing the empty state. */
 html[data-booting] #itineraryPanel { visibility: hidden; }
+
+/* Stop facts: a label chip, then the value; several shops get one line each. */
+#itineraryPanel #tripContainer .table-cost, #itineraryPanel #tripContainer .table-address, #itineraryPanel #tripContainer .table-tips { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 10px; }
+#itineraryPanel #tripContainer .table-address, #itineraryPanel #tripContainer .table-cost { color: var(--card-ink, #2a2018); }
+#itineraryPanel #tripContainer .fact-label { min-width: 4.2em; padding: 0 8px; border-radius: 999px; background: #ece2cc; color: #5a4532; font-size: .75rem; font-weight: 700; line-height: 1.9; letter-spacing: .06em; text-align: center; white-space: nowrap; }
+#itineraryPanel #tripContainer .table-cost .fact-value { font-weight: 700; color: #7a4a1c; }
+#itineraryPanel #tripContainer .table-tips .fact-label { background: #d39b33; color: #fff; }

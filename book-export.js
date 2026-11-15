@@ -183,18 +183,29 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
 .bound .stop-head .type-cell{flex-direction:row;flex-wrap:wrap;align-items:center;max-width:none;gap:6px}
 .bound .stop-head .stop-name{font-size:22px;line-height:1.4}
 .bound .stop-body .stop-description{margin:2px 0 6px}
-.bound .stop-body .table-cost,.bound .stop-body .table-address{display:inline-block;margin:0 12px 2px 0;font-size:13px;color:var(--card-muted)}
-.bound .stop-body .table-tips{margin:4px 0;padding:0;border:0;background:none;font-family:var(--kai);font-size:15.5px;color:#a8261d}
-.bound .stop-body .table-tips::before{content:'✎ '}
+.bound .stop-head{break-after:avoid}
+.bound .stop-body .stop-description{color:var(--card-ink)}
+.bound .stop-body .table-cost,.bound .stop-body .table-address{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:baseline;gap:10px;margin:0;padding:5px 0;border-top:1px dashed var(--card-rule);font-size:14px;line-height:1.7;color:var(--card-ink);break-inside:avoid}
+.bound .stop-body .table-address{border-bottom:1px dashed var(--card-rule);margin-bottom:6px}
+.bound .stop-body .fact-label{min-width:4.2em;padding:0 8px;border-radius:999px;background:#ece2cc;color:#5a4532;font-size:12px;font-weight:700;line-height:1.9;letter-spacing:.06em;text-align:center;white-space:nowrap}
+.bound .stop-body .table-cost .fact-value{font-weight:700;color:#7a4a1c}
+.bound .address-line{display:block}.bound .address-line b{margin-right:6px;font-weight:700}
+.bound .stop-body .table-tips{display:block;margin:10px 0 6px;padding:9px 12px;border:0;border-left:4px solid #d39b33;border-radius:2px 10px 10px 2px;background:#fbefd3;font-family:inherit;font-size:14.5px;line-height:1.75;color:#3f3120}
+.bound .stop-body .table-tips .fact-label{display:inline-block;margin-right:8px;background:#d39b33;color:#fff}
+.bound .stop-body .table-tips::before{content:none}
+.bound .book-page.tight .stop-body .table-cost,.bound .book-page.tight .stop-body .table-address{padding:2px 0;line-height:1.6}.bound .book-page.tight .stop-body .table-tips{margin:6px 0 4px;padding:6px 10px;line-height:1.65}.bound .book-page.tight .stop-body .table-map-link{min-height:28px;padding:1px 12px}
+.bound .book-page.tighter .stop-body .table-address{margin-bottom:2px}.bound .book-page.tighter .stop-body .action-cell{padding-top:0}.bound .book-page.tighter .journal-move .transit-option{padding:3px 10px}
 .bound .stop-body .stop-note{margin:14px 0 10px}
 .bound .stop-note::before{top:0;transform:translateY(-13px) rotate(-4deg)}
-.bound .stop-body .action-cell{padding-top:2px;border:0}
-.bound .stop-body .table-map-link{min-height:40px;padding:6px 14px;font-size:13px}
+.bound .stop-body .action-cell{display:flex;justify-content:flex-end;padding-top:2px;border:0}
+.bound .stop-body .table-map-link{min-height:32px;padding:3px 14px;border:1.5px solid var(--card-blue);background:none;box-shadow:none;color:var(--card-blue);font-size:13px;font-weight:700}
 .bound .stop-list>.journal-move{position:relative;break-inside:avoid;break-after:avoid;margin:-4px 0 12px;padding:2px 0 4px 98px;border:0;background:none;font-size:13px;color:var(--card-blue)}
 .bound .stop-list>.journal-move::before{content:'↓';position:absolute;left:58px;top:2px;font-family:var(--kai)}
 .bound .stop-list>.journal-move::after{content:'';position:absolute;left:96px;top:0;bottom:0;border-left:2px dotted var(--card-blue)}
-.bound .journal-move .transit-option{padding:0 0 0 10px}
-.bound .journal-move .transit-option p{margin:0;font-size:12.5px;color:var(--card-muted)}
+.bound .journal-move .transit-option{margin:0 0 4px 10px;padding:5px 12px;border-radius:8px;background:#e6edf2}
+.bound .journal-move .transit-option:first-child strong::before{content:'怎麼去';margin-right:8px;padding:0 7px;border-radius:999px;background:var(--card-blue);color:#fff;font-size:11.5px;letter-spacing:.06em}
+.bound .journal-move .transit-option strong{font-size:13.5px;color:var(--card-blue)}
+.bound .journal-move .transit-option p{margin:2px 0 0;font-size:13px;line-height:1.65;color:var(--card-ink)}
 @media(max-width:899px){
 .bound .journal-hero{margin:-20px -20px 40px}
 .bound .journal-hero .day-number{left:16px;bottom:-38px;width:70px;height:84px;font-size:32px}
@@ -208,7 +219,7 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
 .bound .stop-head .stop-name{font-size:20px}
 }
 @media(max-height:500px){.bound .journal-hero{margin-top:-12px}}
-.bound .book-page.tight .stop-list>.journal-move{break-after:auto}.bound .book-page.tight .stop-entry{margin-bottom:10px}.bound .book-page.tight p,.bound .book-page.tight .stop-description{line-height:1.7}.bound .book-page.tight .journal-hero{height:clamp(120px,calc(var(--leaf-height,620px) * .27),210px)}.bound .book-page.tight .route{margin-bottom:10px}.bound .book-page.tight .stop-note{margin:10px 0 8px}.bound .book-page.tight .manual-details{margin-top:18px}
+.bound .book-page.tight .stop-list>.journal-move,.bound .book-page.flowing .stop-list>.journal-move{break-after:auto}.bound .book-page.tight .stop-entry{margin-bottom:10px}.bound .book-page.tight p,.bound .book-page.tight .stop-description{line-height:1.7}.bound .book-page.tight .journal-hero{height:clamp(120px,calc(var(--leaf-height,620px) * .27),210px)}.bound .book-page.tight .route{margin-bottom:10px}.bound .book-page.tight .stop-note{margin:10px 0 8px}.bound .book-page.tight .manual-details{margin-top:18px}
 .bound .book-page.tighter .journal-hero{height:clamp(100px,calc(var(--leaf-height,620px) * .2),160px);margin-bottom:40px}.bound .book-page.tighter p,.bound .book-page.tighter .stop-description{line-height:1.6}.bound .book-page.tighter .stop-entry{margin-bottom:6px}.bound .book-page.tighter .stop-note{padding:12px 14px 16px;margin:8px 0 6px}.bound .book-page.tighter .stop-list>.journal-move{margin-bottom:6px}.bound .book-page.tighter .manual-heading{margin:12px 0 8px -4px}.bound .book-page.tighter .stop-head .stop-name{font-size:20px}
 .day-end{margin:18px 0 4px;text-align:center;font-family:var(--kai);font-size:14px;letter-spacing:.3em;color:var(--card-muted);break-before:avoid}
 .bound .manual-overview .day-actions{margin:0 0 14px;padding:0;border:0}
@@ -353,29 +364,43 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
                 flow.style.setProperty('--leaf-offset', '0px');
                 // scrollWidth includes every overflow column, not just the visible spread.
                 const leaves = () => Math.max(1, Math.round((flow.scrollWidth + gap) / stride));
-                // How far down the last leaf the content reaches (0–1).
-                const tailUse = total => {
-                    const box = flow.getBoundingClientRect(); let used = 0;
-                    for (const node of flow.querySelectorAll('p,li,h2,h3,a,.stop-name,.stop-note,.table-tips,.journal-move,.day-end:not([hidden])'))
-                        for (const rect of node.getClientRects())
-                            if (rect.width && Math.floor((rect.left - box.left + 1) / stride) === total - 1) used = Math.max(used, (rect.bottom - box.top) / height);
+                const content = 'p,li,h2,h3,a,.stop-name,.stop-meta,.stop-description,.table-cost,.table-address,.stop-note,.table-tips,.journal-move,.day-end:not([hidden])';
+                const column = rect => Math.floor((rect.left - flow.getBoundingClientRect().left + 1) / stride);
+                // How far down each leaf the content reaches (0–1).
+                const leafUse = total => {
+                    const top = flow.getBoundingClientRect().top, used = Array(total).fill(0);
+                    for (const node of flow.querySelectorAll(content))
+                        for (const rect of node.getClientRects()) {
+                            const leaf = column(rect);
+                            if (rect.width && rect.height && leaf >= 0 && leaf < total) used[leaf] = Math.max(used[leaf], (rect.bottom - top) / height);
+                        }
                     return used;
                 };
                 // A day ending with a short tail on a fresh leaf is tightened slightly, kept only if it saves the leaf.
-                flow.classList.remove('tight', 'tighter');
+                flow.classList.remove('tight', 'tighter', 'flowing');
                 const loose = leaves();
-                if (loose > 1 && tailUse(loose) < .25) {
+                if (loose > 1 && leafUse(loose)[loose - 1] < .25) {
                     flow.classList.add('tight');
                     if (leaves() >= loose) flow.classList.add('tighter');
                     if (leaves() >= loose) flow.classList.remove('tight', 'tighter');
                 }
+                // Leaves left half empty because a block that must stay together moved to the next leaf:
+                // let the travel note part from its stop, kept only if it fills gaps without adding a leaf.
+                const gaps = () => leafUse(leaves()).slice(0, -1).filter(use => use < .5).length;
+                const gapped = gaps();
+                if (gapped) {
+                    const before = leaves();
+                    flow.classList.add('flowing');
+                    if (leaves() > before || gaps() >= gapped) flow.classList.remove('flowing');
+                }
                 const endMark = flow.querySelector('.day-end');
                 if (endMark) {
                     endMark.hidden = false;
-                    const column = rect => Math.floor((rect.left - flow.getBoundingClientRect().left + 1) / stride);
-                    const before = [...(endMark.previousElementSibling?.getClientRects() || [])].at(-1);
+                    // The last leaf holding real content; a list's trailing margin can spill an empty fragment past it.
+                    const lastContent = Math.max(-1, ...[...flow.querySelectorAll(content)].filter(node => node !== endMark)
+                        .flatMap(node => [...node.getClientRects()]).filter(rect => rect.width && rect.height).map(column));
                     // A closing mark alone on a fresh page only adds an empty-looking page.
-                    if (before && column(endMark.getBoundingClientRect()) > column(before)) endMark.hidden = true;
+                    if (lastContent >= 0 && column(endMark.getBoundingClientRect()) > lastContent) endMark.hidden = true;
                 }
                 const count = leaves();
                 flow.dataset.leaves = String(count);
@@ -558,7 +583,8 @@ body[data-chrome='hidden'] .reader-footer{opacity:0;transform:translateY(6px);po
             // The way to reach this stop is drawn between entries, in the margin of the notebook.
             const move = desc.querySelector('.transit-details');
             if (move) { move.classList.add('journal-move'); stops.append(move); }
-            desc.querySelectorAll('.table-tips').forEach(tip => { tip.textContent = tip.textContent.replace(/^💡\s*/u, ''); });
+            // Older trips render the tip as '💡 text'; newer ones carry a label chip that must be kept.
+            desc.querySelectorAll('.table-tips').forEach(tip => { if (!tip.querySelector('.fact-label')) tip.textContent = tip.textContent.replace(/^💡\s*/u, ''); });
             body.append(head, desc, block('action-cell'));
             const detailArt = images.find(image => image.day === index && image.subject.role === 'detail' && image.stop === stopIndex);
             if (detailArt) body.insertAdjacentHTML('beforeend', picture(detailArt));
