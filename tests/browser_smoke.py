@@ -70,7 +70,7 @@ class Network:
         host = urlparse(request.url).hostname
         if host in {"127.0.0.1", "localhost"}:
             return route.continue_()
-        if host in {"api.deepseek.com", "generativelanguage.googleapis.com"}:
+        if host in {"api.anthropic.com", "generativelanguage.googleapis.com"}:
             body = request.post_data_json
             self.ai_requests.append(body)
             if self.fail_ai:
@@ -83,7 +83,7 @@ class Network:
             else:
                 result = sample_day(END if "第 2 天" in prompt else START, modified="微調" in prompt)
             content = json.dumps(result, ensure_ascii=False)
-            payload = {"choices": [{"finish_reason": "stop", "message": {"content": content}}]} if "messages" in body else {"candidates": [{"content": {"parts": [{"text": content}]}}]}
+            payload = {"id": "msg_mock", "type": "message", "role": "assistant", "model": "claude-opus-5-5", "stop_reason": "end_turn", "stop_sequence": None, "content": [{"type": "text", "text": content}], "usage": {"input_tokens": 1, "output_tokens": 1}} if "messages" in body else {"candidates": [{"content": {"parts": [{"text": content}]}}]}
             if self.hold_ai:
                 self.pending.append((route, payload))
                 return
@@ -122,7 +122,7 @@ def setup_page(browser, url, width, height, with_key=True):
     network = Network()
     context.route("**/*", network.route)
     if with_key:
-        context.add_init_script("localStorage.setItem('geminiApiKey', 'mock-not-a-real-key'); sessionStorage.setItem('deepseekApiKey', 'mock-not-a-real-key');")
+        context.add_init_script("localStorage.setItem('geminiApiKey', 'mock-not-a-real-key'); sessionStorage.setItem('claudeApiKey', 'mock-not-a-real-key');")
     page = context.new_page()
     errors = []
     dialogs = []
@@ -199,7 +199,7 @@ def smoke(browser, base_url):
             page.wait_for_function("tripData.length === 1 && document.querySelectorAll('#tripContainer > details').length === 1 && !document.getElementById('planBtn').disabled")
             check(prefix + "first day and continuation", page.locator("#generateNextDayBtn").is_visible())
             first_request = network.ai_requests[-1]
-            check(prefix + "DeepSeek wire format", "messages" in first_request and first_request.get("response_format") == {"type": "json_object"})
+            check(prefix + "Claude wire format", first_request.get("model") == "claude-opus-5-5" and first_request.get("max_tokens") == 16000 and "JSON" in first_request.get("system", "") and first_request.get("fallbacks") == "default" and len(first_request.get("messages", [])) == 1 and "response_format" not in first_request)
             prompt = first_request["messages"][-1]["content"]
             check(prefix + "preferences reach the AI", all(text in prompt for text in ["大稻埕需求標記", "素食需求標記", "花生過敏需求標記"]))
 

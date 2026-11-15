@@ -44,3 +44,12 @@ test('empty notes render no invented facts and grouping never mutates stored sum
     assert.match(rendered, /summary-category-cost/);
     assert.equal(JSON.stringify(day), before);
 });
+
+test('generated one-paragraph summaries render as plain text; imported structure keeps the headings', () => {
+    const plain = context.renderDaySummary({ summary: '上午走訪老街，下午建議到河濱散步。', itinerary: [] });
+    assert.ok(!plain.includes('summary-overview') && !plain.includes('其他補充') && !plain.includes('<h4>'));
+    assert.equal(plain.replace(/<[^>]+>/g, ''), '上午走訪老街，下午建議到河濱散步。');
+    for (const summary of ['團費：每人 3 萬元。', '日期暫定（依人工授權選定）。', '第一段。\n第二段。', '行程。\n匯入核對事項\n住宿：待確認。']) {
+        assert.match(context.renderDaySummary({ summary, itinerary: [] }), /summary-overview|summary-review/, summary);
+    }
+});

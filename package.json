@@ -2,7 +2,7 @@
   "name": "tourism-planning",
   "version": "1.0.0",
   "private": true,
-  "description": "Traditional Chinese travel planner with DeepSeek and Motion",
+  "description": "Traditional Chinese travel planner with the Claude API and Motion",
   "scripts": {
     "build:pages": "node scripts/build-pages.cjs",
     "codex:bridge": "node codex-bridge.cjs",
@@ -12,14 +12,20 @@
     "sync:pdfjs": "node scripts/sync-pdfjs.cjs",
     "check:pdfjs": "node scripts/sync-pdfjs.cjs --check",
     "sync:tesseract": "node scripts/sync-tesseract.cjs",
-    "check:tesseract": "node scripts/sync-tesseract.cjs --check"
+    "check:tesseract": "node scripts/sync-tesseract.cjs --check",
+    "sync:anthropic": "node scripts/sync-anthropic.cjs",
+    "check:anthropic": "node scripts/sync-anthropic.cjs --check"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "1.8.0",
     "@tesseract.js-data/chi_tra": "1.0.0",
     "@tesseract.js-data/eng": "1.0.0",
     "motion": "14.2.0",
     "pdfjs-dist": "6.4.299",
     "tesseract.js": "7.0.0",
     "tesseract.js-core": "7.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
   }
 }

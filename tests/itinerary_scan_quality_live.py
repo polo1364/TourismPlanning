@@ -78,7 +78,7 @@ def run(args):
         browser = getattr(p, args.engine).launch()
         device = 'Pixel 7' if args.engine == 'chromium' else 'iPhone 13'
         context = browser.new_context(**p.devices[device], service_workers='block', timezone_id='Asia/Taipei')
-        context.add_init_script("localStorage.setItem('aiProvider','deepseek');localStorage.setItem('roamReadingMode','continuous');")
+        context.add_init_script("localStorage.setItem('aiProvider','codex');localStorage.setItem('roamReadingMode','continuous');")
         def route_request(route):
             request = route.request
             parsed = urlsplit(request.url)

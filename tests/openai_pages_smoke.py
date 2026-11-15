@@ -59,7 +59,7 @@ class PagesNetwork(Network):
                 self.pending.append((route, result))
                 return
             return route.fulfill(status=self.status, json=result)
-        if url.hostname in ['127.0.0.1','localhost','api.deepseek.com'] or 'sslip.io' in url.hostname:
+        if url.hostname in ['127.0.0.1','localhost','api.anthropic.com'] or 'sslip.io' in url.hostname:
             self.foreign.append(req.url)
             return route.abort()
         return super().route(route)
@@ -183,7 +183,7 @@ def main():
             image_id = page.evaluate('window.imageId')
             page.reload(wait_until='networkidle')
             check(profile+' completed images retrievable after reload without key', page.evaluate("async id=>(await CodexLocal.imageRequest('/'+id)).status", image_id)=='completed' and network.image_calls==1)
-            check(profile+' no private localhost or DeepSeek dependency', not network.foreign)
+            check(profile+' no private localhost or Claude dependency', not network.foreign)
             check(profile+' no browser errors', not errors)
             context.close()
             browser.close()

@@ -81,7 +81,7 @@ def main():
             page.locator('#openItineraryImport').click()
             page.wait_for_function("!document.getElementById('itinerarySourceText').disabled")
             check(profile + ' draft and correction survive reload', page.locator('#itinerarySourceText').input_value() == TEXT and '晚餐餐盒' in page.locator('#itineraryCorrection-0').input_value())
-            check(profile + ' no browser errors or DeepSeek fallback', not errors and not network.deepseek_requests)
+            check(profile + ' no browser errors or Claude fallback', not errors and not network.claude_requests)
             context.close()
             browser.close()
     server.shutdown()

@@ -26,7 +26,7 @@
 
 最多 50 個檔案、每檔 8 MiB、每份 PDF 60 頁；合計最多 60 張圖片／PDF 頁圖、20 MiB 圖片資料及 30,000 字元（含文字來源標記）。新一批有任一檔失敗或合併超限時，整批不加入，先前文字、附件與預覽保留。「清除本次來源」只清除匯入視窗內容，不影響已存旅程。圖片、PDF 頁圖及手動補充會儲存為此網站的匯入草稿，重新整理後可繼續。網路較慢時，大批圖片上傳可能逾時；請減少檔案或頁面後重試，原旅程不變。
 
-按「使用 API 額度讀取並整合」，會將全部附件、來源檔名／頁碼及文字一次送給 OpenAI API，整合為同一份行程。失敗時保留來源，不自動切換至 DeepSeek 或 ChatGPT 訂閱額度。
+按「使用 API 額度讀取並整合」，會將全部附件、來源檔名／頁碼及文字一次送給 OpenAI API，整合為同一份行程。失敗時保留來源，不自動切換至 Claude API 或 ChatGPT 訂閱額度。
 
 整合結果依日期合併重複活動與互補說明。當日已知時間由早到晚排列；時間未知的活動依原順序列於當日最後，並提示補上時間。不同日期的同名景點不會直接合併；同日同名但時間或地址衝突、無法確定是否同一站時，保留候選站點並提示核對。已確認為同站的費用若有不同版本，會在提醒保留來源費用並留空費用欄，不任選金額。預覽的核對事項也會保存至首日摘要。文件只有「第一天」或缺少年份時，請補充完整開始日期；目的地可選填。看不清或缺漏的資訊會標示待確認，請核對日期、時間、地址與費用。整理結果最多 15 天，按「另存為新旅程」才寫入收藏，既有旅程、完成標記、復原紀錄及 JSON 備份入口保留。修改來源或補充資料後須重新整理，取消或儲存失敗不會覆蓋原旅程。
 
@@ -53,7 +53,7 @@ PDF／TXT 回歸報告為 `artifacts/itinerary-import-report.json`；圖片整�
 
 ## 啟動
 
-公開版：[開啟 ROAM 旅遊書](https://polo1364.github.io/TourismPlanning/)。GitHub Pages 可填入自己的 OpenAI API Key，直接生成行程與匯入附件；也保留手動選擇 DeepSeek。需要伺服器保管金鑰時，可使用本機版或受登入保護的 Oracle 版（見 [雲端部署說明](deploy/README.md)）。公開頁面不會連接本機 Codex，也不會自動切換生成服務。不同網址與裝置的行程不共用儲存空間，請先匯出 JSON 再匯入。
+公開版：[開啟 ROAM 旅遊書](https://polo1364.github.io/TourismPlanning/)。GitHub Pages 可填入自己的 OpenAI API Key，直接生成行程與匯入附件；也可手動選擇 Claude API。需要伺服器保管金鑰時，可使用本機版或受登入保護的 Oracle 版（見 [雲端部署說明](deploy/README.md)）。公開頁面不會連接本機 Codex，也不會自動切換生成服務。不同網址與裝置的行程不共用儲存空間，請先匯出 JSON 再匯入。
 
 ## GitHub Pages 部署
 
@@ -71,7 +71,7 @@ PDF／TXT 回歸報告為 `artifacts/itinerary-import-report.json`；圖片整�
 python -m http.server 8080 --bind 127.0.0.1
 ```
 
-瀏覽器開啟 [http://127.0.0.1:8080](http://127.0.0.1:8080)，終止服務按 `Ctrl+C`。DeepSeek 模式不需要 Node 套件或建置流程；本機 Codex 模式另需下方的連接服務。
+瀏覽器開啟 [http://127.0.0.1:8080](http://127.0.0.1:8080)，終止服務按 `Ctrl+C`。Claude API 模式不需要建置流程（SDK 已打包於 `vendor/`）；本機 Codex 模式另需下方的連接服務。
 
 也可直接雙擊 `index.html`。瀏覽器對 `file://` 的儲存空間、剪貼簿與外部請求權限可能不同；建議使用上述本機服務。剪貼簿不可用時，文字匯出會改成下載 `.txt`。圖片匯出需要連網載入 html2canvas，多天匯出可能需要允許多檔下載。
 
@@ -79,7 +79,7 @@ python -m http.server 8080 --bind 127.0.0.1
 
 以下僅記錄 API 改版前的 CLI 實作；目前啟動入口使用上方 OpenAI API 模式，下列登入步驟不適用目前版本。
 
-網頁可透過本機官方 Codex CLI 使用 ChatGPT 登入的 Codex 額度，不需要 OpenAI API Key，也不會自動切到 API 計費或 DeepSeek。這不會帶入目前 Codex 對話的歷史或記憶；每次把旅行需求送入獨立的生成工作。用量與你的 Codex 共用額度，額度不足會停止並保留已完成內容。登入與計費方式見 [OpenAI 官方驗證說明](https://learn.chatgpt.com/docs/auth)。
+網頁可透過本機官方 Codex CLI 使用 ChatGPT 登入的 Codex 額度，不需要 OpenAI API Key，也不會自動切到 API 計費或 Claude API。這不會帶入目前 Codex 對話的歷史或記憶；每次把旅行需求送入獨立的生成工作。用量與你的 Codex 共用額度，額度不足會停止並保留已完成內容。登入與計費方式見 [OpenAI 官方驗證說明](https://learn.chatgpt.com/docs/auth)。
 
 1. 電腦需有 Node.js、Python 3 與官方 Codex CLI。本次確認版本為 Node.js 24.18.0、Codex CLI 0.162.1。
 2. 使用 `codex login` 登入 ChatGPT；`codex login status` 應顯示 `Logged in using ChatGPT`。
@@ -101,15 +101,24 @@ python tests/codex_smoke.py
 
 上述測試不消耗真實額度。`tests/codex_live_smoke.py` 是需明確手動執行的實際 Codex 驗證：使用獨立瀏覽器與示範一天行程，會消耗 Codex 額度，天氣及匯率仍為固定測試回應；不會修改日常瀏覽器的旅程。報告為 `artifacts/codex-report.json` 與 `artifacts/codex-live-report.json`。
 
-## DeepSeek 設定
+## Claude API 設定
 
-1. 開啟右上方服務設定，選擇 DeepSeek API，填入自己的 API Key；專案沒有內建金鑰。
-2. 選擇 DeepSeek Flash 或 DeepSeek V4 Pro，儲存設定。
+1. 開啟右上方服務設定，選擇 Claude API，填入自己的 Claude API Key（在 [Claude Console](https://platform.claude.com/) 建立）；專案沒有內建金鑰。
+2. 選擇模型後儲存設定：Claude Opus 5.5（預設，細緻規劃）、Claude Sonnet 5.5（速度與品質平衡）或 Claude Haiku 5.5（快速省費）。
 3. 填寫目的地、日期和偏好，按「產生整本旅遊書」，自動安排每一天，完成後直接從第一頁翻閱。
 
-金鑰由瀏覽器直接送至 DeepSeek 官方 API，不經本專案的後端。未勾選記住金鑰時，使用目前分頁的工作階段儲存；勾選後才存入該瀏覽器的本機儲存空間。備份不包含金鑰。舊 Gemini 金鑰不會自動當作 DeepSeek 金鑰使用。
+網頁沒有後端，金鑰由瀏覽器透過官方 Anthropic SDK 直接送至 Claude API，不經本專案的伺服器；費用計入你的 Anthropic API 帳戶。未勾選記住金鑰時，使用目前分頁的工作階段儲存；勾選後才存入該瀏覽器的本機儲存空間。備份與下載小冊不包含金鑰。舊版的 DeepSeek 金鑰不會被當作 Claude 金鑰使用；先前選擇 DeepSeek 的設定會自動改為 Claude API，但需重新輸入金鑰。
 
-截至 2026-10-14，使用官方文件列出的 `deepseek-flash` 與 `deepseek-v4-pro`，端點為 `https://api.deepseek.com/chat/completions`，使用 JSON 輸出與非思考模式。單次請求最多等待 120 秒，失敗不自動重送；逾時的請求可能已計費。參見 [DeepSeek 模型說明](https://api-docs.deepseek.com/quick_start/pricing/) 與 [JSON 輸出文件](https://api-docs.deepseek.com/guides/json_mode/)。
+選擇 Claude API 時，同一把金鑰也用在：
+
+- **匯入行程**：檔案文字、圖片與 PDF 頁圖一次交給 Claude 讀取並整合成行程。長邊超過 1568 像素的圖片會先在瀏覽器縮小再送出（Claude 建議尺寸，也符合多圖請求的限制）；一次最多 60 張，單次最多等待 600 秒。匯入依服務設定決定用 Claude 或 Codex，不會自動切換。
+- **行程插圖**：Claude 依當天景點或美食畫一張扁平向量風的 SVG 插圖（不是寫實照片）。SVG 只保留基本圖形，移除程式碼、事件、內嵌樣式與外部連結，再於瀏覽器轉成圖片存入原本的圖片庫，因此下載小冊與含插圖備份都直接沿用。Claude 不能產生寫實照片；需要照片風插圖時，請改用 Codex／OpenAI 生圖。
+
+匯入與插圖使用串流接收回覆，避免長時間輸出因連線閒置而中斷。
+
+**用量與額度**：一般 API Key 無法查詢帳戶餘額，因此 `claude-usage.js` 在這個瀏覽器記錄每次 Claude 回覆的 Token（含被拒或過長、同樣計費的回覆），依官方定價（2026-11：Opus 5.5 每百萬 Token 輸入 US$4／輸出 US$20，Sonnet 5.5 US$2／US$10，Haiku 5.5 US$0.10／US$0.50，提示超過 10 萬 Token 時 US$0.50／US$2.50）按月估算費用，並依排行程、匯入行程、行程插圖與模型分開統計。服務設定的「用量與額度」顯示本月估計與明細，右上角狀態也顯示本月估計。可設每月預算上限（美元）：達到後這個瀏覽器停止送出新的 Claude 請求，已送出的請求不受影響。紀錄只存在本瀏覽器（`claudeUsage_v1`），不含其他裝置或程式，實際費用以 Claude Console 帳單為準。
+
+SDK 版本鎖定為 `@anthropic-ai/sdk` 1.8.0，並以 `npm run sync:anthropic` 打包成 `vendor/anthropic-sdk.js`（`npm run check:anthropic` 驗證是否與已安裝版本一致），頁面不需建置流程也不依賴 CDN。每次請求使用 `effort: medium`、最多 16,000 個輸出 Token，要求只回傳 JSON；Opus 與 Sonnet 開啟伺服器端 refusal fallback（`server-side-fallback-2026-07-01`，`fallbacks: "default"`），Haiku 不支援故不開啟。單次請求最多等待 300 秒，失敗不自動重送；逾時的請求可能已計費。
 
 ## 儲存與備份
 
@@ -138,8 +147,8 @@ GitHub 版插圖由 `openai-browser.js` 直接呼叫 OpenAI Images API；本機�
 Node.js 內建測試，不需安裝 npm 套件：
 
 ```powershell
-node --test tests/app.test.cjs tests/deepseek.test.cjs
-node --check deepseek.js
+node --test tests/app.test.cjs tests/claude.test.cjs
+node --check claude.js
 ```
 
 瀏覽器測試需要 Python 的 Playwright 與 Chromium；未安裝時可執行：
@@ -150,7 +159,7 @@ python -m playwright install chromium
 python tests/browser_smoke.py --mode smoke
 ```
 
-測試會自行啟動本機測試伺服器，把外部 API 替換為固定回應，並將結果與截圖寫入 `artifacts/`。這些測試不會發出真實付費生成請求；實際 DeepSeek 付費 API 生成仍待使用有效金鑰驗證。天氣、匯率和 AI 內容也不因模擬測試通過而代表現場資訊已核實。
+測試會自行啟動本機測試伺服器，把外部 API 替換為固定回應，並將結果與截圖寫入 `artifacts/`。這些測試不會發出真實付費生成請求；實際 Claude API 付費生成仍待使用有效金鑰驗證。天氣、匯率和 AI 內容也不因模擬測試通過而代表現場資訊已核實。
 
 真實圖片匯出另有獨立測試，使用固定行程與 CDN 的 html2canvas，不呼叫付費 AI：
 
@@ -259,7 +268,7 @@ python tests/scenes_smoke.py
 
 翻頁不修改旅程資料。整本生成或接續完成後會開啟第一章，編輯與復原會盡量保留目前日期；若復原後該日已不存在，會回到有效頁次。切換旅程從第一頁開始。重新生成等待第一天時仍可閱讀原本的章節；此時取消會保留原內容及所在頁。旅途中模式會隱藏翻頁工具，返回完整行程後恢復目前章節。原有單站編輯、AI 微調、多旅程、一步復原及匯出功能保留。
 
-`book-ui.js` 只管理閱讀狀態與現有章節的顯示，資料仍由原有儲存及生成模組管理。圖片是旅行意象，不是每個城市的實景。這次沒有新增雲端同步或呼叫真實付費 DeepSeek API。
+`book-ui.js` 只管理閱讀狀態與現有章節的顯示，資料仍由原有儲存及生成模組管理。圖片是旅行意象，不是每個城市的實景。這次沒有新增雲端同步或呼叫真實付費 AI API。
 
 ```powershell
 npm test

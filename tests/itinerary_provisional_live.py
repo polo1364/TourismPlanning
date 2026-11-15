@@ -99,7 +99,7 @@ def run(args):
             closing = False
             context = engine.launch_persistent_context(str(output / 'profile'), **device, service_workers='block', timezone_id='Asia/Taipei')
             context.route('**/*', route_request)
-            context.add_init_script("localStorage.setItem('aiProvider','deepseek');localStorage.setItem('roamReadingMode','continuous');")
+            context.add_init_script("localStorage.setItem('aiProvider','codex');localStorage.setItem('roamReadingMode','continuous');")
             return context
         def new_page(context):
             page = context.new_page()

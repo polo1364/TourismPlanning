@@ -109,7 +109,7 @@ def run(args):
             browser = getattr(p, engine).launch(headless=True)
             context = browser.new_context(**p.devices[device], http_credentials=auth, timezone_id='Asia/Taipei', service_workers='block')
             seed = {'date': '2026-11-09', 'day_title': '原有旅程', 'summary': '不可被覆寫', 'itinerary': [{'time': '08:00', 'title': '原始站點', 'type': 'SPOT', 'userNote': '保留原筆記'}]}
-            context.add_init_script("""(() => {if(!localStorage.mobileImportSeeded){localStorage.setItem('aiProvider','deepseek');localStorage.setItem('roamReadingMode','continuous');localStorage.setItem('tripDraft_v27',JSON.stringify({city:'原有旅程',hasHotel:false}));localStorage.setItem('myTrip_v27',JSON.stringify([SEED]));localStorage.mobileImportSeeded='yes';}})();""".replace('SEED', json.dumps(seed, ensure_ascii=False)))
+            context.add_init_script("""(() => {if(!localStorage.mobileImportSeeded){localStorage.setItem('aiProvider','codex');localStorage.setItem('roamReadingMode','continuous');localStorage.setItem('tripDraft_v27',JSON.stringify({city:'原有旅程',hasHotel:false}));localStorage.setItem('myTrip_v27',JSON.stringify([SEED]));localStorage.mobileImportSeeded='yes';}})();""".replace('SEED', json.dumps(seed, ensure_ascii=False)))
             def route_request(route):
                 request = route.request
                 parsed = urlsplit(request.url)

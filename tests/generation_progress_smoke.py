@@ -22,11 +22,11 @@ class ProgressNetwork(Network):
         codex = url.port == 8081
         if codex and url.path == '/status':
             return route.fulfill(json={'ready': True, 'auth': 'chatgpt', 'token': 'test-only'})
-        if (codex and url.path == '/generate') or url.hostname == 'api.deepseek.com':
+        if (codex and url.path == '/generate') or url.hostname == 'api.anthropic.com':
             if route.request.method == 'OPTIONS':
                 return route.fulfill(status=204)
             self.calls += 1
-            payload = {'data': sample_day()} if codex else {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(sample_day())}}]}
+            payload = {'data': sample_day()} if codex else {"id": "msg_mock", "type": "message", "role": "assistant", "model": "claude-opus-5-5", "stop_reason": "end_turn", "stop_sequence": None, "content": [{"type": "text", "text": json.dumps(sample_day())}], "usage": {"input_tokens": 1, "output_tokens": 1}}
             self.pending_responses.append((route, payload))
             return
         return super().route(route)
@@ -48,11 +48,11 @@ def main():
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
-        for provider in ['deepseek', 'codex']:
+        for provider in ['claude', 'codex']:
             for width in [1440, 390]:
                 label = f'{provider}-{width}'
                 context = browser.new_context(viewport={'width': width, 'height': 950}, is_mobile=width == 390, has_touch=width == 390)
-                context.add_init_script(f"localStorage.setItem('aiProvider','{provider}');sessionStorage.setItem('deepseekApiKey','test-only')")
+                context.add_init_script(f"localStorage.setItem('aiProvider','{provider}');sessionStorage.setItem('claudeApiKey','test-only')")
                 net = ProgressNetwork()
                 context.route('**/*', net.route)
                 page = context.new_page()

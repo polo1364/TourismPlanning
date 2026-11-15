@@ -50,7 +50,7 @@ class ImportNetwork(Network):
         super().__init__()
         self.result = response()
         self.ocr_requests = []
-        self.deepseek_requests = []
+        self.claude_requests = []
 
     @staticmethod
     def cors(route):
@@ -61,8 +61,8 @@ class ImportNetwork(Network):
         if '/vendor/tesseract/' in url.path:
             self.ocr_requests.append(route.request.url)
             return route.abort()
-        if url.hostname == "api.deepseek.com":
-            self.deepseek_requests.append(route.request.url)
+        if url.hostname == "api.anthropic.com":
+            self.claude_requests.append(route.request.url)
             return route.abort()
         if url.hostname != "127.0.0.1" or url.port != 8081:
             return super().route(route)
@@ -134,7 +134,7 @@ def main():
                 network = ImportNetwork()
                 context.route("**/*", network.route)
                 legacy = {"i": {"city": "台北", "hasHotel": False, "flightArrival": START + "T08:00", "flightDeparture": START + "T20:00"}, "t": [sample_day()], "g": None}
-                context.add_init_script("""localStorage.setItem('aiProvider','deepseek');localStorage.setItem('roamReadingMode','continuous');if(!localStorage.importSeeded){const d=SEED;localStorage.setItem('tripDraft_v27',JSON.stringify(d.i));localStorage.setItem('myTrip_v27',JSON.stringify(d.t));localStorage.importSeeded='yes';}""".replace("SEED", json.dumps(legacy, ensure_ascii=False)))
+                context.add_init_script("""localStorage.setItem('aiProvider','codex');localStorage.setItem('roamReadingMode','continuous');if(!localStorage.importSeeded){const d=SEED;localStorage.setItem('tripDraft_v27',JSON.stringify(d.i));localStorage.setItem('myTrip_v27',JSON.stringify(d.t));localStorage.importSeeded='yes';}""".replace("SEED", json.dumps(legacy, ensure_ascii=False)))
                 page = context.new_page()
                 page.set_default_timeout(15000)
                 errors = []
@@ -216,7 +216,7 @@ def main():
                     record_check("AI receives all selected and appended files", all(marker in prompt for marker in ["TXT來源標記", "Markdown來源標記", "Dadaocheng", "追加來源標記"]))
                     images = network.ai_requests[-1]['images']
                     record_check("all image and scanned PDF attachments share one Codex request", len(network.ai_requests) == 1 and [image['name'] for image in images] == ['第四份.png', '第五份掃描.pdf'] and all(image['dataBase64'] and image['page'] == 1 for image in images) and all(name in prompt for name in ['第四份.png', '第五份掃描.pdf']))
-                    record_check("import always uses Codex without altering the global provider", page.evaluate("!CodexLocal.selected() && localStorage.aiProvider==='deepseek'") and not network.deepseek_requests)
+                    record_check("import uses the selected Codex service without changing the provider", page.evaluate("CodexLocal.selected() && localStorage.aiProvider==='codex'") and not network.claude_requests)
                     preview_before = page.locator("#itineraryImportPreview").text_content()
                     page.locator("#itinerarySourceFile").set_input_files([
                         {"name": "不應部分加入.txt", "mimeType": "text/plain", "buffer": "這份不能部分寫入".encode("utf-8")},
@@ -406,7 +406,7 @@ def main():
                         page.wait_for_function("!isBusy && !!document.getElementById('itineraryImportError').textContent.trim()")
                         record_check("20-journey limit preserves library", saved_state() == full_state and len(json.loads(full_state)["trips"]) == 20)
                     record_check("no uncaught browser exceptions", not errors)
-                    record_check('no DeepSeek fallback or local OCR requests occur', not network.deepseek_requests and not network.ocr_requests)
+                    record_check('no Claude fallback or local OCR requests occur', not network.claude_requests and not network.ocr_requests)
                 except Exception as exc:
                     failures.append({"viewport": label, "error": str(exc), "trace": traceback.format_exc(), "page_errors": errors})
                     shot = ARTIFACTS / f"itinerary-import-failure-{label}.png"
@@ -416,7 +416,7 @@ def main():
             browser.close()
     finally:
         server.shutdown()
-    report = {"checks": checks, "failures": failures, "screenshots": screenshots, "passed": not failures and all(c["passed"] for c in checks), "limits": ["Codex import responses are mocked; no real account quota or vision model quality was tested.", "Chromium mobile viewports are emulation, not physical-phone verification.", "PDF and PNG fixtures are prepared as real attachments; no local OCR or DeepSeek requests are allowed."]}
+    report = {"checks": checks, "failures": failures, "screenshots": screenshots, "passed": not failures and all(c["passed"] for c in checks), "limits": ["Codex import responses are mocked; no real account quota or vision model quality was tested.", "Chromium mobile viewports are emulation, not physical-phone verification.", "PDF and PNG fixtures are prepared as real attachments; no local OCR or Claude requests are allowed."]}
     report_path = ARTIFACTS / "itinerary-import-report.json"
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))

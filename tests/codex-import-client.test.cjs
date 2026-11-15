@@ -6,7 +6,7 @@ const vm = require('node:vm');
 
 function client({ cloud = true, local = false, respond } = {}) {
     const requests = [], timeouts = [];
-    const elements = { aiProvider: { value: 'deepseek' }, codexStatus: {}, codexTokenUsage: {} };
+    const elements = { aiProvider: { value: 'claude' }, codexStatus: {}, codexTokenUsage: {} };
     const context = vm.createContext({
         window: { ROAM_CLOUD: cloud }, location: { protocol: local ? 'http:' : 'https:', hostname: local ? '127.0.0.1' : 'travel.example' },
         document: { getElementById: id => elements[id] }, localStorage: { getItem: () => null }, isBusy: false,
@@ -31,7 +31,7 @@ for (const local of [false, true]) test(`import sends all attachments once to Co
     assert.equal(requests[1].options.headers['X-Roam-Token'], 'test-token');
     assert.ok(timeouts.includes(195000));
     assert.match(elements.codexTokenUsage.textContent, /15 Token/);
-    assert.equal(elements.aiProvider.value, 'deepseek');
+    assert.equal(elements.aiProvider.value, 'claude');
     await api.generate('ordinary planning', new AbortController().signal);
     assert.ok(requests[2].url.endsWith('/generate'));
     assert.equal('images' in JSON.parse(requests[2].options.body), false);

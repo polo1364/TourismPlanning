@@ -19,7 +19,7 @@ class BookNetwork(Network):
         self.pending_books = []
 
     def route(self, route):
-        if urlparse(route.request.url).hostname != 'api.deepseek.com':
+        if urlparse(route.request.url).hostname != 'api.anthropic.com':
             return super().route(route)
         body = route.request.post_data_json
         prompt = body['messages'][-1]['content']
@@ -29,7 +29,7 @@ class BookNetwork(Network):
         result = sample_day(title=f'第 {day} 天的旅程')
         result['itinerary'][0]['title'] = f'第{day}天獨有景點'
         result['itinerary'][1]['title'] = f'第{day}天特色餐廳'
-        payload = {'choices':[{'finish_reason':'stop','message':{'content':json.dumps(result,ensure_ascii=False)}}]}
+        payload = {"id": "msg_mock", "type": "message", "role": "assistant", "model": "claude-opus-5-5", "stop_reason": "end_turn", "stop_sequence": None, "content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}], "usage": {"input_tokens": 1, "output_tokens": 1}}
         if self.fail_day == day:
             return route.fulfill(status=503,content_type='application/json',body='{"error":{"message":"Mock unavailable"}}')
         if self.hold_day == day:
@@ -54,7 +54,7 @@ def main():
         browser=p.chromium.launch()
         for label,width in [('desktop',1440),('mobile',390)]:
             context=browser.new_context(viewport={'width':width,'height':950},is_mobile=width==390,has_touch=width==390)
-            context.add_init_script("sessionStorage.setItem('deepseekApiKey','mock-not-a-real-key')")
+            context.add_init_script("sessionStorage.setItem('claudeApiKey','mock-not-a-real-key')")
             net=BookNetwork();context.route('**/*',net.route)
             page=context.new_page();errors=[]
             page.on('pageerror',lambda e:errors.append(str(e)))

@@ -4,7 +4,7 @@
     const browserApi = !cloudPage && location.protocol === 'https:' ? window.OpenAIBrowser : null;
     const BASE = cloudPage ? '/codex' : 'http://127.0.0.1:8081';
     const localPage = location.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(location.hostname);
-    const localOnlyMessage = 'Codex 額度僅供本機版使用。請下載專案並執行「啟動Codex旅遊書.vbs」；線上版可手動選用自己的 DeepSeek API Key。';
+    const localOnlyMessage = 'Codex 額度僅供本機版使用。請下載專案並執行「啟動Codex旅遊書.vbs」；線上版可手動選用自己的 Claude API Key。';
     const $ = id => document.getElementById(id);
     // Selection advice inferred from OpenAI model roles, checked 2026-10-30.
     // https://developers.openai.com/api/docs/guides/latest-model
@@ -132,7 +132,7 @@
     }
     function update(manual = false) {
         if (manual) touched = true;
-        $('deepseekSettings').hidden = selected();
+        $('claudeSettings').hidden = selected();
         $('codexSettings').hidden = !selected();
         if ($('settingsDone')) $('settingsDone').textContent = selected() && authMode === 'api' ? '完成' : '儲存並關閉';
         summary();
@@ -234,7 +234,9 @@
         if (browserApi) $('openaiKeyStatus').textContent = browserApi.restore();
         let saved = null;
         try { saved = localStorage.getItem('aiProvider'); } catch (_) { /* Optional preference. */ }
-        if (saved === 'codex' || saved === 'deepseek') $('aiProvider').value = saved;
+        // A saved DeepSeek preference from earlier versions maps to the Claude API option.
+        if (saved === 'codex' || saved === 'claude') $('aiProvider').value = saved;
+        else if (saved === 'deepseek') $('aiProvider').value = 'claude';
         update();
         $('hostedNotice').hidden = localPage || cloudPage;
         if (browserApi) $('hostedNotice').textContent = '資料只存在目前網站與瀏覽器，搬移請使用 JSON 備份。';

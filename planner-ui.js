@@ -338,7 +338,7 @@
         begin(() => replaceStop(target, instruction), `正在替換 ${original.title}`);
         setBusy(true);
         try {
-            const result = await callDeepSeek(key, `只替換單一站點，其他站點由程式保留。城市：${generationState?.city || $('city').value}。日期：${day.date}。原站點：${JSON.stringify(original)}。相鄰站點：${JSON.stringify(day.itinerary.slice(Math.max(0, itemIndex - 1), itemIndex + 2))}。需求：${instruction}。旅人偏好：${generationState?.combinedPrefs || ''}。回傳 JSON {"item":{"title":"名稱","type":"SPOT","desc":"介紹","address":"地址","cost":"預估費用","tips":"提醒","booking":false}}。不要宣稱營業資訊已查證。`);
+            const result = await callModel(key, `只替換單一站點，其他站點由程式保留。城市：${generationState?.city || $('city').value}。日期：${day.date}。原站點：${JSON.stringify(original)}。相鄰站點：${JSON.stringify(day.itinerary.slice(Math.max(0, itemIndex - 1), itemIndex + 2))}。需求：${instruction}。旅人偏好：${generationState?.combinedPrefs || ''}。回傳 JSON {"item":{"title":"名稱","type":"SPOT","desc":"介紹","address":"地址","cost":"預估費用","tips":"提醒","booking":false}}。不要宣稱營業資訊已查證。`);
             if (!result?.item || typeof result.item.title !== 'string' || !result.item.title.trim()) throw new Error('單站回應格式不完整，原行程已保留。');
             const days = structuredClone(tripData);
             const replacement = normalizeDay({ date: day.date, day_title: day.day_title, itinerary: [result.item] }).itinerary[0];

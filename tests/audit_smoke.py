@@ -23,7 +23,7 @@ def main():
             net = Network()
             context.route('**/*', net.route)
             legacy = {'i': {'city': '台北', 'hasHotel': False, 'flightArrival': START+'T08:00', 'flightDeparture': END+'T20:00'}, 't': [sample_day(), sample_day(END)], 'g': {'city': '台北', 'flightArr': START+'T08:00', 'flightDep': END+'T20:00', 'tags': []}}
-            context.add_init_script("""if(!localStorage.seeded){const d=PAYLOAD;for(const [k,v] of Object.entries({tripDraft_v27:d.i,myTrip_v27:d.t,generationState_v27:d.g}))localStorage.setItem(k,JSON.stringify(v));localStorage.seeded='1';} sessionStorage.setItem('deepseekApiKey','mock-not-a-real-key');""".replace('PAYLOAD', json.dumps(legacy)))
+            context.add_init_script("""if(!localStorage.seeded){const d=PAYLOAD;for(const [k,v] of Object.entries({tripDraft_v27:d.i,myTrip_v27:d.t,generationState_v27:d.g}))localStorage.setItem(k,JSON.stringify(v));localStorage.seeded='1';} sessionStorage.setItem('claudeApiKey','mock-not-a-real-key');""".replace('PAYLOAD', json.dumps(legacy)))
             page = context.new_page()
             errors = []
             page.on('pageerror', lambda e: errors.append(str(e)))

@@ -81,7 +81,7 @@ def run(args):
             print(json.dumps({'stage': 'browser ready', 'profile': args.profile}), flush=True)
             return result
         context = new_context()
-        context.add_init_script("localStorage.setItem('aiProvider','deepseek');localStorage.setItem('roamReadingMode','continuous');")
+        context.add_init_script("localStorage.setItem('aiProvider','codex');localStorage.setItem('roamReadingMode','continuous');")
         def route_request(route):
             request = route.request
             parsed = urlsplit(request.url)

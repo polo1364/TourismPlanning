@@ -121,6 +121,8 @@ body[data-scene='town'] #itineraryPanel #tripContainer > details > summary::befo
 #itineraryPanel .schedule-transport .schedule-kind { color: var(--card-blue); background: #c9d6f2b3; }
 #itineraryPanel .chapter-context .chapter-intro { line-height: 1.95; }
 #itineraryPanel .chapter-context .chapter-intro { font-family: var(--sans, sans-serif); font-size: 15px; line-height: 1.9; overflow-wrap: anywhere; }
+/* Drop cap only on a generated one-paragraph summary; grouped import notes start with headings instead. */
+#itineraryPanel .chapter-context .chapter-intro > p:first-child::first-letter { float: left; margin: 6px 8px 0 0; font-family: var(--kai); font-size: 2.2em; line-height: 1; color: #a8261d; }
 #itineraryPanel .summary-overview { margin: 20px 0; padding: 18px 20px; background: #f4f3eb; border-radius: 6px; }
 #itineraryPanel .summary-overview h4 { margin: 0 0 12px; color: var(--card-muted); font-size: 13px; letter-spacing: .08em; }
 #itineraryPanel .summary-overview p, #itineraryPanel .summary-review-copy p { margin: 0 0 12px; }

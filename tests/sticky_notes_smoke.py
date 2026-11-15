@@ -25,7 +25,7 @@ def main():
             context = browser.new_context(viewport={'width': width, 'height': 1000}, reduced_motion='reduce', accept_downloads=True)
             network = Network()
             context.route('**/*', network.route)
-            context.add_init_script("sessionStorage.setItem('deepseekApiKey','mock-not-a-real-key')")
+            context.add_init_script("sessionStorage.setItem('claudeApiKey','mock-not-a-real-key')")
             context.add_init_script("if(!localStorage.notesSeeded){localStorage.setItem('myTrip_v27',JSON.stringify([DAY]));localStorage.notesSeeded='true';}".replace('DAY', json.dumps(day, ensure_ascii=False)))
             page = context.new_page()
             errors = []
@@ -45,7 +45,8 @@ def main():
                 page.locator('#noteModal').wait_for(state='hidden')
 
             check(f'{width} empty legacy journey has add buttons', page.locator('.stop-note').count() == 0 and page.locator('#tripContainer .note-open').count() == len(day['itinerary']))
-            check(f'{width} names are labels inside intact sentence', page.locator('.chapter-intro').inner_text() == day['summary'] and page.locator('.chapter-intro .inline-place').count() == 4)
+            # A generated summary is shown as one plain paragraph: no grouping headings, sentence intact.
+            check(f'{width} names are labels inside intact sentence', page.locator('.chapter-intro').inner_text() == day['summary'] and page.locator('.chapter-intro .summary-overview').count() == 0 and page.locator('.chapter-intro .inline-place').count() == 4)
             open_note()
             page.locator('#noteText').fill('未儲存草稿')
             page.keyboard.press('Escape')

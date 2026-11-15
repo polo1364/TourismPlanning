@@ -27,7 +27,7 @@ test('Pages artifact contains only the allowlisted frontend and all relative HTM
 
 for (const saved of [null, 'codex']) {
     test(`public origin never probes loopback or silently switches saved provider (${saved})`, async () => {
-        const elements = Object.fromEntries(['aiProvider', 'deepseekSettings', 'codexSettings', 'codexStatus', 'hostedNotice'].map(id => [id, { value: id === 'aiProvider' ? 'deepseek' : '', hidden: true }]));
+        const elements = Object.fromEntries(['aiProvider', 'claudeSettings', 'codexSettings', 'codexStatus', 'hostedNotice'].map(id => [id, { value: id === 'aiProvider' ? 'claude' : '', hidden: true }]));
         let requests = 0;
         const context = vm.createContext({
             location: { protocol: 'https:', hostname: 'polo1364.github.io' },
@@ -39,7 +39,7 @@ for (const saved of [null, 'codex']) {
         vm.runInContext(fs.readFileSync(path.join(__dirname, '../codex-local.js'), 'utf8'), context);
         await context.window.CodexLocal.init();
         assert.equal(elements.hostedNotice.hidden, false);
-        assert.equal(elements.aiProvider.value, saved || 'deepseek');
+        assert.equal(elements.aiProvider.value, saved || 'claude');
         await assert.rejects(context.window.CodexLocal.generate('test'), /僅供本機版/);
         assert.equal(requests, 0);
     });

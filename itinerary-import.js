@@ -24,7 +24,7 @@
         // Source text, filenames and images never grant date-selection permission.
         const text = manual.map(item => item.text).join('\n').normalize('NFKC');
         if (/(?:不|別|勿|禁止|取消)[^，,。；;\n]{0,16}(?:隨意|隨便|暫定|自行|決定|安排)/u.test(text)) return false;
-        return /日期\s*(?:先|可以|可|暫時|都)?\s*(?:隨意|隨便)(?:[，,。；;！!\s]|$)|(?:請|讓|由)\s*Codex\s*(?:選擇|選|安排)\s*暫定日期/iu.test(text);
+        return /日期\s*(?:先|可以|可|暫時|都)?\s*(?:隨意|隨便)(?:[，,。；;！!\s]|$)|(?:請|讓|由)\s*(?:Codex|Claude|AI)\s*(?:選擇|選|安排)\s*暫定日期/iu.test(text);
     }
     function makePrompt(text, { city = '', start = '', images = [], corrections = [] } = {}) {
         if (typeof text !== 'string' || (!text.trim() && !images.length)) throw new Error('請先讀取檔案或貼上行程文字。');
@@ -341,10 +341,14 @@ ${JSON.stringify(text)}`;
         if (typeof encoded !== 'string' || !encoded.length || encoded.length % 4) throw new Error('圖片附件格式無效，請重新選取檔案。');
         return encoded.length / 4 * 3 - (encoded.endsWith('==') ? 2 : encoded.endsWith('=') ? 1 : 0);
     }
-    function status(text) { $('itineraryImportStatus').textContent = root.CodexLocal?.billing?.() === 'api' ? text.replaceAll('Codex', 'OpenAI API') : text; }
+    // Messages are written for Codex; name the service that actually reads the sources.
+    const claudeMode = () => !root.CodexLocal?.selected();
+    const providerName = () => claudeMode() ? 'Claude' : root.CodexLocal?.billing?.() === 'api' ? 'OpenAI API' : 'Codex';
+    const named = text => providerName() === 'Codex' ? text : String(text).replaceAll('Codex', providerName());
+    function status(text) { $('itineraryImportStatus').textContent = named(text); }
     function startProgress(task, phase) {
         const codex = phase === 'codex';
-        const provider = root.CodexLocal?.billing?.() === 'api' ? 'OpenAI API' : 'Codex';
+        const provider = providerName();
         const started = performance.now();
         $('itineraryWorkPanel').classList.add('is-running');
         $('itineraryWorkHeading').hidden = false;
@@ -367,7 +371,27 @@ ${JSON.stringify(text)}`;
         $('itineraryWorkHeading').hidden = true;
         $('itineraryWorkActivity').hidden = true;
     }
-    function error(text = '') { $('itineraryImportError').textContent = text; $('itineraryImportError').hidden = !text; }
+    function error(text = '') { $('itineraryImportError').textContent = named(text); $('itineraryImportError').hidden = !text; }
+    // Claude reads images best at most 1568 px on the long edge, and many-image requests reject larger ones.
+    async function claudeImages(images, signal) {
+        const result = [];
+        for (const image of images) {
+            signal.throwIfAborted();
+            const bytes = Uint8Array.from(atob(image.dataBase64), char => char.charCodeAt(0));
+            const bitmap = await createImageBitmap(new Blob([bytes], { type: image.mime }));
+            try {
+                const scale = Math.min(1, 1568 / Math.max(bitmap.width, bitmap.height));
+                if (scale === 1) { result.push(image); continue; }
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round(bitmap.width * scale)); canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+                const context = canvas.getContext('2d');
+                context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height);
+                context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                result.push({ ...image, mime: 'image/jpeg', dataBase64: canvas.toDataURL('image/jpeg', 0.9).split(',')[1] });
+            } finally { bitmap.close(); }
+        }
+        return result;
+    }
     function invalidate() {
         candidate = null;
         candidateInput = '';
@@ -560,13 +584,18 @@ ${JSON.stringify(text)}`;
         invalidate();
         await run(async (signal, current) => {
             const options = { city: $('itineraryImportCity').value.trim(), start: $('itineraryImportStart').value, images: sourceImages, corrections: manualValues() };
-            if (!root.CodexLocal?.importsAvailable()) throw new Error('請使用 HTTPS 網址開啟 GitHub 版並設定 OpenAI API Key；已選檔案與文字仍保留。');
+            const claude = claudeMode(), claudeKey = $('apiKey')?.value.trim() || '';
+            if (claude && !claudeKey) throw new Error('請先在服務設定填入 Claude API Key；已選檔案與文字仍保留。');
+            if (claude && !root.ClaudeClient) throw new Error('Claude 元件未載入，請重新整理頁面；已選檔案與文字仍保留。');
+            if (!claude && !root.CodexLocal?.importsAvailable()) throw new Error('請使用 HTTPS 網址開啟 GitHub 版並設定 OpenAI API Key；已選檔案與文字仍保留。');
             const prompt = makePrompt($('itinerarySourceText').value, { ...options, images: sourceImages });
             // Match the dedicated import endpoint's prompt-character limit.
             if (prompt.length > 60000) throw new Error('文字與附件來源說明過長，請縮短行程文字或檔名再整理。');
-            status(root.CodexLocal?.billing?.() === 'api' ? '正在使用 OpenAI API 額度，讀取所有來源並整合行程，請稍候…' : '正在使用 Codex 登入帳號額度，讀取所有來源並整合行程，請稍候…');
+            status(claude ? '正在使用 Claude API 額度，讀取所有來源並整合行程，請稍候…' : root.CodexLocal?.billing?.() === 'api' ? '正在使用 OpenAI API 額度，讀取所有來源並整合行程，請稍候…' : '正在使用 Codex 登入帳號額度，讀取所有來源並整合行程，請稍候…');
             const inputSignature = signature();
-            const result = await root.CodexLocal.importItinerary(prompt, sourceImages, signal);
+            const result = claude
+                ? await root.ClaudeClient.readItinerary({ key: claudeKey, model: $('modelSelect').value, prompt, images: await claudeImages(sourceImages, signal), signal })
+                : await root.CodexLocal.importItinerary(prompt, sourceImages, signal);
             if (!current()) return;
             if (inputSignature !== signature()) throw new Error('來源或補充已變更，請重新整合後再另存。');
             showCorrections(result);
@@ -597,10 +626,16 @@ ${JSON.stringify(text)}`;
         if (apiBilling) $('itineraryPrivacy').textContent = '按「使用 API 額度讀取並整合」才傳送原檔內容、PDF 頁圖與補充至 OpenAI 並計費；刪除文字不會移除圖片內容，請先確認附件中的個人資料。';
         $('itineraryImportSettings').textContent = apiBilling ? 'API 與模型設定' : '連線與模型設定';
         $('itineraryCodexNotice').hidden = !!root.CodexLocal?.importsAvailable();
+        if (claudeMode()) {
+            $('itineraryParseButton').textContent = '使用 Claude API 讀取並整合';
+            $('itineraryPrivacy').textContent = '選檔只在本機準備附件。按「使用 Claude API 讀取並整合」才會把原檔文字、圖片與 PDF 頁圖和補充內容傳送至 Anthropic 的 Claude API 並計費；刪除文字不會移除圖片內容，請先確認附件中的個人資料。';
+            $('itineraryImportSettings').textContent = 'Claude API 與模型設定';
+            $('itineraryCodexNotice').hidden = true;
+        }
         openModal('itineraryImportModal');
         syncControls();
     }
-    function settings() { closeModal('itineraryImportModal'); openModal('apiModal'); $('codexSettings').hidden = false; }
+    function settings() { closeModal('itineraryImportModal'); openModal('apiModal'); if (!claudeMode()) $('codexSettings').hidden = false; }
     function init() {
         if ($('itineraryImportModal')) return;
         document.body.insertAdjacentHTML('beforeend', `<div id="itineraryImportModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="itineraryImportTitle"><div class="modal-content itinerary-import-content">

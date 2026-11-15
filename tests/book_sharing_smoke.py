@@ -56,7 +56,7 @@ def main():
                 day = sample_day()
                 day['itinerary'][0]['userNote'] = '記得帶水，集合時間 09:00。'
                 page.evaluate('''async day => { tripData = [day]; generationState = {city:'台北分享示範'};
-                    sessionStorage.setItem('deepseekApiKey','SHARE_SECRET_MUST_STAY_PRIVATE'); await renderTrip(); }''', day)
+                    sessionStorage.setItem('claudeApiKey','SHARE_SECRET_MUST_STAY_PRIVATE'); await renderTrip(); }''', day)
                 page.locator('#itineraryTab').click()
                 original = page.evaluate('JSON.stringify(tripData)')
                 page.locator('#createBookShare').click()

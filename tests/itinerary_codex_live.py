@@ -34,7 +34,7 @@ def run(args):
         png = fixture.screenshot()
         fixture.close()
         context = browser.new_context(http_credentials=auth, viewport={"width": 1440, "height": 1050}, timezone_id="Asia/Taipei", service_workers="block")
-        context.add_init_script("localStorage.setItem('aiProvider','deepseek');localStorage.setItem('roamReadingMode','continuous');")
+        context.add_init_script("localStorage.setItem('aiProvider','codex');localStorage.setItem('roamReadingMode','continuous');")
 
         def route_request(route):
             request = route.request

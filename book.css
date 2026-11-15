@@ -1,6 +1,9 @@
 /* Digital atlas: a focused brief, followed by one readable chapter at a time. */
 .codex-usage { margin-top: 16px; padding: 16px; border: 1px solid #2c4059; border-radius: 12px; background: #0b1728; }
 .modal-content .codex-usage .field-hint { color: #b5c7da; }
+/* Labels and links inside the dark usage panel need light text to stay readable. */
+#apiModal .codex-usage label { color: #e7f1fb; font-weight: 700; }
+#apiModal .codex-usage a { color: #8aede7; }
 .codex-usage-heading, .codex-quota-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .codex-usage-heading button { width: auto; margin: 0; }
 .codex-quota { margin: 14px 0; overflow-wrap: anywhere; }

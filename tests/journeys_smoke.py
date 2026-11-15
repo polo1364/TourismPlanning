@@ -26,7 +26,7 @@ def main():
             for label,width in [('desktop',1440),('mobile',390)]:
                 context=browser.new_context(viewport={'width':width,'height':950},timezone_id='Asia/Taipei',accept_downloads=True)
                 network=Network(); context.route('**/*',network.route)
-                context.add_init_script("""window.testNow='2026-11-10T02:00:00Z'; const RealDate=Date; window.Date=class extends RealDate {constructor(...a){super(...(a.length?a:[window.testNow]));} static now(){return new RealDate(window.testNow).getTime();}}; sessionStorage.setItem('deepseekApiKey','mock-not-a-real-key');""")
+                context.add_init_script("""window.testNow='2026-11-10T02:00:00Z'; const RealDate=Date; window.Date=class extends RealDate {constructor(...a){super(...(a.length?a:[window.testNow]));} static now(){return new RealDate(window.testNow).getTime();}}; sessionStorage.setItem('claudeApiKey','mock-not-a-real-key');""")
                 context.add_init_script("""if(!localStorage.testSeeded){const data=PAYLOAD;localStorage.setItem('tripDraft_v27',JSON.stringify(data.i));localStorage.setItem('myTrip_v27',JSON.stringify(data.t));localStorage.setItem('generationState_v27',JSON.stringify(data.g));localStorage.testSeeded='true';}""".replace('PAYLOAD',json.dumps(legacy,ensure_ascii=False)))
                 page=context.new_page(); page.set_default_timeout(12000)
                 errors=[]; page.on('pageerror',lambda e:errors.append(str(e))); page.on('dialog',lambda d:d.accept())

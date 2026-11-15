@@ -97,7 +97,7 @@ class LiveNetwork:
             return route.fulfill(status=200, headers=cors, content_type="application/json", body=json.dumps(value))
         if local_bridge and request.method == "OPTIONS":
             return route.fulfill(status=204, headers=cors)
-        if parsed.hostname == "api.deepseek.com":
+        if parsed.hostname == "api.anthropic.com":
             self.blocked_mutations.append({"method": request.method, "path": parsed.path})
             return route.abort()
         if request.method not in {"GET", "HEAD"}:
@@ -190,8 +190,8 @@ def run(args):
             context.on("response", network.response)
             legacy = {"i": {"city": "原測試旅程", "hasHotel": False}, "t": [{"date": DATE, "day_title": "原測試旅程", "summary": "須完整保留", "itinerary": [{"title": "原站點", "time": "08:00", "type": "SPOT", "userNote": "原筆記"}]}]}
             context.add_init_script("""(() => {
-                localStorage.setItem('aiProvider','deepseek');
-                sessionStorage.setItem('deepseekApiKey','mock-not-a-real-key');
+                localStorage.setItem('aiProvider','codex');
+                sessionStorage.setItem('claudeApiKey','mock-not-a-real-key');
                 localStorage.setItem('roamReadingMode','continuous');
                 if (!localStorage.liveImportSeeded) {
                     const seed=SEED;
@@ -209,7 +209,7 @@ def run(args):
                 navigation = page.goto(args.url, wait_until="networkidle", timeout=60000)
                 check(label, "real website document loads", navigation is not None and navigation.status == 200)
                 page.wait_for_selector("#openItineraryImport")
-                check(label, "global DeepSeek preference does not control Codex import", page.locator("#aiProvider").input_value() == "deepseek")
+                check(label, "selected Codex service drives the import", page.locator("#aiProvider").input_value() == "codex")
                 page.evaluate("""() => {const days=structuredClone(tripData);days[0].summary+='，含復原紀錄';TripLibrary.write({myTrip_v27:JSON.stringify(days)},{label:'部署驗收測試'});} """)
                 original = page.evaluate("TripLibrary.active()")
                 original_raw = page.evaluate("localStorage.tourismTrips_v1")

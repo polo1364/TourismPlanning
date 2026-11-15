@@ -36,7 +36,7 @@ def main():
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(f'http://127.0.0.1:{server.server_port}/', wait_until='networkidle')
         page.evaluate('''async days => {
-            sessionStorage.setItem('deepseekApiKey', 'PRIVATE_KEY_MUST_NOT_EXPORT');
+            sessionStorage.setItem('claudeApiKey', 'PRIVATE_KEY_MUST_NOT_EXPORT');
             localStorage.setItem('unrelated-journey', 'OTHER_TRIP_MUST_NOT_EXPORT');
             tripData = days; generationState = {city:'台北與花蓮', apiKey:'STATE_KEY_MUST_NOT_EXPORT'};
             await renderTrip();

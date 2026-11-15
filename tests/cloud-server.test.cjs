@@ -191,14 +191,15 @@ test('cloud frontend probes same-origin endpoint and preserves selected provider
     const vm = require('node:vm');
     const fs = require('node:fs');
     const path = require('node:path');
-    for (const saved of [null, 'deepseek']) {
-        const elements = Object.fromEntries(['aiProvider', 'deepseekSettings', 'codexSettings', 'codexStatus', 'hostedNotice', 'codexHelp', 'codexConnectionCheck'].map(id => [id, { value: id === 'aiProvider' ? 'deepseek' : '', querySelector: () => ({}), hidden: true }]));
+    // A provider saved by an earlier DeepSeek version is kept as the Claude API option.
+    for (const [saved, expected] of [[null, 'codex'], ['claude', 'claude'], ['deepseek', 'claude']]) {
+        const elements = Object.fromEntries(['aiProvider', 'claudeSettings', 'codexSettings', 'codexStatus', 'hostedNotice', 'codexHelp', 'codexConnectionCheck'].map(id => [id, { value: id === 'aiProvider' ? 'claude' : '', querySelector: () => ({}), hidden: true }]));
         const urls = [];
         const context = vm.createContext({ location: { protocol: 'https:', hostname: 'travel.example.test' }, document: { getElementById: id => elements[id] }, window: { ROAM_CLOUD: true }, localStorage: { getItem: key => key === 'aiProvider' ? saved : null }, updateApiStatus() {}, isBusy: false, AbortSignal,
             fetch: async url => { urls.push(url); return { ok: true, json: async () => ({ ready: true, auth: 'chatgpt', token: 'mock', data: { ok: true } }) }; } });
         vm.runInContext(fs.readFileSync(path.join(__dirname, '../codex-local.js'), 'utf8'), context);
         await context.window.CodexLocal.init();
-        assert.equal(elements.aiProvider.value, saved || 'codex');
+        assert.equal(elements.aiProvider.value, expected);
         assert.equal(elements.hostedNotice.hidden, true);
         await context.window.CodexLocal.generate('test');
         assert.deepEqual(urls, ['/codex/status', '/codex/generate']);

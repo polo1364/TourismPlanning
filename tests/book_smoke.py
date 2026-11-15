@@ -19,7 +19,7 @@ def main():
         browser = p.chromium.launch()
         for label, width in [('desktop', 1440), ('mobile', 390)]:
             context = browser.new_context(viewport={'width': width, 'height': 1000}, is_mobile=width==390, has_touch=width==390)
-            context.add_init_script("sessionStorage.setItem('deepseekApiKey','mock-not-a-real-key')")
+            context.add_init_script("sessionStorage.setItem('claudeApiKey','mock-not-a-real-key')")
             net = Network()
             context.route('**/*', net.route)
             page = context.new_page()

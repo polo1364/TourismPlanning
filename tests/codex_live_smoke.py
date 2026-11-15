@@ -30,7 +30,7 @@ def main():
             'date_is_correct':page.evaluate(f"tripData[0]?.date==='{START}'"),
             'completed_and_saved': '100%' in page.locator('#operationText').inner_text() and page.evaluate('JSON.parse(localStorage.myTrip_v27||"[]").length===1'),
             'readable_book': page.locator('#bookNavigation').is_visible(),
-            'no_paid_deepseek_calls':len(net.ai_requests)==0,
+            'no_paid_claude_calls':len(net.ai_requests)==0,
             'no_page_errors':not errors,
         }
         report={'checks':[{'name':k,'passed':bool(v)} for k,v in checks.items()], 'passed':all(checks.values()),'scope':'Real local Codex using ChatGPT login; isolated demo data; weather and exchange rates mocked.'}
