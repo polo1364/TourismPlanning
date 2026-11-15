@@ -246,7 +246,9 @@
             $('codexHelp').textContent = '由你的 Oracle 主機生成，電腦關機也能使用。生成時請保持手機頁面開啟；中斷後可手動接續。';
         }
         const connected = await check();
-        if ((authMode === 'api' || !saved) && !touched && (connected || authMode === 'api') && !isBusy) { $('aiProvider').value = 'codex'; update(); }
+        // Without a saved choice (or with the old DeepSeek one) a ready Codex/OpenAI connection is picked;
+        // an explicit Claude API choice is kept on every reload.
+        if ((authMode === 'api' || !saved) && saved !== 'claude' && !touched && (connected || authMode === 'api') && !isBusy) { $('aiProvider').value = 'codex'; update(); }
     }
     async function saveApiKey() {
         if (isBusy || $('openaiSaveKey').disabled) return;
