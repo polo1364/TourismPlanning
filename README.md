@@ -242,8 +242,6 @@ python tests/journeys_smoke.py
 python tests/audit_smoke.py
 ```
 
-本次缺陷、驗證範圍與前後畫面見 `AUDIT.md`；跨流程報告位於 `artifacts/audit-report.json`。
-
 ## 插畫封面與動態
 
 頁首可切換「海岸日光／街巷夜色」，並同步改變旅程總覽的封面；尚未建立行程時，另一幅插畫會顯示為明信片。兩張圖都是原創旅行意象，不代表所選目的地的實景。圖片由內建 imagegen 生成，儲存在本機 `assets/`，完整提示詞與尺寸見 [素材說明](assets/README.md)。原始 PNG 合計約 6.2 MB，首次載入需要讀取這些圖片。
