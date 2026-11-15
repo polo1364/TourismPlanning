@@ -43,13 +43,13 @@ python tests/itinerary_import_smoke.py
 
 `itinerary-file.js`／`itinerary-image.js` 準備文字及圖片附件，匯入使用 `prepareImages` 模式，不執行本機 OCR。`itinerary-import.js`／`itinerary-import.css` 管理多檔預覽、整合與另存；`codex-local.js` 在 GitHub 版透過 `openai-browser.js` 直接呼叫 Responses API，本機／私人站則使用專用匯入端點；所有來源一次讀取與整合。`scripts/sync-pdfjs.cjs` 同步鎖定版本的解析器、worker、字元對照及字型資產，`check:pdfjs` 比對 SHA-256。保留的 OCR 元件由 `scripts/sync-tesseract.cjs` 同步鎖定版本，`npm run check:tesseract` 核對各資產 SHA-256。
 
-先依下方「本機啟動」開啟服務，再於另一個終端執行圖片整合驗證：
+匯入的 PDF、TXT 與圖片附件以模擬測試驗證：
 
 ```powershell
-python tests/itinerary_import_live.py --url http://127.0.0.1:8080/ --images --report itinerary-images-local-live.json
+python tests/itinerary_import_smoke.py
 ```
 
-PDF／TXT 回歸報告為 `artifacts/itinerary-import-report.json`；圖片整合報告為 `artifacts/itinerary-images-local-live.json`。測試會實際準備 PDF 與圖片附件，Codex 回覆使用模擬，不會使用真實 AI 額度。桌機與手機尺寸使用隔離 Chromium 瀏覽器驗證；不代表已驗證實體手機、真實 Codex 的辨識整理品質或正式站部署。
+回歸報告為 `artifacts/itinerary-import-report.json`。測試會實際準備 PDF 與圖片附件，Codex 回覆使用模擬，不會使用真實 AI 額度。桌機與手機尺寸使用隔離 Chromium 瀏覽器驗證；不代表已驗證實體手機、真實 Codex 的辨識整理品質或正式站部署。
 
 ## 啟動
 
@@ -99,7 +99,7 @@ npm test
 python tests/codex_smoke.py
 ```
 
-上述測試不消耗真實額度。`tests/codex_live_smoke.py` 是需明確手動執行的實際 Codex 驗證：使用獨立瀏覽器與示範一天行程，會消耗 Codex 額度，天氣及匯率仍為固定測試回應；不會修改日常瀏覽器的旅程。報告為 `artifacts/codex-report.json` 與 `artifacts/codex-live-report.json`。
+上述測試不消耗真實額度。
 
 ## Claude API 設定
 

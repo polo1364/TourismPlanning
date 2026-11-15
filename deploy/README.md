@@ -76,6 +76,4 @@ sudo journalctl -u roam-cloud -n 30 --no-pager
 
 `python tests/openai_api_smoke.py` 驗證 API 設定與草稿保留（模擬 API）。舊版 `python tests/codex_usage_smoke.py` 僅驗證桌機／手機尺寸的額度、模型、記住選擇、缺失資料及 Token 累計。加上 `--credentials <受保護JSON檔>` 時讀取真實雲端額度／模型，但生成仍使用 fixture，不消耗生成額度。官方資料格式參考：[Codex App Server](https://learn.chatgpt.com/docs/app-server)。
 
-`tests/cloud_live_smoke.py --credentials <工作目錄外的受保護JSON檔>` 會透過真實 HTTPS 呼叫生成後端並消耗所設定服務的額度產生兩日旅遊書，僅供明確手動驗收。JSON 需有 `url`、`username`、`password`；測試不記錄其內容。天氣與匯率為模擬資料，手機尺寸測試不代表實體手機驗收。
-
 參考：[官方遠端登入](https://learn.chatgpt.com/docs/auth#login-on-headless-devices)、[Caddy HTTPS](https://caddyserver.com/docs/automatic-https)、[Oracle Always Free](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)。Always Free 有容量與閒置回收條件，不是永久可用性保證。
