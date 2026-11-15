@@ -4,6 +4,29 @@
 /* Labels and links inside the dark usage panel need light text to stay readable. */
 #apiModal .codex-usage label { color: #e7f1fb; font-weight: 700; }
 #apiModal .codex-usage a { color: #8aede7; }
+/* Settings dialog: title and save bar stay in view while the long middle scrolls. */
+#apiModal .settings-head { position: sticky; top: -24px; z-index: 2; display: flex; justify-content: space-between; align-items: center; margin: -28px -28px 14px; padding: 18px 28px 12px; background: inherit; border-bottom: 1px solid #d6d5cd; }
+#apiModal .settings-foot { position: sticky; bottom: -24px; z-index: 2; margin: 18px -28px -28px; padding: 14px 28px 18px; background: inherit; border-top: 1px solid #d6d5cd; }
+#apiModal .settings-foot .btn-primary { width: 100%; margin: 0; }
+#apiModal #claudeSettings > label:first-child { margin-top: 0; }
+#apiModal .remember-key { margin: 6px 0 4px; font-size: .9375rem; }
+#apiModal .settings-details > summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 14px; color: #2f3b52; font-weight: 700; }
+#apiModal .settings-summary-value { margin-left: auto; margin-right: 8px; color: #1f6f73; font-weight: 700; font-variant-numeric: tabular-nums; }
+#apiModal .settings-summary-value[data-low='true'] { color: #a8261d; }
+#apiModal .claude-usage { padding: 14px; }
+#apiModal .claude-usage .codex-quota { margin: 0 0 8px; }
+#apiModal .claude-usage #claudeUsageDetail { margin: 0 0 10px; font-size: .875rem; line-height: 1.7; }
+#apiModal .claude-budget-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+#apiModal .claude-budget-row label { margin: 0; font-size: .9375rem; white-space: nowrap; }
+#apiModal .claude-budget-row input { margin: 0; min-height: 44px; }
+#apiModal .claude-budget-row button { width: auto; margin: 0; padding: 8px 12px; white-space: nowrap; }
+#apiModal .claude-usage > p:last-child { margin: 10px 0 0; font-size: .875rem; line-height: 1.7; }
+@media (max-width: 520px) {
+  #apiModal .settings-head { top: -12px; margin: -22px -18px 12px; padding: 14px 18px 10px; }
+  #apiModal .settings-foot { bottom: -12px; margin: 14px -18px -22px; padding: 12px 18px 14px; }
+  #apiModal .claude-budget-row { grid-template-columns: minmax(0, 1fr) auto; }
+  #apiModal .claude-budget-row label { grid-column: 1 / -1; }
+}
 .codex-usage-heading, .codex-quota-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .codex-usage-heading button { width: auto; margin: 0; }
 .codex-quota { margin: 14px 0; overflow-wrap: anywhere; }

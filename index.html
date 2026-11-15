@@ -1624,7 +1624,7 @@
 
     <div id="apiModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
         <div class="modal-content">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+            <div class="settings-head">
                 <h3 id="settingsTitle" style="margin:0;">服務與資料設定</h3><button type="button" onclick="closeModal('apiModal')" class="modal-close" aria-label="關閉設定">×</button>
             </div>
             <label for="aiProvider">行程生成服務</label>
@@ -1663,27 +1663,30 @@
             </div>
             <div id="claudeSettings">
             <label for="apiKey">Claude API Key</label><input type="password" id="apiKey" placeholder="輸入你的 Claude API Key（sk-ant- 開頭）" autocomplete="off" spellcheck="false">
-            <label for="rememberKey" class="remember-key"><input type="checkbox" id="rememberKey"> 在這台裝置記住金鑰</label>
-            <p class="field-hint">預設僅在此分頁使用。勾選後會儲存於此瀏覽器；請勿在共用裝置勾選。金鑰不會包含在行程備份中。</p>
+            <label for="rememberKey" class="remember-key"><input type="checkbox" id="rememberKey"> 在這台裝置記住金鑰（共用裝置請勿勾選）</label>
             <label for="modelSelect">AI 模型</label>
             <select id="modelSelect">
                 <option value="claude-opus-5-5">Claude Opus 5.5 · 細緻規劃（預設）</option>
                 <option value="claude-sonnet-5-5">Claude Sonnet 5.5 · 速度與品質平衡</option>
                 <option value="claude-haiku-5-5">Claude Haiku 5.5 · 快速省費</option>
             </select>
-            <p class="field-hint">排行程、匯入行程讀檔與畫行程插圖都使用這把金鑰；內容由瀏覽器直接傳送至 Anthropic 的 Claude API，費用計入你的 API 帳戶。<a href="https://platform.claude.com/" target="_blank" rel="noopener noreferrer">前往 Claude Console 取得 API Key ↗</a></p>
-            <details id="claudeUsageDetails" class="settings-details"><summary>用量與額度</summary>
-                <section class="codex-usage" aria-labelledby="claudeUsageTitle">
-                    <strong id="claudeUsageTitle">Claude 用量（本瀏覽器估計）</strong>
+            <details id="claudeUsageDetails" class="settings-details"><summary>用量與額度<span id="claudeUsageSummary" class="settings-summary-value"></span></summary>
+                <section class="codex-usage claude-usage" aria-label="Claude 用量（本瀏覽器估計）">
                     <div id="claudeUsageMonth" role="status" aria-live="polite"></div>
                     <p id="claudeUsageDetail" class="field-hint"></p>
-                    <label for="claudeBudget">每月預算上限（美元，選填）</label>
-                    <input id="claudeBudget" type="number" min="0" step="0.5" inputmode="decimal" placeholder="例如 5；留空表示不限制">
-                    <p id="claudeBudgetError" class="field-hint" role="alert"></p>
-                    <p class="field-hint">達到上限後，這個瀏覽器會停止送出新的 Claude 請求（排行程、匯入、插圖都算）。</p>
-                    <div class="settings-key-actions"><button type="button" id="claudeUsageReset" class="btn-outline">清除用量紀錄</button></div>
-                    <p class="field-hint">只計算這個瀏覽器送出的請求，依 2026 年 11 月官方定價估算（Opus 5.5 每百萬 Token 輸入 US$4／輸出 US$20，Sonnet 5.5 為 US$2／US$10，Haiku 5.5 為 US$0.10／US$0.50）。不含其他裝置或程式；實際費用以 <a href="https://platform.claude.com/" target="_blank" rel="noopener noreferrer">Claude Console 帳單 ↗</a>為準。</p>
+                    <div class="claude-budget-row">
+                        <label for="claudeBudget">每月上限（US$）</label>
+                        <input id="claudeBudget" type="number" min="0" step="0.5" inputmode="decimal" placeholder="不限制">
+                        <button type="button" id="claudeUsageReset" class="btn-outline">清除紀錄</button>
+                    </div>
+                    <p id="claudeBudgetError" class="field-hint" role="alert" hidden></p>
+                    <p class="field-hint">本瀏覽器的估計值，到上限就停止送出新的請求；實際費用以 <a href="https://platform.claude.com/" target="_blank" rel="noopener noreferrer">Claude Console 帳單 ↗</a>為準。</p>
                 </section>
+            </details>
+            <details id="claudeSafetyDetails" class="settings-details"><summary>安全與計費說明</summary>
+                <p class="field-hint">金鑰預設只在這個分頁使用；勾選記住後才存進這個瀏覽器，不會包含在行程備份或下載的小冊中。</p>
+                <p class="field-hint">排行程、匯入行程讀檔與畫行程插圖都使用這把金鑰；內容由瀏覽器直接傳送至 Anthropic 的 Claude API，費用計入你的 API 帳戶。<a href="https://platform.claude.com/" target="_blank" rel="noopener noreferrer">前往 Claude Console 取得 API Key ↗</a></p>
+                <p class="field-hint">用量依 2026 年 11 月官方定價估算：Opus 5.5 每百萬 Token 輸入 US$4／輸出 US$20，Sonnet 5.5 為 US$2／US$10，Haiku 5.5 為 US$0.10／US$0.50。只計算這個瀏覽器送出的請求，不含其他裝置或程式；被拒或過長的回覆同樣計費，也會計入。</p>
             </details>
             </div>
             <hr style="border:0; border-top:1px solid #eee; margin:25px 0;">
@@ -1692,7 +1695,7 @@
                 <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(this)">
                 <button onclick="document.getElementById('importFile').click()" class="btn-outline">📥 匯入資料</button>
             </div>
-            <button id="settingsDone" onclick="saveAndCloseModal()" class="btn-primary" style="margin-top:25px;">儲存並關閉</button>
+            <div class="settings-foot"><button id="settingsDone" onclick="saveAndCloseModal()" class="btn-primary">儲存並關閉</button></div>
         </div>
     </div>
 

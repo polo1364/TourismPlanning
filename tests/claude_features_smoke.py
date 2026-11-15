@@ -146,6 +146,8 @@ def main():
         check("header shows this month's estimate", page.locator('#apiStatus').text_content() == f'Claude · 本月 US${0.024 * requests:.2f}')
         page.locator('.header-status').click()
         page.locator('#claudeUsageDetails > summary').click()
+        check('collapsed heading already shows the month estimate', page.locator('#claudeUsageSummary').text_content().startswith('本月 US$'))
+        check('save button stays in view with usage open', page.evaluate("(() => { const r = document.getElementById('settingsDone').getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; })()"))
         check('usage panel lists requests and features', f'{requests} 次請求' in page.locator('#claudeUsageMonth').text_content() and '行程插圖' in page.locator('#claudeUsageDetail').text_content() and '匯入行程' in page.locator('#claudeUsageDetail').text_content())
         page.locator('#claudeBudget').fill('0.05')
         page.locator('#claudeBudget').dispatch_event('change')

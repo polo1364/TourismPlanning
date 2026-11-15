@@ -92,6 +92,12 @@
     function render() {
         if (!$('claudeUsageMonth')) return;
         const current = usage.month(), limit = usage.budget();
+        // The collapsed heading already shows this month's estimate, so the panel rarely needs opening.
+        const summary = $('claudeUsageSummary');
+        if (summary) {
+            summary.textContent = current.requests || limit !== null ? `本月 ${money(current.cost)}${limit !== null ? ` / US$${limit.toFixed(2)}` : ''}` : '';
+            summary.dataset.low = String(limit !== null && current.cost >= limit * 0.8);
+        }
         const box = $('claudeUsageMonth');
         box.replaceChildren();
         const row = root.document.createElement('div'); row.className = 'codex-quota';
@@ -109,17 +115,15 @@
         row.append(note); box.append(row);
         const parts = Object.entries(current.features).map(([key, value]) => `${FEATURES[key]} ${value.requests} 次 ${money(value.cost)}`);
         const models = Object.entries(current.models).map(([key, value]) => `${MODEL_NAMES[key] || key} ${value.requests} 次`);
-        const latest = usage.last();
-        $('claudeUsageDetail').textContent = current.requests
-            ? `${parts.join('、')}。模型：${models.join('、')}。${latest ? `最近一次：${FEATURES[latest.feature]}，${latest.cost === null ? '未列價' : money(latest.cost)}。` : ''}`
-            : '本月尚未送出 Claude 請求。';
+        $('claudeUsageDetail').textContent = current.requests ? `${parts.join('、')}（${models.join('、')}）` : '本月尚未送出 Claude 請求。';
         if (root.document.activeElement !== $('claudeBudget')) $('claudeBudget').value = limit === null ? '' : String(limit);
     }
     function init() {
         if (!$('claudeUsageMonth')) return;
         $('claudeBudget').addEventListener('change', () => {
-            try { usage.setBudget($('claudeBudget').value.trim()); $('claudeBudgetError').textContent = ''; }
-            catch (error) { $('claudeBudgetError').textContent = error.message; }
+            const message = $('claudeBudgetError');
+            try { usage.setBudget($('claudeBudget').value.trim()); message.textContent = ''; message.hidden = true; }
+            catch (error) { message.textContent = error.message; message.hidden = false; }
         });
         $('claudeUsageReset').addEventListener('click', () => {
             if (root.confirm('清除這個瀏覽器的 Claude 用量紀錄？預算設定會保留，實際帳單不受影響。')) usage.reset();
