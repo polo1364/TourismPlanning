@@ -8,10 +8,34 @@
     const targets = () => core.targets(city(), tripData);
     const status = text => { $('artworkStatus').textContent = text; };
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-    // Claude API mode (the Claude option in 服務設定): Claude draws a flat SVG, stored as an ordinary picture.
-    const claudeMode = () => !window.CodexLocal?.selected();
+    // Pictures have their own source, separate from the planning service: trips can be planned with Claude
+    // while Codex CLI (local version) or the OpenAI API (online version) draws realistic pictures.
+    // Claude draws a flat SVG, stored as an ordinary picture.
+    const SOURCE_KEY = 'artworkSource';
+    const codexReady = () => !!window.CodexLocal?.imagesAvailable();
+    const viaApi = () => window.CodexLocal?.billing?.() === 'api';
+    function source() {
+        let saved = '';
+        try { saved = localStorage.getItem(SOURCE_KEY) || ''; } catch (_) { /* Optional preference. */ }
+        if (saved === 'claude') return 'claude';
+        if (saved === 'codex' && codexReady()) return 'codex';
+        return window.CodexLocal?.selected() && codexReady() ? 'codex' : 'claude';
+    }
+    const claudeMode = () => source() === 'claude';
     const claudeKey = () => ($('apiKey')?.value || '').trim();
-    const canGenerate = () => claudeMode() ? !!claudeKey() && !!window.ClaudeClient : !!window.CodexLocal?.imagesAvailable();
+    // Online, OpenAI pictures need the key the traveller enters in 服務設定 (OpenAI API).
+    const browserApiPage = () => location.protocol === 'https:' && window.ROAM_CLOUD !== true && !!window.OpenAIBrowser;
+    const codexKeyMissing = () => browserApiPage() && !window.OpenAIBrowser.ready();
+    const canGenerate = () => claudeMode() ? !!claudeKey() && !!window.ClaudeClient : codexReady();
+    function renderSource() {
+        const select = $('artworkSource');
+        if (!select) return;
+        const codex = select.querySelector('option[value="codex"]');
+        codex.textContent = viaApi() ? 'OpenAI API · 寫實照片風' : 'Codex CLI · 寫實照片風（本機 ChatGPT 額度）';
+        codex.disabled = !codexReady();
+        select.value = source();
+        select.disabled = isBusy || running;
+    }
     let claudeController = null;
     // Model output is untrusted: keep plain drawing elements only. Pictures are also only ever shown through <img>.
     const SVG_TAGS = new Set(['svg', 'g', 'defs', 'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'lineargradient', 'radialgradient', 'stop', 'clippath', 'mask', 'pattern', 'title', 'desc', 'use', 'symbol']);
@@ -94,12 +118,15 @@
             }
             $('artworkCount').textContent = `已保存 ${states.filter(item => item.image).length} / ${list.length} 張 · 封面＋每天景點與美食／活動插圖`;
             $('generateArtwork').disabled = isBusy || !list.length || !canGenerate();
+            renderSource();
             $('artworkHelp').textContent = claudeMode()
                 ? (canGenerate() ? '手動生成才使用 Claude API 額度：Claude 會畫扁平向量插畫（不是寫實照片），存成圖片後下載小冊直接重用。行程更動後可重新生成。'
                     : '在服務設定填入 Claude API Key 後，即可請 Claude 畫行程插圖；這裡也可以匯入、閱讀及下載已存圖片。')
-                : window.CodexLocal?.imagesAvailable()
-                    ? '手動生成才使用額度；下載重用已存圖片。行程更動後可重新生成。圖片為 AI 旅行示意，非景點實拍。'
-                    : '生成插圖需使用本機或私人雲端版；這裡可以匯入、閱讀及下載已存圖片。';
+                : codexKeyMissing()
+                    ? '用 OpenAI 畫圖需要 OpenAI API Key：到「服務設定」把 AI 服務切到 OpenAI API 填入 Key，再切回 Claude 排行程也沒關係，插圖仍會用 OpenAI 畫。'
+                    : codexReady()
+                        ? `手動生成才使用${viaApi() ? ' OpenAI API' : ' Codex（ChatGPT 登入）'}額度，排行程仍用服務設定選的 AI。下載重用已存圖片；行程更動後可重新生成。圖片為 AI 旅行示意，非景點實拍。`
+                        : '用 Codex CLI 畫圖需執行本機版「啟動Codex旅遊書.vbs」；這裡可以匯入、閱讀及下載已存圖片。';
         } catch (error) { status(error.message); }
     }
     async function adopt(target, id, tripId) {
@@ -247,6 +274,13 @@
     function init() {
         $('generateArtwork').addEventListener('click', () => start());
         $('stopArtwork').addEventListener('click', stop);
+        $('artworkSource')?.addEventListener('change', event => {
+            try { localStorage.setItem(SOURCE_KEY, event.target.value); } catch (_) { /* Kept for this page only. */ }
+            void refresh();
+        });
+        // Key and service changes in 服務設定 decide whether the chosen source can draw.
+        $('aiProvider')?.addEventListener('change', () => void refresh());
+        window.addEventListener('roam-openai-key-change', () => void refresh());
         $('backupArtwork').addEventListener('click', () => backup(false));
         $('backupAllArtwork').addEventListener('click', () => backup(true));
         $('artworkPanel').addEventListener('toggle', () => { if ($('artworkPanel').open) void refresh(); });

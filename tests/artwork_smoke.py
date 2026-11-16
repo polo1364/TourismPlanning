@@ -100,6 +100,11 @@ def main():
             document.getElementById('artworkPanel').open=true;await TripArtwork.refresh();
         }''', [sample_day(), sample_day('2026-11-11', '第二天散步')])
         check('two-day plan shows five illustration slots', page.locator('.artwork-card').count() == 5)
+        # Trips planned with Claude can still have Codex CLI draw the pictures (no Claude key is set here).
+        page.evaluate("const s=document.getElementById('aiProvider');s.value='claude';s.dispatchEvent(new Event('change'))")
+        page.locator('#artworkSource').select_option('codex')
+        check('Claude planning with Codex CLI pictures', page.evaluate("CodexLocal.selected()") is False and page.locator('#artworkSource').input_value() == 'codex' and not page.locator('#generateArtwork').is_disabled() and 'Codex CLI' in page.locator('#artworkSource option[value=codex]').text_content())
+        check('picture source survives reload', page.evaluate("localStorage.getItem('artworkSource')") == 'codex')
         page.locator('#generateArtwork').click()
         page.wait_for_function("!isBusy && document.getElementById('artworkCount').textContent.includes('5 / 5')")
         generated = len(starts)

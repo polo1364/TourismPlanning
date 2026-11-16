@@ -2137,6 +2137,9 @@
                 <summary>行程插圖與圖片備份</summary>
                 <p id="artworkHelp">手動生成圖片，下載時重用已存成品。</p>
                 <p id="artworkCount"></p>
+                <label class="artwork-source" for="artworkSource">插圖來源
+                    <select id="artworkSource"><option value="codex">Codex CLI · 寫實照片風</option><option value="claude">Claude · 扁平向量插畫</option></select>
+                </label>
                 <div class="artwork-actions"><button type="button" id="generateArtwork">生成行程插圖／補齊缺圖</button><button type="button" id="stopArtwork" disabled hidden>停止生成</button><button type="button" id="backupArtwork">備份目前旅程（含插圖）</button><button type="button" id="backupAllArtwork">備份全部（含插圖）</button></div>
                 <p id="artworkStatus" role="status" aria-live="polite"></p><div id="artworkList" class="artwork-list"></div>
             </details>
